@@ -24,6 +24,7 @@ const ChemicalInfoOutputSchema = z.object({
       reactivity: z.number().min(0).max(10).describe('A rating from 0 (inert) to 10 (highly reactive).'),
       flammability: z.number().min(0).max(10).describe('A rating from 0 (non-flammable) to 10 (highly flammable).'),
       explosiveness: z.number().min(0).max(10).describe('A rating from 0 (stable) to 10 (highly explosive).'),
+      radioactivity: z.number().min(0).max(10).describe('A rating from 0 (not radioactive) to 10 (highly radioactive).'),
   }).describe('Safety and property ratings on a scale of 0 to 10.'),
   experimentTips: z.string().describe('A few fun, simple, and safe experiment ideas or combinations to try with this chemical in the simulator. Be creative and encouraging.'),
 });
@@ -46,7 +47,7 @@ const prompt = ai.definePrompt({
   1.  **Description**: Briefly describe what this chemical is, its key properties, and common uses.
   2.  **Traits**: Summarize its most important traits (e.g., 'Corrosive, volatile, strong odor').
   3.  **Possible Reactions**: Suggest some specific reaction partners from the simulation and what to look for (e.g., 'Mix with NaOH to see a neutralization reaction.').
-  4.  **Ratings**: Provide a 0-10 rating for its reactivity, flammability, and explosiveness.
+  4.  **Ratings**: Provide a 0-10 rating for its reactivity, flammability, explosiveness, and radioactivity.
   5.  **Experiment Tips**: Give some fun, creative ideas for the simulator. For example, 'Try mixing it with a strong acid like HCl and see the bubbles!' or 'Add some Sodium (Na) to see a colorful reaction!'. Keep it exciting and focused on the simulation.`,
 });
 

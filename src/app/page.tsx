@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
 import { VerticalSlider } from '@/components/vertical-slider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { conductReaction, ConductReactionInput, ConductReactionOutput } from '@/ai/flows/reactionFlow';
-import { getChemicalInfo, ChemicalInfoInput, ChemicalInfoOutput } from '@/ai/flows/chemicalInfoFlow';
+import { getChemicalInfo, ChemicalInfoOutput } from '@/ai/flows/chemicalInfoFlow';
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { SoundManager } from '@/components/sound-manager';
@@ -388,6 +388,10 @@ export default function Home() {
                      <div className="flex items-center gap-2">
                       <span className="w-24">Explosiveness</span>
                       <Progress value={infoContent.ratings.explosiveness * 10} className="w-[60%]" />
+                    </div>
+                     <div className="flex items-center gap-2">
+                      <span className="w-24">Radioactivity</span>
+                      <Progress value={infoContent.ratings.radioactivity * 10} className="w-[60%]" />
                     </div>
                   </div>
                   <div>
