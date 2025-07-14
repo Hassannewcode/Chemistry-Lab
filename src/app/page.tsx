@@ -2,12 +2,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Beaker, Plus, Minus, Thermometer, ChevronsRight, FlaskConical, Loader2, X } from 'lucide-react';
+import { Beaker, Plus, Minus, Thermometer, ChevronsRight, FlaskConical, Loader2, X, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
 import { VerticalSlider } from '@/components/vertical-slider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { conductReaction, ConductReactionInput, ConductReactionOutput } from '@/ai/flows/reactionFlow';
+import { getChemicalInfo, ChemicalInfoInput, ChemicalInfoOutput } from '@/ai/flows/chemicalInfoFlow';
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 
@@ -125,6 +127,11 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  const [infoChemical, setInfoChemical] = useState<Chemical | null>(null);
+  const [infoContent, setInfoContent] = useState<ChemicalInfoOutput | null>(null);
+  const [isInfoLoading, setIsInfoLoading] = useState(false);
+
+
   const handleAddChemical = (chemical: Chemical) => {
     if (beakerContents.length < 8) {
       setReactionEffects(null);
@@ -144,6 +151,26 @@ export default function Home() {
     setReactionResult(null);
     setReactionEffects(null);
   }
+
+  const handleShowInfo = async (chemical: Chemical) => {
+    setInfoChemical(chemical);
+    setIsInfoLoading(true);
+    setInfoContent(null);
+    try {
+      const result = await getChemicalInfo({ name: chemical.name, formula: chemical.formula });
+      setInfoContent(result);
+    } catch (error) {
+      console.error("Error fetching chemical info:", error);
+      toast({
+        variant: "destructive",
+        title: "Info Error",
+        description: "Could not fetch information for this chemical.",
+      });
+      setInfoChemical(null); // Close dialog on error
+    } finally {
+      setIsInfoLoading(false);
+    }
+  };
 
   const handleStartReaction = async () => {
     if (beakerContents.length < 2) return;
@@ -212,17 +239,27 @@ export default function Home() {
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-60 overflow-y-auto pr-2">
                 {CHEMICAL_CATEGORIES[activeCategory].map(chemical => (
-                   <Button 
-                    key={chemical.formula} 
-                    variant="outline"
-                    onClick={() => handleAddChemical(chemical)}
-                    disabled={beakerContents.length >= 8 || beakerContents.some(c => c.formula === chemical.formula)}
-                    title={chemical.name}
-                    className="flex-col h-auto"
-                  >
-                     <span className="font-bold text-lg">{chemical.formula}</span>
-                     <span className="text-xs text-muted-foreground">{chemical.name}</span>
-                   </Button>
+                   <div key={chemical.formula} className="relative group">
+                    <Button 
+                      variant="outline"
+                      onClick={() => handleAddChemical(chemical)}
+                      disabled={beakerContents.length >= 8 || beakerContents.some(c => c.formula === chemical.formula)}
+                      title={chemical.name}
+                      className="w-full flex-col h-auto"
+                    >
+                      <span className="font-bold text-lg">{chemical.formula}</span>
+                      <span className="text-xs text-muted-foreground">{chemical.name}</span>
+                    </Button>
+                    <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="absolute top-0 right-0 h-6 w-6 opacity-50 group-hover:opacity-100"
+                        onClick={() => handleShowInfo(chemical)}
+                        title={`Info on ${chemical.name}`}
+                    >
+                        <Info size={14} />
+                    </Button>
+                   </div>
                 ))}
               </div>
             </CardContent>
@@ -307,6 +344,32 @@ export default function Home() {
         </div>
       </div>
       <Toaster />
+      <Dialog open={!!infoChemical} onOpenChange={(isOpen) => !isOpen && setInfoChemical(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>About {infoChemical?.name} ({infoChemical?.formula})</DialogTitle>
+            <DialogDescription>
+              {isInfoLoading && (
+                <div className="flex justify-center items-center p-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              )}
+              {infoContent && (
+                <div className="mt-4 space-y-4 text-sm text-foreground">
+                  <div>
+                    <h3 className="font-semibold mb-1">Description</h3>
+                    <p>{infoContent.description}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-1">Experiment Tips</h3>
+                    <p>{infoContent.experimentTips}</p>
+                  </div>
+                </div>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
