@@ -8,6 +8,8 @@ import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
 import { VerticalSlider } from '@/components/vertical-slider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { conductReaction, ConductReactionInput, ConductReactionOutput } from '@/ai/flows/reactionFlow';
+import { useToast } from "@/hooks/use-toast";
+import { Toaster } from "@/components/ui/toaster";
 
 interface Chemical {
   formula: string;
@@ -103,6 +105,7 @@ export default function Home() {
   
   const [reactionResult, setReactionResult] = useState<ConductReactionOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleAddChemical = (chemical: Chemical) => {
     if (beakerContents.length < 8) {
@@ -133,11 +136,10 @@ export default function Home() {
       setReactionResult(result);
     } catch (error) {
       console.error("Error conducting reaction:", error);
-      setReactionResult({
-        reactionName: "Error",
-        description: "An error occurred while simulating the reaction. Please try again.",
-        products: [],
-        safetyNotes: "Ensure all inputs are correct."
+      toast({
+        variant: "destructive",
+        title: "Simulation Error",
+        description: "An unexpected error occurred. Please check the console and try again.",
       });
     } finally {
       setIsLoading(false);
@@ -279,6 +281,7 @@ export default function Home() {
           </div>
         </div>
       </div>
+      <Toaster />
     </div>
   );
 }
