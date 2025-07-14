@@ -1,62 +1,152 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 
-// Simple hash function to get a color from a string
-const stringToColor = (str: string) => {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  let color = '#';
-  for (let i = 0; i < 3; i++) {
-    const value = (hash >> (i * 8)) & 0xFF;
-    color += ('00' + value.toString(16)).substr(-2);
-  }
-  return color;
-};
+// Effect properties for each chemical
+export interface ChemicalEffect {
+  color: string;
+  bubbles: number; // 0-10, intensity
+  smoke: number;   // 0-1, density
+  sparkles: number; // count
+  glow: number;    // 0-2, intensity
+}
 
-const mixColors = (color1: string, color2: string) => {
-    const c1 = parseInt(color1.substring(1), 16);
-    const c2 = parseInt(color2.substring(1), 16);
-    const r = Math.floor((((c1 >> 16) & 0xFF) + ((c2 >> 16) & 0xFF)) / 2);
-    const g = Math.floor((((c1 >> 8) & 0xFF) + ((c2 >> 8) & 0xFF)) / 2);
-    const b = Math.floor(((c1 & 0xFF) + (c2 & 0xFF)) / 2);
-    return `#${(r).toString(16).padStart(2, '0')}${(g).toString(16).padStart(2, '0')}${(b).toString(16).padStart(2, '0')}`;
+interface Chemical {
+    formula: string;
+    name: string;
+    effects?: Partial<ChemicalEffect>;
 }
 
 interface BeakerIconProps extends React.SVGProps<SVGSVGElement> {
-  contents?: string[];
+  contents?: Chemical[];
 }
 
-export const BeakerIcon: React.FC<BeakerIconProps> = ({ contents = [], ...props }) => {
-  const fillLevel = contents.length; // 0, 1, or 2
+// Default effects for the liquid base
+const defaultEffects: ChemicalEffect = {
+  color: '#add8e6', // Water blue
+  bubbles: 0,
+  smoke: 0,
+  sparkles: 0,
+  glow: 0,
+};
 
-  let liquidColor = '#3b82f6'; // Default blue
-  if (fillLevel === 1) {
-    liquidColor = stringToColor(contents[0]);
-  } else if (fillLevel === 2) {
-    const color1 = stringToColor(contents[0]);
-    const color2 = stringToColor(contents[1]);
-    liquidColor = mixColors(color1, color2);
-  }
-  
+// Helper to mix hex colors
+const mixHexColors = (colors: string[]): string => {
+  if (colors.length === 0) return defaultEffects.color;
+  let r = 0, g = 0, b = 0;
+  colors.forEach(hex => {
+    const color = parseInt(hex.substring(1), 16);
+    r += (color >> 16) & 0xFF;
+    g += (color >> 8) & 0xFF;
+    b += color & 0xFF;
+  });
+  r = Math.floor(r / colors.length);
+  g = Math.floor(g / colors.length);
+  b = Math.floor(b / colors.length);
+  return `#${(r).toString(16).padStart(2, '0')}${(g).toString(16).padStart(2, '0')}${(b).toString(16).padStart(2, '0')}`;
+};
+
+const SmokeParticle: React.FC<{ delay: string, duration: string }> = ({ delay, duration }) => (
+    <path
+      d="M 100 150 Q 90 130 100 110 T 100 70"
+      fill="none"
+      stroke="rgba(200, 200, 200, 0.3)"
+      strokeWidth="10"
+      strokeLinecap="round"
+    >
+      <animateTransform
+        attributeName="transform"
+        type="translate"
+        values="0 0; 5 -10; -5 -20; 0 -30; 5 -40"
+        dur={duration}
+        repeatCount="indefinite"
+        begin={delay}
+      />
+      <animate
+        attributeName="opacity"
+        values="0; 1; 1; 0"
+        dur={duration}
+        repeatCount="indefinite"
+        begin={delay}
+      />
+    </path>
+);
+
+const Sparkle: React.FC<{ cx: number; cy: number; size: number; delay: string; duration: string }> = ({ cx, cy, size, delay, duration }) => (
+  <path
+    d={`M${cx},${cy - size} L${cx + size * 0.2},${cy - size * 0.2} L${cx + size},${cy} L${cx + size * 0.2},${cy + size * 0.2} L${cx},${cy + size} L${cx - size * 0.2},${cy + size * 0.2} L${cx - size},${cy} L${cx - size * 0.2},${cy - size * 0.2} Z`}
+    fill="white"
+  >
+    <animate
+      attributeName="opacity"
+      values="0; 1; 0"
+      dur={duration}
+      begin={delay}
+      repeatCount="indefinite"
+    />
+    <animateTransform
+      attributeName="transform"
+      type="scale"
+      values="0.5; 1; 0.5"
+      dur={duration}
+      begin={delay}
+      repeatCount="indefinite"
+      additive="sum"
+    />
+  </path>
+);
+
+
+export const BeakerIcon: React.FC<BeakerIconProps> = ({ contents = [], ...props }) => {
+  const fillLevel = contents.length;
+
+  const combinedEffects = useMemo<ChemicalEffect>(() => {
+    if (fillLevel === 0) return defaultEffects;
+
+    const effects = contents.reduce((acc, chemical) => {
+        const chemEffects = { ...defaultEffects, ...chemical.effects };
+        acc.color.push(chemEffects.color);
+        acc.bubbles += chemEffects.bubbles;
+        acc.smoke += chemEffects.smoke;
+        acc.sparkles += chemEffects.sparkles;
+        acc.glow += chemEffects.glow;
+        return acc;
+    }, { color: [] as string[], bubbles: 0, smoke: 0, sparkles: 0, glow: 0 });
+
+    return {
+        color: mixHexColors(effects.color),
+        bubbles: Math.min(effects.bubbles, 10),
+        smoke: Math.min(effects.smoke, 1),
+        sparkles: Math.floor(Math.min(effects.sparkles, 50)),
+        glow: Math.min(effects.glow, 2),
+    };
+  }, [contents]);
+
   const liquidPath = [
-      // Level 0 (Empty)
-      "M 40 175 C 60 175, 140 175, 160 175 L 160 175 C 140 175, 60 175, 40 175 Z",
-      // Level 1
-      "M 40 175 C 60 160, 140 160, 160 175 L 160 130 C 140 145, 60 145, 40 130 Z",
-      // Level 2
-      "M 40 175 C 60 160, 140 160, 160 175 L 160 100 C 140 115, 60 115, 40 100 Z",
+      "M 40 175 C 60 175, 140 175, 160 175 L 160 175 C 140 175, 60 175, 40 175 Z", // Level 0
+      "M 40 175 C 60 160, 140 160, 160 175 L 160 165 C 140 180, 60 180, 40 165 Z", // Level 1
+      "M 40 175 C 60 160, 140 160, 160 175 L 160 155 C 140 170, 60 170, 40 155 Z", // Level 2
+      "M 40 175 C 60 160, 140 160, 160 175 L 160 145 C 140 160, 60 160, 40 145 Z", // Level 3
+      "M 40 175 C 60 160, 140 160, 160 175 L 160 130 C 140 145, 60 145, 40 130 Z", // Level 4
+      "M 40 175 C 60 160, 140 160, 160 175 L 160 115 C 140 130, 60 130, 40 115 Z", // Level 5
+      "M 40 175 C 60 160, 140 160, 160 175 L 160 100 C 140 115, 60 115, 40 100 Z", // Level 6
+      "M 40 175 C 60 160, 140 160, 160 175 L 160, 85 C 140, 100, 60, 100, 40, 85 Z", // Level 7
+      "M 40 175 C 60 160, 140 160, 160 175 L 160, 70 C 140, 85, 60, 85, 40, 70 Z",  // Level 8
   ];
   
   const surfacePath = [
-      // Level 0 (Empty)
-      "M 40 175 C 60 175, 140 175, 160 175",
-      // Level 1
-      "M 40 130 C 60 145, 140 145, 160 130",
-      // Level 2
-      "M 40 100 C 60 115, 140 115, 160 100",
+      "M 40 175 C 60 175, 140 175, 160 175", // Level 0
+      "M 40 165 C 60 180, 140 180, 160 165", // Level 1
+      "M 40 155 C 60 170, 140 170, 160 155", // Level 2
+      "M 40 145 C 60 160, 140 160, 160 145", // Level 3
+      "M 40 130 C 60 145, 140 145, 160 130", // Level 4
+      "M 40 115 C 60 130, 140 130, 160 115", // Level 5
+      "M 40 100 C 60 115, 140 115, 160 100", // Level 6
+      "M 40, 85 C 60, 100, 140, 100, 160, 85", // Level 7
+      "M 40, 70 C 60, 85, 140, 85, 160, 70", // Level 8
   ];
+
+  const currentLiquidPath = liquidPath[Math.min(fillLevel, 8)];
+  const currentSurfacePath = surfacePath[Math.min(fillLevel, 8)];
 
   return (
     <svg
@@ -66,11 +156,11 @@ export const BeakerIcon: React.FC<BeakerIconProps> = ({ contents = [], ...props 
     >
       <defs>
         <linearGradient id="liquidGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor={liquidColor} stopOpacity="0.7" />
-          <stop offset="100%" stopColor={liquidColor} stopOpacity="0.9" />
+          <stop offset="0%" stopColor={combinedEffects.color} stopOpacity="0.7" />
+          <stop offset="100%" stopColor={combinedEffects.color} stopOpacity="0.9" />
         </linearGradient>
         <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+            <feGaussianBlur stdDeviation={combinedEffects.glow} result="coloredBlur" />
             <feMerge>
                 <feMergeNode in="coloredBlur" />
                 <feMergeNode in="SourceGraphic" />
@@ -78,11 +168,29 @@ export const BeakerIcon: React.FC<BeakerIconProps> = ({ contents = [], ...props 
         </filter>
       </defs>
       
+      {/* Liquid */}
+      {fillLevel > 0 && (
+        <g filter={combinedEffects.glow > 0 ? "url(#glow)" : undefined}>
+          <path
+            d={currentLiquidPath}
+            fill="url(#liquidGradient)"
+            style={{ transition: 'd 0.5s ease-in-out' }}
+          />
+          <path
+            d={currentSurfacePath}
+            fill="none"
+            stroke={combinedEffects.color}
+            strokeWidth="3"
+            style={{ transition: 'd 0.5s ease-in-out' }}
+          />
+        </g>
+      )}
+
       {/* Beaker Glass */}
       <path
         d="M 30 180 L 30 40 Q 30 30 40 30 L 160 30 Q 170 30 170 40 L 170 180"
-        fill="rgba(229, 231, 235, 0.3)" // Light gray, slightly transparent
-        stroke="#9ca3af" // Gray-400
+        fill="rgba(229, 231, 235, 0.3)"
+        stroke="#9ca3af"
         strokeWidth="4"
       />
       <path
@@ -92,39 +200,30 @@ export const BeakerIcon: React.FC<BeakerIconProps> = ({ contents = [], ...props 
         strokeWidth="4"
       />
       
-      {/* Liquid */}
-      {fillLevel > 0 && (
-        <>
-          <path
-            d={liquidPath[fillLevel]}
-            fill="url(#liquidGradient)"
-            filter="url(#glow)"
-            style={{ transition: 'd 0.5s ease-in-out' }}
-          />
-          <path
-            d={surfacePath[fillLevel]}
-            fill="none"
-            stroke={liquidColor}
-            strokeWidth="3"
-            style={{ transition: 'd 0.5s ease-in-out' }}
-          />
-        </>
-      )}
+      {/* Effects */}
+      <g opacity={combinedEffects.smoke}>
+        <SmokeParticle delay="0s" duration="5s" />
+        <SmokeParticle delay="-1s" duration="6s" />
+        <SmokeParticle delay="-2.5s" duration="4s" />
+      </g>
+      
+      {Array.from({ length: combinedEffects.sparkles }).map((_, i) => (
+        <Sparkle
+          key={i}
+          cx={60 + Math.random() * 80}
+          cy={100 + Math.random() * 70}
+          size={1 + Math.random() * 2}
+          delay={`${Math.random() * 2}s`}
+          duration={`${0.5 + Math.random() * 0.5}s`}
+        />
+      ))}
 
-      {/* Bubbles */}
-      {fillLevel > 0 && (
-          <>
-            <circle cx="70" cy="130" r="3" fill="white" opacity="0.7">
-                <animate attributeName="cy" values="170;120;170" dur="3s" repeatCount="indefinite" />
-            </circle>
-            <circle cx="100" cy="150" r="4" fill="white" opacity="0.8">
-                <animate attributeName="cy" values="175;110;175" dur="2.5s" begin="-1s" repeatCount="indefinite" />
-            </circle>
-            <circle cx="130" cy="120" r="2.5" fill="white" opacity="0.6">
-                <animate attributeName="cy" values="165;130;165" dur="3.5s" begin="-0.5s" repeatCount="indefinite" />
-            </circle>
-          </>
-      )}
+      {Array.from({ length: Math.floor(combinedEffects.bubbles) }).map((_, i) => (
+         <circle key={i} cx={60 + Math.random() * 80} cy="170" r={1 + Math.random() * 3} fill="white" opacity="0.7">
+              <animate attributeName="cy" values="170;100" dur={`${2 + Math.random() * 2}s`} begin={`${i * 0.3}s`} repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.7;0" dur={`${2 + Math.random() * 2}s`} begin={`${i * 0.3}s`} repeatCount="indefinite" />
+          </circle>
+      ))}
       
       {/* Markings */}
       <g stroke="#a0aec0" strokeWidth="1.5">

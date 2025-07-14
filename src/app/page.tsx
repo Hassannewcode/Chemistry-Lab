@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { Beaker, Plus, Minus, Thermometer, ChevronsRight, FlaskConical, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { BeakerIcon } from '@/components/beaker-icon';
+import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
 import { VerticalSlider } from '@/components/vertical-slider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { conductReaction, ConductReactionInput, ConductReactionOutput } from '@/ai/flows/reactionFlow';
@@ -12,66 +12,84 @@ import { conductReaction, ConductReactionInput, ConductReactionOutput } from '@/
 interface Chemical {
   formula: string;
   name: string;
+  effects?: Partial<ChemicalEffect>;
 }
 
 const CHEMICAL_CATEGORIES: Record<string, Chemical[]> = {
   ELEMENTS: [
-    { formula: 'H', name: 'Hydrogen' }, { formula: 'He', name: 'Helium' }, { formula: 'Li', name: 'Lithium' },
-    { formula: 'Be', name: 'Beryllium' }, { formula: 'B', name: 'Boron' }, { formula: 'C', name: 'Carbon' },
-    { formula: 'N', name: 'Nitrogen' }, { formula: 'O', name: 'Oxygen' }, { formula: 'F', name: 'Fluorine' },
-    { formula: 'Ne', name: 'Neon' }, { formula: 'Na', name: 'Sodium' }, { formula: 'Mg', name: 'Magnesium' },
-    { formula: 'Al', name: 'Aluminum' }, { formula: 'Si', name: 'Silicon' }, { formula: 'P', name: 'Phosphorus' },
-    { formula: 'S', name: 'Sulfur' }, { formula: 'Cl', name: 'Chlorine' }, { formula: 'Ar', name: 'Argon' },
-    { formula: 'K', name: 'Potassium' }, { formula: 'Ca', name: 'Calcium' }, { formula: 'Sc', name: 'Scandium' },
-    { formula: 'Ti', name: 'Titanium' }, { formula: 'V', name: 'Vanadium' }, { formula: 'Cr', name: 'Chromium' },
-    { formula: 'Mn', name: 'Manganese' }, { formula: 'Fe', name: 'Iron' }, { formula: 'Co', name: 'Cobalt' },
-    { formula: 'Ni', name: 'Nickel' }, { formula: 'Cu', name: 'Copper' }, { formula: 'Zn', name: 'Zinc' },
-    { formula: 'Ga', name: 'Gallium' }, { formula: 'Ge', name: 'Germanium' }, { formula: 'As', name: 'Arsenic' },
-    { formula: 'Se', name: 'Selenium' }, { formula: 'Br', name: 'Bromine' }, { formula: 'Kr', name: 'Krypton' },
-    { formula: 'Rb', name: 'Rubidium' }, { formula: 'Sr', name: 'Strontium' }, { formula: 'Y', name: 'Yttrium' },
-    { formula: 'Zr', name: 'Zirconium' }, { formula: 'Ag', name: 'Silver' }, { formula: 'Cd', name: 'Cadmium' },
-    { formula: 'Sn', name: 'Tin' }, { formula: 'I', name: 'Iodine' }, { formula: 'Xe', name: 'Xenon' },
-    { formula: 'Cs', name: 'Caesium' }, { formula: 'Ba', name: 'Barium' }, { formula: 'W', name: 'Tungsten' },
-    { formula: 'Pt', name: 'Platinum' }, { formula: 'Au', name: 'Gold' }, { formula: 'Hg', name: 'Mercury' },
-    { formula: 'Pb', name: 'Lead' }, { formula: 'Rn', name: 'Radon' }, { formula: 'Fr', name: 'Francium' },
-    { formula: 'Ra', name: 'Radium' }, { formula: 'U', name: 'Uranium' }, { formula: 'Pu', name: 'Plutonium' },
+    { formula: 'H', name: 'Hydrogen', effects: { color: '#f0f8ff', glow: 0.1 } }, { formula: 'He', name: 'Helium', effects: { color: '#d3d3d3', bubbles: 1 } },
+    { formula: 'Li', name: 'Lithium', effects: { color: '#e0e0e0' } }, { formula: 'Be', name: 'Beryllium', effects: { color: '#c0c0c0' } },
+    { formula: 'B', name: 'Boron', effects: { color: '#a0a0a0' } }, { formula: 'C', name: 'Carbon', effects: { color: '#36454f' } },
+    { formula: 'N', name: 'Nitrogen', effects: { color: '#add8e6', bubbles: 1 } }, { formula: 'O', name: 'Oxygen', effects: { color: '#87ceeb', bubbles: 1 } },
+    { formula: 'F', name: 'Fluorine', effects: { color: '#98fb98' } }, { formula: 'Ne', name: 'Neon', effects: { color: '#ffc0cb', glow: 0.5 } },
+    { formula: 'Na', name: 'Sodium', effects: { color: '#fafad2' } }, { formula: 'Mg', name: 'Magnesium', effects: { color: '#dcdcdc' } },
+    { formula: 'Al', name: 'Aluminum', effects: { color: '#d3d3d3' } }, { formula: 'Si', name: 'Silicon', effects: { color: '#808080' } },
+    { formula: 'P', name: 'Phosphorus', effects: { color: '#ffc0cb', glow: 0.2 } }, { formula: 'S', name: 'Sulfur', effects: { color: '#ffff00', smoke: 0.2 } },
+    { formula: 'Cl', name: 'Chlorine', effects: { color: '#90ee90' } }, { formula: 'Ar', name: 'Argon', effects: { color: '#dda0dd', glow: 0.4 } },
+    { formula: 'K', name: 'Potassium', effects: { color: '#f0e68c' } }, { formula: 'Ca', name: 'Calcium', effects: { color: '#f5f5dc' } },
+    { formula: 'Sc', name: 'Scandium', effects: { color: '#c0c0c0' } }, { formula: 'Ti', name: 'Titanium', effects: { color: '#b0c4de' } },
+    { formula: 'V', name: 'Vanadium', effects: { color: '#6a5acd' } }, { formula: 'Cr', name: 'Chromium', effects: { color: '#e6e6fa' } },
+    { formula: 'Mn', name: 'Manganese', effects: { color: '#ffdab9' } }, { formula: 'Fe', name: 'Iron', effects: { color: '#a0522d', smoke: 0.1 } },
+    { formula: 'Co', name: 'Cobalt', effects: { color: '#4682b4' } }, { formula: 'Ni', name: 'Nickel', effects: { color: '#b0e0e6' } },
+    { formula: 'Cu', name: 'Copper', effects: { color: '#b87333' } }, { formula: 'Zn', name: 'Zinc', effects: { color: '#d3d3d3' } },
+    { formula: 'Ga', name: 'Gallium', effects: { color: '#c0c0c0' } }, { formula: 'Ge', name: 'Germanium', effects: { color: '#a9a9a9' } },
+    { formula: 'As', name: 'Arsenic', effects: { color: '#808080' } }, { formula: 'Se', name: 'Selenium', effects: { color: '#ffc0cb' } },
+    { formula: 'Br', name: 'Bromine', effects: { color: '#a52a2a' } }, { formula: 'Kr', name: 'Krypton', effects: { color: '#afeeee', glow: 0.6 } },
+    { formula: 'Rb', name: 'Rubidium', effects: { color: '#f0e68c' } }, { formula: 'Sr', name: 'Strontium', effects: { color: '#ff6347', glow: 0.3 } },
+    { formula: 'Y', name: 'Yttrium', effects: { color: '#d3d3d3' } }, { formula: 'Zr', name: 'Zirconium', effects: { color: '#c0c0c0' } },
+    { formula: 'Ag', name: 'Silver', effects: { color: '#c0c0c0', sparkles: 2 } }, { formula: 'Cd', name: 'Cadmium', effects: { color: '#d3d3d3' } },
+    { formula: 'Sn', name: 'Tin', effects: { color: '#d3d3d3' } }, { formula: 'I', name: 'Iodine', effects: { color: '#4b0082' } },
+    { formula: 'Xe', name: 'Xenon', effects: { color: '#87ceeb', glow: 0.8 } }, { formula: 'Cs', name: 'Caesium', effects: { color: '#f0e68c' } },
+    { formula: 'Ba', name: 'Barium', effects: { color: '#f5f5dc' } }, { formula: 'W', name: 'Tungsten', effects: { color: '#808080' } },
+    { formula: 'Pt', name: 'Platinum', effects: { color: '#d3d3d3', sparkles: 1 } }, { formula: 'Au', name: 'Gold', effects: { color: '#ffd700', sparkles: 5 } },
+    { formula: 'Hg', name: 'Mercury', effects: { color: '#e0e0e0', smoke: 0.3 } }, { formula: 'Pb', name: 'Lead', effects: { color: '#696969' } },
+    { formula: 'Rn', name: 'Radon', effects: { color: '#e0ffff', glow: 1 } }, { formula: 'Fr', name: 'Francium', effects: { color: '#f0e68c' } },
+    { formula: 'Ra', name: 'Radium', effects: { color: '#f5f5dc', glow: 1.5 } }, { formula: 'U', name: 'Uranium', effects: { color: '#90ee90', glow: 0.7 } },
+    { formula: 'Pu', name: 'Plutonium', effects: { color: '#ff69b4', glow: 0.9 } },
   ],
-  WATER: [{ formula: 'H2O', name: 'Water' }],
+  WATER: [{ formula: 'H2O', name: 'Water', effects: { color: '#add8e6' } }],
   ACIDS: [
-    { formula: 'HCl', name: 'Hydrochloric Acid' }, { formula: 'H2SO4', name: 'Sulfuric Acid' },
-    { formula: 'HNO3', name: 'Nitric Acid' }, { formula: 'CH3COOH', name: 'Acetic Acid' },
-    { formula: 'H3PO4', name: 'Phosphoric Acid' }, { formula: 'H2CO3', name: 'Carbonic Acid' },
-    { formula: 'HF', name: 'Hydrofluoric Acid' }, { formula: 'HBr', name: 'Hydrobromic Acid' },
-    { formula: 'HI', name: 'Hydroiodic Acid' },
+    { formula: 'HCl', name: 'Hydrochloric Acid', effects: { color: '#b0e0e6', smoke: 0.1 } }, { formula: 'H2SO4', name: 'Sulfuric Acid', effects: { color: '#f0f8ff', smoke: 0.4 } },
+    { formula: 'HNO3', name: 'Nitric Acid', effects: { color: '#fafad2', smoke: 0.3 } }, { formula: 'CH3COOH', name: 'Acetic Acid', effects: { color: '#f5f5f5' } },
+    { formula: 'H3PO4', name: 'Phosphoric Acid', effects: { color: '#f0fff0' } }, { formula: 'H2CO3', name: 'Carbonic Acid', effects: { color: '#f0ffff', bubbles: 2 } },
+    { formula: 'HF', name: 'Hydrofluoric Acid', effects: { color: '#e0ffff', smoke: 0.6 } }, { formula: 'HBr', name: 'Hydrobromic Acid', effects: { color: '#e6e6fa', smoke: 0.2 } },
+    { formula: 'HI', name: 'Hydroiodic Acid', effects: { color: '#fff0f5', smoke: 0.2 } },
   ],
   BASES: [
-    { formula: 'NaOH', name: 'Sodium Hydroxide' }, { formula: 'KOH', name: 'Potassium Hydroxide' },
-    { formula: 'Ca(OH)2', name: 'Calcium Hydroxide' }, { formula: 'NH3', name: 'Ammonia' },
-    { formula: 'Mg(OH)2', name: 'Magnesium Hydroxide' }, { formula: 'LiOH', name: 'Lithium Hydroxide' },
-    { formula: 'Ba(OH)2', name: 'Barium Hydroxide' }, { formula: 'Sr(OH)2', name: 'Strontium Hydroxide' },
+    { formula: 'NaOH', name: 'Sodium Hydroxide', effects: { color: '#f8f8ff' } }, { formula: 'KOH', name: 'Potassium Hydroxide', effects: { color: '#faf0e6' } },
+    { formula: 'Ca(OH)2', name: 'Calcium Hydroxide', effects: { color: '#fdf5e6' } }, { formula: 'NH3', name: 'Ammonia', effects: { color: '#f0fff0', smoke: 0.1 } },
+    { formula: 'Mg(OH)2', name: 'Magnesium Hydroxide', effects: { color: '#fffafa' } }, { formula: 'LiOH', name: 'Lithium Hydroxide', effects: { color: '#f5fffa' } },
+    { formula: 'Ba(OH)2', name: 'Barium Hydroxide', effects: { color: '#fff5ee' } }, { formula: 'Sr(OH)2', name: 'Strontium Hydroxide', effects: { color: '#ffefd5' } },
   ],
   SALTS: [
-    { formula: 'NaCl', name: 'Sodium Chloride' }, { formula: 'CuSO4', name: 'Copper Sulfate' },
-    { formula: 'KNO3', name: 'Potassium Nitrate' }, { formula: 'NaHCO3', name: 'Sodium Bicarbonate' },
-    { formula: 'AgNO3', name: 'Silver Nitrate' }, { formula: 'KCl', name: 'Potassium Chloride' },
-    { formula: 'CaCO3', name: 'Calcium Carbonate' }, { formula: 'FeCl3', name: 'Iron(III) Chloride' },
-    { formula: 'KI', name: 'Potassium Iodide' }, { formula: 'AgCl', name: 'Silver Chloride' },
-    { formula: 'Pb(NO3)2', name: 'Lead(II) Nitrate' },
+    { formula: 'NaCl', name: 'Sodium Chloride', effects: { color: '#ffffff' } }, { formula: 'CuSO4', name: 'Copper Sulfate', effects: { color: '#87ceeb' } },
+    { formula: 'KNO3', name: 'Potassium Nitrate', effects: { color: '#f8f8ff' } }, { formula: 'NaHCO3', name: 'Sodium Bicarbonate', effects: { color: '#f5f5f5', bubbles: 4 } },
+    { formula: 'AgNO3', name: 'Silver Nitrate', effects: { color: '#e6e6fa' } }, { formula: 'KCl', name: 'Potassium Chloride', effects: { color: '#fffafa' } },
+    { formula: 'CaCO3', name: 'Calcium Carbonate', effects: { color: '#fafafa' } }, { formula: 'FeCl3', name: 'Iron(III) Chloride', effects: { color: '#f5deb3' } },
+    { formula: 'KI', name: 'Potassium Iodide', effects: { color: '#fafad2' } }, { formula: 'AgCl', name: 'Silver Chloride', effects: { color: '#f8f8ff' } },
+    { formula: 'Pb(NO3)2', name: 'Lead(II) Nitrate', effects: { color: '#fffafa' } },
   ],
   GASES: [
-    { formula: 'O2', name: 'Oxygen' }, { formula: 'H2', name: 'Hydrogen' }, { formula: 'N2', name: 'Nitrogen' },
-    { formula: 'Cl2', name: 'Chlorine' }, { formula: 'CO2', name: 'Carbon Dioxide' },
-    { formula: 'SO2', name: 'Sulfur Dioxide' }, { formula: 'NO2', name: 'Nitrogen Dioxide' },
+    { formula: 'O2', name: 'Oxygen', effects: { bubbles: 3 } }, { formula: 'H2', name: 'Hydrogen', effects: { bubbles: 5 } },
+    { formula: 'N2', name: 'Nitrogen', effects: { bubbles: 2 } }, { formula: 'Cl2', name: 'Chlorine', effects: { color: '#90ee90', smoke: 0.5 } },
+    { formula: 'CO2', name: 'Carbon Dioxide', effects: { bubbles: 4, smoke: 0.1 } }, { formula: 'SO2', name: 'Sulfur Dioxide', effects: { color: '#f0e68c', smoke: 0.7 } },
+    { formula: 'NO2', name: 'Nitrogen Dioxide', effects: { color: '#a0522d', smoke: 0.8 } },
   ],
   HALOGENS: [
-    { formula: 'F2', name: 'Fluorine' }, { formula: 'Cl2', name: 'Chlorine' },
-    { formula: 'Br2', name: 'Bromine' }, { formula: 'I2', name: 'Iodine' },
+    { formula: 'F2', name: 'Fluorine', effects: { color: '#98fb98', smoke: 0.4 } }, { formula: 'Cl2', name: 'Chlorine', effects: { color: '#90ee90', smoke: 0.5 } },
+    { formula: 'Br2', name: 'Bromine', effects: { color: '#a52a2a', smoke: 0.4 } }, { formula: 'I2', name: 'Iodine', effects: { color: '#4b0082', smoke: 0.3 } },
   ],
   ORGANIC: [
-    { formula: 'CH4', name: 'Methane' }, { formula: 'C2H5OH', name: 'Ethanol' },
-    { formula: 'CH3OH', name: 'Methanol' }, { formula: 'C6H12O6', name: 'Glucose' },
-    { formula: 'C3H8', name: 'Propane' }, { formula: 'C6H6', name: 'Benzene' },
-    { formula: 'CH3COCH3', name: 'Acetone' },
+    { formula: 'CH4', name: 'Methane', effects: { bubbles: 3 } }, { formula: 'C2H5OH', name: 'Ethanol', effects: { color: '#f0f8ff' } },
+    { formula: 'CH3OH', name: 'Methanol', effects: { color: '#f8f8ff' } }, { formula: 'C6H12O6', name: 'Glucose', effects: { color: '#fafad2' } },
+    { formula: 'C3H8', name: 'Propane', effects: { bubbles: 4 } }, { formula: 'C6H6', name: 'Benzene', effects: { color: '#fffacd' } },
+    { formula: 'CH3COCH3', name: 'Acetone', effects: { color: '#f0ffff' } },
+  ],
+  SPRAYS: [
+    { formula: 'Sparkle', name: 'Sparkle Spray', effects: { sparkles: 20 } },
+    { formula: 'Smoke', name: 'Smoke Spray', effects: { smoke: 1 } },
+    { formula: 'Glow', name: 'Glow Spray', effects: { glow: 2 } },
+    { formula: 'Bubbles', name: 'Bubble Spray', effects: { bubbles: 10 } },
   ],
 };
 
@@ -79,7 +97,7 @@ type ChemicalCategory = keyof typeof CHEMICAL_CATEGORIES;
 
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState<ChemicalCategory>('ELEMENTS');
-  const [beakerContents, setBeakerContents] = useState<string[]>([]);
+  const [beakerContents, setBeakerContents] = useState<Chemical[]>([]);
   const [temperature, setTemperature] = useState(25); // in Celsius
   const [concentration, setConcentration] = useState(1); // in Molarity (M)
   
@@ -87,13 +105,13 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleAddChemical = (chemical: Chemical) => {
-    if (beakerContents.length < 2) {
-      setBeakerContents([...beakerContents, chemical.formula]);
+    if (beakerContents.length < 8) {
+      setBeakerContents([...beakerContents, chemical]);
     }
   };
 
-  const handleRemoveChemical = (chemical: string) => {
-    setBeakerContents(beakerContents.filter(c => c !== chemical));
+  const handleRemoveChemical = (chemicalFormula: string) => {
+    setBeakerContents(beakerContents.filter(c => c.formula !== chemicalFormula));
   };
   
   const handleClearBeaker = () => {
@@ -107,7 +125,7 @@ export default function Home() {
     setReactionResult(null);
     try {
       const input: ConductReactionInput = {
-        chemicals: beakerContents,
+        chemicals: beakerContents.map(c => c.formula),
         temperature,
         concentration
       };
@@ -150,7 +168,7 @@ export default function Home() {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle>Select Chemicals</CardTitle>
-              <CardDescription>Choose up to 2 chemicals to mix in the beaker.</CardDescription>
+              <CardDescription>Choose up to 8 chemicals & sprays to mix in the beaker.</CardDescription>
             </CardHeader>
             <CardContent>
                <div className="w-full bg-gray-800 p-2 rounded-full mb-6 flex flex-wrap justify-center gap-1">
@@ -171,8 +189,8 @@ export default function Home() {
                     key={chemical.formula} 
                     variant="outline"
                     onClick={() => handleAddChemical(chemical)}
-                    disabled={beakerContents.length >= 2 || beakerContents.includes(chemical.formula)}
-                    title={chemical.formula}
+                    disabled={beakerContents.length >= 8 || beakerContents.some(c => c.formula === chemical.formula)}
+                    title={chemical.name}
                     className="flex-col h-auto"
                   >
                      <span className="font-bold text-lg">{chemical.formula}</span>
@@ -190,13 +208,13 @@ export default function Home() {
           <div className="w-full">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold">Beaker</h2>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap justify-end">
                   <p className="font-semibold">Contents:</p>
                   {beakerContents.length > 0 ? (
                     beakerContents.map(c => (
-                      <span key={c} className="flex items-center bg-blue-100 text-blue-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded-full">
-                        {c}
-                        <button onClick={() => handleRemoveChemical(c)} className="ml-2 text-blue-600 hover:text-blue-800">
+                      <span key={c.formula} className="flex items-center bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
+                        {c.formula}
+                        <button onClick={() => handleRemoveChemical(c.formula)} className="ml-2 text-blue-600 hover:text-blue-800">
                           <X size={14}/>
                         </button>
                       </span>
