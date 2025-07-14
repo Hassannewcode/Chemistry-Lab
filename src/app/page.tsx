@@ -2,18 +2,19 @@
 'use client';
 
 import { useState } from 'react';
-import { Beaker, Plus, Minus, Thermometer, ChevronsRight, FlaskConical, Loader2, X, Info } from 'lucide-react';
+import { Beaker, Plus, Minus, Thermometer, ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
 import { VerticalSlider } from '@/components/vertical-slider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { conductReaction, ConductReactionInput, ConductReactionOutput } from '@/ai/flows/reactionFlow';
 import { getChemicalInfo, ChemicalInfoOutput } from '@/ai/flows/chemicalInfoFlow';
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { SoundManager } from '@/components/sound-manager';
 import { Progress } from '@/components/ui/progress';
+import { PeriodicTable } from '@/components/periodic-table';
 
 interface Chemical {
   formula: string;
@@ -63,7 +64,13 @@ const CHEMICAL_CATEGORIES: Record<string, Chemical[]> = {
         { formula: 'Pa', name: 'Protactinium', effects: { color: '#d3d3d3', glow: 1.1 } }, { formula: 'U', name: 'Uranium', effects: { color: '#90ee90', glow: 0.7 } },
         { formula: 'Np', name: 'Neptunium', effects: { color: '#4682b4', glow: 1.3 } }, { formula: 'Pu', name: 'Plutonium', effects: { color: '#ff69b4', glow: 0.9, explosion: 0.4 } },
     ],
-    WATER: [{ formula: 'H2O', name: 'Water', effects: { color: '#add8e6' } }],
+    LIQUIDS: [
+        { formula: 'H2O', name: 'Water', effects: { color: '#add8e6' } },
+        { formula: 'C2H5OH', name: 'Ethanol', effects: { color: '#f0f8ff' } },
+        { formula: 'CH3OH', name: 'Methanol', effects: { color: '#f8f8ff' } },
+        { formula: 'CH3COCH3', name: 'Acetone', effects: { color: '#f0ffff' } },
+        { formula: 'C3H8O3', name: 'Glycerin', effects: { color: '#fafafa' } },
+    ],
     ACIDS: [
         { formula: 'HCl', name: 'Hydrochloric Acid', effects: { color: '#b0e0e6', smoke: 0.1 } }, { formula: 'H2SO4', name: 'Sulfuric Acid', effects: { color: '#f0f8ff', smoke: 0.4 } },
         { formula: 'HNO3', name: 'Nitric Acid', effects: { color: '#fafad2', smoke: 0.3 } }, { formula: 'CH3COOH', name: 'Acetic Acid', effects: { color: '#f5f5f5' } },
@@ -103,10 +110,9 @@ const CHEMICAL_CATEGORIES: Record<string, Chemical[]> = {
         { formula: 'Br2', name: 'Bromine', effects: { color: '#a52a2a', smoke: 0.4 } }, { formula: 'I2', name: 'Iodine', effects: { color: '#4b0082', smoke: 0.3 } },
     ],
     ORGANIC: [
-        { formula: 'CH4', name: 'Methane', effects: { bubbles: 3, explosion: 0.1 } }, { formula: 'C2H5OH', name: 'Ethanol', effects: { color: '#f0f8ff' } },
-        { formula: 'CH3OH', name: 'Methanol', effects: { color: '#f8f8ff' } }, { formula: 'C6H12O6', name: 'Glucose', effects: { color: '#fafad2' } },
+        { formula: 'CH4', name: 'Methane', effects: { bubbles: 3, explosion: 0.1 } }, { formula: 'C6H12O6', name: 'Glucose', effects: { color: '#fafad2' } },
         { formula: 'C3H8', name: 'Propane', effects: { bubbles: 4, explosion: 0.15 } }, { formula: 'C6H6', name: 'Benzene', effects: { color: '#fffacd' } },
-        { formula: 'CH3COCH3', name: 'Acetone', effects: { color: '#f0ffff' } }, { formula: 'C2H2', name: 'Acetylene', effects: { bubbles: 5, explosion: 0.25 } },
+        { formula: 'C2H2', name: 'Acetylene', effects: { bubbles: 5, explosion: 0.25 } },
         { formula: 'C7H8', name: 'Toluene', effects: { color: '#fffafa' } }, { formula: 'C8H18', name: 'Octane', effects: { explosion: 0.2 } },
         { formula: 'C6H5OH', name: 'Phenol', effects: { color: '#f5f5f5' } },
     ],
@@ -140,6 +146,7 @@ export default function Home() {
   const [infoChemical, setInfoChemical] = useState<Chemical | null>(null);
   const [infoContent, setInfoContent] = useState<ChemicalInfoOutput | null>(null);
   const [isInfoLoading, setIsInfoLoading] = useState(false);
+  const [isPeriodicTableOpen, setIsPeriodicTableOpen] = useState(false);
 
 
   const handleAddChemical = (chemical: Chemical) => {
@@ -147,6 +154,14 @@ export default function Home() {
       setReactionEffects(null);
       setReactionResult(null);
       setBeakerContents([...beakerContents, chemical]);
+    }
+  };
+  
+  const handleAddElementFromTable = (elementName: string) => {
+    const element = CHEMICAL_CATEGORIES.ELEMENTS.find(el => el.name === elementName);
+    if (element) {
+        handleAddChemical(element);
+        toast({ title: `Added ${element.name} to beaker!` });
     }
   };
 
@@ -232,8 +247,16 @@ export default function Home() {
           </div>
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle>Select Chemicals</CardTitle>
-              <CardDescription>Choose up to 12 chemicals & sprays to mix in the beaker.</CardDescription>
+              <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Select Chemicals</CardTitle>
+                    <CardDescription>Choose up to 12 chemicals & sprays to mix in the beaker.</CardDescription>
+                  </div>
+                  <Button variant="outline" onClick={() => setIsPeriodicTableOpen(true)}>
+                    <Grid3x3 className="mr-2 h-4 w-4" />
+                    Periodic Table
+                  </Button>
+              </div>
             </CardHeader>
             <CardContent>
                <div className="w-full bg-gray-200 p-1 rounded-full mb-6 flex flex-wrap justify-center gap-1">
@@ -356,7 +379,7 @@ export default function Home() {
       </div>
       <Toaster />
       <Dialog open={!!infoChemical} onOpenChange={(isOpen) => !isOpen && setInfoChemical(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>About {infoChemical?.name} ({infoChemical?.formula})</DialogTitle>
             <div className="text-sm text-muted-foreground pt-2">
@@ -378,20 +401,28 @@ export default function Home() {
                   <div className="space-y-2">
                     <h3 className="font-semibold">Ratings</h3>
                     <div className="flex items-center gap-2">
-                      <span className="w-24">Reactivity</span>
+                      <span className="w-28">Reactivity</span>
                       <Progress value={infoContent.ratings.reactivity * 10} className="w-[60%]" />
                     </div>
                      <div className="flex items-center gap-2">
-                      <span className="w-24">Flammability</span>
+                      <span className="w-28">Flammability</span>
                       <Progress value={infoContent.ratings.flammability * 10} className="w-[60%]" />
                     </div>
                      <div className="flex items-center gap-2">
-                      <span className="w-24">Explosiveness</span>
+                      <span className="w-28">Explosiveness</span>
                       <Progress value={infoContent.ratings.explosiveness * 10} className="w-[60%]" />
                     </div>
                      <div className="flex items-center gap-2">
-                      <span className="w-24">Radioactivity</span>
+                      <span className="w-28">Radioactivity</span>
                       <Progress value={infoContent.ratings.radioactivity * 10} className="w-[60%]" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-28">Toxicity</span>
+                      <Progress value={infoContent.ratings.toxicity * 10} className="w-[60%]" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-28">Corrosiveness</span>
+                      <Progress value={infoContent.ratings.corrosiveness * 10} className="w-[60%]" />
                     </div>
                   </div>
                   <div>
@@ -406,6 +437,17 @@ export default function Home() {
               )}
             </div>
           </DialogHeader>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isPeriodicTableOpen} onOpenChange={setIsPeriodicTableOpen}>
+        <DialogContent className="max-w-4xl">
+            <DialogHeader>
+                <DialogTitle>Periodic Table of Elements</DialogTitle>
+                <DialogDescription>
+                    Click an element to add it to the beaker.
+                </DialogDescription>
+            </DialogHeader>
+            <PeriodicTable onElementClick={handleAddElementFromTable} beakerContents={beakerContents} />
         </DialogContent>
       </Dialog>
     </div>
