@@ -236,13 +236,13 @@ export default function Home() {
               <CardDescription>Choose up to 12 chemicals & sprays to mix in the beaker.</CardDescription>
             </CardHeader>
             <CardContent>
-               <div className="w-full bg-gray-800 p-2 rounded-full mb-6 flex flex-wrap justify-center gap-1">
+               <div className="w-full bg-gray-200 p-1 rounded-full mb-6 flex flex-wrap justify-center gap-1">
                 {(Object.keys(CHEMICAL_CATEGORIES) as ChemicalCategory[]).map(category => (
                   <Button 
                     key={category}
-                    variant={activeCategory === category ? 'secondary' : 'ghost'}
+                    variant={activeCategory === category ? 'default' : 'ghost'}
                     onClick={() => setActiveCategory(category)}
-                    className={`text-white rounded-full flex-1 ${activeCategory === category ? 'bg-orange-500' : ''}`}
+                    className={`rounded-full flex-1 text-xs md:text-sm ${activeCategory === category ? 'bg-primary text-primary-foreground shadow' : 'text-gray-600'}`}
                   >
                     {category}
                   </Button>
