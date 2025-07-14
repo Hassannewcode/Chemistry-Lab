@@ -3,11 +3,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-
-interface Chemical {
-  formula: string;
-  name: string;
-}
+import type { Chemical } from '@/lib/chemicals';
 
 interface PeriodicTableProps {
   onElementClick: (elementName: string) => void;
@@ -125,7 +121,7 @@ const elements = [
   { number: 91, symbol: 'Pa', name: 'Protactinium', group: 5, period: 10, category: 'actinide' },
   { number: 92, symbol: 'U', name: 'Uranium', group: 6, period: 10, category: 'actinide' },
   { number: 93, symbol: 'Np', name: 'Neptunium', group: 7, period: 10, category: 'actinide' },
-  { number: 94, symbol: 'Pu', name: 'Plutonium', group: 8, period: 10, category: 'actinide' },
+  { number: 94, symbol: 'Pu', 'name': 'Plutonium', group: 8, period: 10, category: 'actinide' },
   { number: 95, symbol: 'Am', name: 'Americium', group: 9, period: 10, category: 'actinide' },
   { number: 96, symbol: 'Cm', name: 'Curium', group: 10, period: 10, category: 'actinide' },
   { number: 97, symbol: 'Bk', name: 'Berkelium', group: 11, period: 10, category: 'actinide' },

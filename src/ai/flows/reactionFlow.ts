@@ -50,7 +50,7 @@ const prompt = ai.definePrompt({
   Concentration: {{concentration}}M
 
   Based on these inputs, provide the following:
-  1. The name of the reaction. If sprays are used, give it a fun, descriptive name.
+  1. The name of the reaction. If sprays are used, you MUST give it a fun, descriptive, creative name (e.g. "Sparkling Volcano", "Graphene Mist", "Icy Fire").
   2. A clear, step-by-step description of the chemical process. Explain what is happening at a molecular level in simple terms. Incorporate the visual effects of any sprays into the description.
   3. The chemical formulas of the main products. If no reaction occurs, state that and list the original chemicals as the products. Sprays generally don't create new products but can be mentioned.
   4. A brief, important safety note or a fun fact related to the reaction or chemicals involved. Comment on the visual results.
