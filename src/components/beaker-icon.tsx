@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 // Effect properties for each chemical
@@ -8,6 +8,7 @@ export interface ChemicalEffect {
   smoke: number;   // 0-1, density
   sparkles: number; // count
   glow: number;    // 0-2, intensity
+  explosion: number; // 0-10, intensity
 }
 
 interface Chemical {
@@ -28,6 +29,7 @@ const defaultEffects: ChemicalEffect = {
   smoke: 0,
   sparkles: 0,
   glow: 0,
+  explosion: 0,
 };
 
 // Helper to mix hex colors
@@ -96,8 +98,28 @@ const Sparkle: React.FC<{ cx: number; cy: number; size: number; delay: string; d
   </path>
 );
 
+const Explosion: React.FC<{ intensity: number }> = ({ intensity }) => {
+    if (intensity <= 0) return null;
+    const size = 20 + intensity * 15;
+    const duration = 0.5 / Math.max(0.5, intensity * 0.5);
+
+    return (
+        <g>
+            <circle cx="100" cy="120" r="5" fill="#FFD700">
+                <animate attributeName="r" from="5" to={size} dur={`${duration}s`} begin="0s" fill="freeze" />
+                <animate attributeName="opacity" from="1" to="0" dur={`${duration}s`} begin="0s" fill="freeze" />
+            </circle>
+            <circle cx="100" cy="120" r="2" fill="#FF8C00">
+                <animate attributeName="r" from="2" to={size * 0.7} dur={`${duration * 0.8}s`} begin="0.05s" fill="freeze" />
+                <animate attributeName="opacity" from="1" to="0" dur={`${duration * 0.8}s`} begin="0.05s" fill="freeze" />
+            </circle>
+        </g>
+    );
+};
+
 
 export const BeakerIcon: React.FC<BeakerIconProps> = ({ contents = [], overrideEffects = null, ...props }) => {
+  const [explosionKey, setExplosionKey] = useState(0);
   const fillLevel = contents.length;
 
   const combinedEffects = useMemo<ChemicalEffect>(() => {
@@ -111,8 +133,9 @@ export const BeakerIcon: React.FC<BeakerIconProps> = ({ contents = [], overrideE
         acc.smoke += chemEffects.smoke;
         acc.sparkles += chemEffects.sparkles;
         acc.glow += chemEffects.glow;
+        acc.explosion += chemEffects.explosion; // Accumulate explosion potential
         return acc;
-    }, { color: [] as string[], bubbles: 0, smoke: 0, sparkles: 0, glow: 0 });
+    }, { color: [] as string[], bubbles: 0, smoke: 0, sparkles: 0, glow: 0, explosion: 0 });
 
     return {
         color: mixHexColors(effects.color),
@@ -120,8 +143,15 @@ export const BeakerIcon: React.FC<BeakerIconProps> = ({ contents = [], overrideE
         smoke: Math.min(effects.smoke, 1),
         sparkles: Math.floor(Math.min(effects.sparkles, 50)),
         glow: Math.min(effects.glow, 2),
+        explosion: Math.min(effects.explosion, 10),
     };
   }, [contents, overrideEffects]);
+
+  useEffect(() => {
+    if (overrideEffects?.explosion && overrideEffects.explosion > 0) {
+      setExplosionKey(prev => prev + 1);
+    }
+  }, [overrideEffects])
 
   const liquidPath = [
       "M 40 175 C 60 175, 140 175, 160 175 L 160 175 C 140 175, 60 175, 40 175 Z", // Level 0
@@ -226,6 +256,13 @@ export const BeakerIcon: React.FC<BeakerIconProps> = ({ contents = [], overrideE
               <animate attributeName="opacity" values="0.7;0" dur={`${2 + Math.random() * 2}s`} begin={`${i * 0.3}s`} repeatCount="indefinite" />
           </circle>
       ))}
+
+      {/* Explosion Effect - keyed to re-trigger */}
+      {combinedEffects.explosion > 0 && (
+          <g key={explosionKey}>
+            <Explosion intensity={combinedEffects.explosion} />
+          </g>
+      )}
       
       {/* Markings */}
       <g stroke="#a0aec0" strokeWidth="1.5">

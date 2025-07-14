@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A chemical reaction simulation AI flow.
@@ -28,6 +29,7 @@ const ConductReactionOutputSchema = z.object({
       smoke: z.number().min(0).max(1).describe("The density of smoke produced, from 0 (none) to 1 (thick smoke)."),
       sparkles: z.number().min(0).max(50).describe("The number of sparkles to show, from 0 to 50."),
       glow: z.number().min(0).max(2).describe("The intensity of the glow effect, from 0 (none) to 2 (bright glow)."),
+      explosion: z.number().min(0).max(10).describe("The intensity of an explosion, from 0 (none) to 10 (massive). An explosion is a rapid release of energy and should be used for highly exothermic or volatile reactions."),
     }).describe("The visual effects of the resulting reaction products.")
 });
 export type ConductReactionOutput = z.infer<typeof ConductReactionOutputSchema>;
@@ -51,7 +53,7 @@ const prompt = ai.definePrompt({
   2. A clear, step-by-step description of the chemical process. Explain what is happening at a molecular level in simple terms. Incorporate the visual effects of any sprays into the description.
   3. The chemical formulas of the main products. If no reaction occurs, state that and list the original chemicals as the products. Sprays generally don't create new products but can be mentioned.
   4. A brief, important safety note or a fun fact related to the reaction or chemicals involved. Comment on the visual results.
-  5. The visual effects of the final products. Determine the resulting color, bubbles, smoke, sparkles, and glow. Be creative and scientifically plausible. For example, a vigorous reaction might produce lots of bubbles and smoke. A reaction with gold might sparkle.
+  5. The visual effects of the final products. Determine the resulting color, bubbles, smoke, sparkles, glow, and explosion intensity. Be creative and scientifically plausible. For example, a vigorous reaction might produce lots of bubbles and smoke. A reaction with gold might sparkle. A reaction involving alkali metals and water should be explosive.
 
   Keep the language accessible and engaging for a high school student.
   If the combination of chemicals does not typically react under the given conditions, state that clearly in the description, but still describe the visual mixing of the substances and set the final effects to be the average of the initial ingredients.`,
