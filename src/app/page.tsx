@@ -13,6 +13,7 @@ import { getChemicalInfo, ChemicalInfoInput, ChemicalInfoOutput } from '@/ai/flo
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { SoundManager } from '@/components/sound-manager';
+import { Progress } from '@/components/ui/progress';
 
 interface Chemical {
   formula: string;
@@ -361,6 +362,29 @@ export default function Home() {
                   <div>
                     <h3 className="font-semibold mb-1">Description</h3>
                     <p>{infoContent.description}</p>
+                  </div>
+                   <div>
+                    <h3 className="font-semibold mb-1">Traits</h3>
+                    <p>{infoContent.traits}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="font-semibold">Ratings</h3>
+                    <div className="flex items-center gap-2">
+                      <span className="w-24">Reactivity</span>
+                      <Progress value={infoContent.ratings.reactivity * 10} className="w-[60%]" />
+                    </div>
+                     <div className="flex items-center gap-2">
+                      <span className="w-24">Flammability</span>
+                      <Progress value={infoContent.ratings.flammability * 10} className="w-[60%]" />
+                    </div>
+                     <div className="flex items-center gap-2">
+                      <span className="w-24">Explosiveness</span>
+                      <Progress value={infoContent.ratings.explosiveness * 10} className="w-[60%]" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-1">Possible Reactions</h3>
+                    <p>{infoContent.possibleReactions}</p>
                   </div>
                   <div>
                     <h3 className="font-semibold mb-1">Experiment Tips</h3>

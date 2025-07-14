@@ -17,8 +17,15 @@ const ChemicalInfoInputSchema = z.object({
 export type ChemicalInfoInput = z.infer<typeof ChemicalInfoInputSchema>;
 
 const ChemicalInfoOutputSchema = z.object({
-    description: z.string().describe('A brief, easy-to-understand description of the chemical, its properties, and common uses.'),
-    experimentTips: z.string().describe('A few fun, simple, and safe experiment ideas or combinations to try with this chemical in the simulator. Be creative and encouraging.'),
+  description: z.string().describe('A brief, easy-to-understand description of the chemical, its properties, and common uses.'),
+  traits: z.string().describe("A summary of the chemical's key traits (e.g., 'Highly corrosive, strong oxidizer')."),
+  possibleReactions: z.string().describe("A few interesting reaction combinations to suggest to the user for the simulator."),
+  ratings: z.object({
+      reactivity: z.number().min(0).max(10).describe('A rating from 0 (inert) to 10 (highly reactive).'),
+      flammability: z.number().min(0).max(10).describe('A rating from 0 (non-flammable) to 10 (highly flammable).'),
+      explosiveness: z.number().min(0).max(10).describe('A rating from 0 (stable) to 10 (highly explosive).'),
+  }).describe('Safety and property ratings on a scale of 0 to 10.'),
+  experimentTips: z.string().describe('A few fun, simple, and safe experiment ideas or combinations to try with this chemical in the simulator. Be creative and encouraging.'),
 });
 export type ChemicalInfoOutput = z.infer<typeof ChemicalInfoOutputSchema>;
 
@@ -36,8 +43,11 @@ const prompt = ai.definePrompt({
   Formula: {{formula}}
 
   Please provide the following in a concise and engaging way:
-  1.  **Description**: Briefly describe what this chemical is. What are its key properties (like color, state at room temperature)? What is it commonly used for?
-  2.  **Experiment Tips**: Suggest some fun things the student could try with this chemical in the simulator. For example, 'Try mixing it with a strong acid like HCl and see the bubbles!' or 'Add some Sodium (Na) to see a colorful reaction!'. Keep it exciting and focused on the simulation.`,
+  1.  **Description**: Briefly describe what this chemical is, its key properties, and common uses.
+  2.  **Traits**: Summarize its most important traits (e.g., 'Corrosive, volatile, strong odor').
+  3.  **Possible Reactions**: Suggest some specific reaction partners from the simulation and what to look for (e.g., 'Mix with NaOH to see a neutralization reaction.').
+  4.  **Ratings**: Provide a 0-10 rating for its reactivity, flammability, and explosiveness.
+  5.  **Experiment Tips**: Give some fun, creative ideas for the simulator. For example, 'Try mixing it with a strong acid like HCl and see the bubbles!' or 'Add some Sodium (Na) to see a colorful reaction!'. Keep it exciting and focused on the simulation.`,
 });
 
 const chemicalInfoFlow = ai.defineFlow(
