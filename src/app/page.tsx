@@ -248,7 +248,7 @@ export default function Home() {
       toast({
         variant: "destructive",
         title: "Simulation Error",
-        description: "An unexpected error occurred. Please check the console and try again.",
+        description: "An unexpected error occurred during the simulation. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -385,6 +385,7 @@ export default function Home() {
                 <CardContent>
                   <p className="mb-2">{reactionResult.description}</p>
                   <p className="mb-2"><b>Products:</b> {reactionResult.products.join(', ')}</p>
+                  <p className="mb-2 text-sm italic text-gray-600"><b>Analogy:</b> {reactionResult.analogy}</p>
                   <p className="text-sm text-yellow-800 bg-yellow-100 p-2 rounded-md"><b>Safety:</b> {reactionResult.safetyNotes}</p>
                 </CardContent>
               </Card>
