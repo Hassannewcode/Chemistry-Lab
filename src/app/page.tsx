@@ -350,14 +350,14 @@ export default function Home() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>About {infoChemical?.name} ({infoChemical?.formula})</DialogTitle>
-            <DialogDescription>
+            <div className="text-sm text-muted-foreground pt-2">
               {isInfoLoading && (
                 <div className="flex justify-center items-center p-8">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               )}
               {infoContent && (
-                <div className="mt-4 space-y-4 text-sm text-foreground">
+                <div className="mt-4 space-y-4 text-left text-sm text-foreground">
                   <div>
                     <h3 className="font-semibold mb-1">Description</h3>
                     <p>{infoContent.description}</p>
@@ -368,7 +368,7 @@ export default function Home() {
                   </div>
                 </div>
               )}
-            </DialogDescription>
+            </div>
           </DialogHeader>
         </DialogContent>
       </Dialog>
