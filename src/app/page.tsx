@@ -104,28 +104,35 @@ export default function Home() {
   const [concentration, setConcentration] = useState(1); // in Molarity (M)
   
   const [reactionResult, setReactionResult] = useState<ConductReactionOutput | null>(null);
+  const [reactionEffects, setReactionEffects] = useState<ChemicalEffect | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const handleAddChemical = (chemical: Chemical) => {
     if (beakerContents.length < 8) {
+      setReactionEffects(null);
+      setReactionResult(null);
       setBeakerContents([...beakerContents, chemical]);
     }
   };
 
   const handleRemoveChemical = (chemicalFormula: string) => {
+    setReactionEffects(null);
+    setReactionResult(null);
     setBeakerContents(beakerContents.filter(c => c.formula !== chemicalFormula));
   };
   
   const handleClearBeaker = () => {
     setBeakerContents([]);
     setReactionResult(null);
+    setReactionEffects(null);
   }
 
   const handleStartReaction = async () => {
     if (beakerContents.length < 2) return;
     setIsLoading(true);
     setReactionResult(null);
+    setReactionEffects(null);
     try {
       const input: ConductReactionInput = {
         chemicals: beakerContents.map(c => c.formula),
@@ -134,6 +141,7 @@ export default function Home() {
       };
       const result = await conductReaction(input);
       setReactionResult(result);
+      setReactionEffects(result.effects);
     } catch (error) {
       console.error("Error conducting reaction:", error);
       toast({
@@ -244,7 +252,7 @@ export default function Home() {
                 onDecrease={() => changeTemperature(-5)}
               />
 
-              <BeakerIcon contents={beakerContents} className="h-72 w-72" />
+              <BeakerIcon contents={beakerContents} overrideEffects={reactionEffects} className="h-72 w-72" />
             </div>
           </div>
           

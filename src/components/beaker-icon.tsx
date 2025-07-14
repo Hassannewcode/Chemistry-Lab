@@ -18,6 +18,7 @@ interface Chemical {
 
 interface BeakerIconProps extends React.SVGProps<SVGSVGElement> {
   contents?: Chemical[];
+  overrideEffects?: ChemicalEffect | null;
 }
 
 // Default effects for the liquid base
@@ -96,10 +97,11 @@ const Sparkle: React.FC<{ cx: number; cy: number; size: number; delay: string; d
 );
 
 
-export const BeakerIcon: React.FC<BeakerIconProps> = ({ contents = [], ...props }) => {
+export const BeakerIcon: React.FC<BeakerIconProps> = ({ contents = [], overrideEffects = null, ...props }) => {
   const fillLevel = contents.length;
 
   const combinedEffects = useMemo<ChemicalEffect>(() => {
+    if (overrideEffects) return overrideEffects;
     if (fillLevel === 0) return defaultEffects;
 
     const effects = contents.reduce((acc, chemical) => {
@@ -119,7 +121,7 @@ export const BeakerIcon: React.FC<BeakerIconProps> = ({ contents = [], ...props 
         sparkles: Math.floor(Math.min(effects.sparkles, 50)),
         glow: Math.min(effects.glow, 2),
     };
-  }, [contents]);
+  }, [contents, overrideEffects]);
 
   const liquidPath = [
       "M 40 175 C 60 175, 140 175, 160 175 L 160 175 C 140 175, 60 175, 40 175 Z", // Level 0
