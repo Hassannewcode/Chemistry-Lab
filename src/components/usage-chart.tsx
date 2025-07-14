@@ -5,6 +5,7 @@ import React from 'react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 import { ElementUsageOutput } from '@/ai/flows/elementUsageFlow';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
+import { Badge } from './ui/badge';
 
 interface UsageChartProps {
   data: ElementUsageOutput;
@@ -42,6 +43,26 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export const UsageChart: React.FC<UsageChartProps> = ({ data }) => {
   return (
     <div className="space-y-4 mt-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Overview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">{data.overview}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-base">Found In Everyday Objects</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-2">
+                {data.dailyObjects.map(item => (
+                    <Badge key={item} variant="secondary">{item}</Badge>
+                ))}
+            </CardContent>
+        </Card>
+
         <Card>
             <CardHeader>
                 <CardTitle className="text-base">Common Uses</CardTitle>

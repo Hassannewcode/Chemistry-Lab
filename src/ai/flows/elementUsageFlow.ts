@@ -17,6 +17,8 @@ const ElementUsageInputSchema = z.object({
 export type ElementUsageInput = z.infer<typeof ElementUsageInputSchema>;
 
 const ElementUsageOutputSchema = z.object({
+  overview: z.string().describe("A brief, engaging overview of the element's importance and primary role in technology and nature."),
+  dailyObjects: z.array(z.string()).describe("A list of 3-5 common, everyday objects where this element is found. (e.g., 'Smartphones', 'Jewelry', 'Car Batteries')."),
   usage: z.array(z.object({
     name: z.string().describe("The name of the usage category (e.g., 'Electronics', 'Jewelry', 'Industrial')."),
     value: z.number().min(0).max(100).describe("The percentage of the element's total usage this category represents. All values should sum to 100."),
@@ -36,11 +38,13 @@ const prompt = ai.definePrompt({
   name: 'elementUsagePrompt',
   input: {schema: ElementUsageInputSchema},
   output: {schema: ElementUsageOutputSchema},
-  prompt: `You are a data visualization expert and geochemist.
-  For the element "{{name}}", provide a breakdown of its common uses and natural sources.
+  prompt: `You are a data visualization expert and science communicator.
+  For the element "{{name}}", provide a breakdown of its common uses, natural sources, and everyday relevance.
 
-  1. **Usage**: List the top 3-5 applications for this element and estimate their percentage of its total commercial/industrial use. These percentages must sum to 100.
-  2. **Sources**: List the top 2-4 places this element is found naturally and its relative abundance in those sources. These percentages must sum to 100.
+  1.  **Overview**: Write a brief, engaging summary about this element's significance.
+  2.  **Daily Objects**: List 3-5 common, everyday items that contain this element.
+  3.  **Usage**: List the top 3-5 applications for this element and estimate their percentage of its total commercial/industrial use. These percentages must sum to 100.
+  4.  **Sources**: List the top 2-4 places this element is found naturally and its relative abundance in those sources. These percentages must sum to 100.
 
   Provide the output in the specified JSON format. Be accurate but provide simplified, rounded percentages for educational purposes.`,
 });
