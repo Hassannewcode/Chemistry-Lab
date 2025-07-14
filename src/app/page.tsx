@@ -11,10 +11,13 @@ import { conductReaction, ConductReactionInput, ConductReactionOutput } from '@/
 
 const CHEMICAL_CATEGORIES = {
   WATER: ['H2O'],
-  ACIDS: ['HCl', 'H2SO4', 'HNO3', 'CH3COOH'],
-  BASES: ['NaOH', 'KOH', 'Ca(OH)2', 'NH3'],
-  SALTS: ['NaCl', 'CuSO4', 'KNO3', 'NaHCO3'],
-  METALS: ['Fe', 'Mg', 'Zn', 'Cu'],
+  ACIDS: ['HCl', 'H2SO4', 'HNO3', 'CH3COOH', 'H3PO4', 'H2CO3'],
+  BASES: ['NaOH', 'KOH', 'Ca(OH)2', 'NH3', 'Mg(OH)2', 'LiOH'],
+  SALTS: ['NaCl', 'CuSO4', 'KNO3', 'NaHCO3', 'AgNO3', 'KCl', 'CaCO3', 'FeCl3'],
+  METALS: ['Fe', 'Mg', 'Zn', 'Cu', 'Al', 'Pb', 'Na', 'K'],
+  GASES: ['O2', 'H2', 'N2', 'Cl2', 'CO2'],
+  HALOGENS: ['F2', 'Cl2', 'Br2', 'I2'],
+  ORGANIC: ['CH4', 'C2H5OH', 'CH3OH', 'C6H12O6'],
 };
 
 type ChemicalCategory = keyof typeof CHEMICAL_CATEGORIES;
