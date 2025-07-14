@@ -71,7 +71,7 @@ const elements = [
   { number: 54, symbol: 'Xe', name: 'Xenon', group: 18, period: 5, category: 'noble-gas' },
   { number: 55, symbol: 'Cs', name: 'Caesium', group: 1, period: 6, category: 'alkali-metal' },
   { number: 56, symbol: 'Ba', name: 'Barium', group: 2, period: 6, category: 'alkaline-earth-metal' },
-  { number: 57, symbol: 'La', name: 'Lanthanum', group: 3, period: 6, isLanthanide: true, category: 'lanthanide' },
+  { number: 57, symbol: 'La', name: 'Lanthanum', group: 3, period: 9, category: 'lanthanide' },
   { number: 72, symbol: 'Hf', name: 'Hafnium', group: 4, period: 6, category: 'transition-metal' },
   { number: 73, symbol: 'Ta', name: 'Tantalum', group: 5, period: 6, category: 'transition-metal' },
   { number: 74, symbol: 'W', name: 'Tungsten', group: 6, period: 6, category: 'transition-metal' },
@@ -89,7 +89,7 @@ const elements = [
   { number: 86, symbol: 'Rn', name: 'Radon', group: 18, period: 6, category: 'noble-gas' },
   { number: 87, symbol: 'Fr', name: 'Francium', group: 1, period: 7, category: 'alkali-metal' },
   { number: 88, symbol: 'Ra', name: 'Radium', group: 2, period: 7, category: 'alkaline-earth-metal' },
-  { number: 89, symbol: 'Ac', name: 'Actinium', group: 3, period: 7, isActinide: true, category: 'actinide' },
+  { number: 89, symbol: 'Ac', name: 'Actinium', group: 3, period: 10, category: 'actinide' },
   { number: 104, symbol: 'Rf', name: 'Rutherfordium', group: 4, period: 7, category: 'transition-metal' },
   { number: 105, symbol: 'Db', name: 'Dubnium', group: 5, period: 7, category: 'transition-metal' },
   { number: 106, symbol: 'Sg', name: 'Seaborgium', group: 6, period: 7, category: 'transition-metal' },
@@ -184,9 +184,12 @@ export const PeriodicTable: React.FC<PeriodicTableProps> = ({ onElementClick, be
                         </TooltipContent>
                     </Tooltip>
                 )})}
-                <div style={{ gridColumn: '3 / span 1', gridRow: 6 }} className="flex items-center justify-center text-center text-xs font-semibold p-1 bg-indigo-100 rounded">57-71</div>
-                <div style={{ gridColumn: '3 / span 1', gridRow: 7 }} className="flex items-center justify-center text-center text-xs font-semibold p-1 bg-pink-100 rounded">89-103</div>
+                 {/* Placeholder for Lanthanide Series Link */}
+                 <div style={{ gridColumn: 3, gridRow: 6 }} className="flex items-center justify-center text-center text-xs font-semibold p-1 bg-indigo-100 rounded">57-71</div>
                 
+                 {/* Placeholder for Actinide Series Link */}
+                 <div style={{ gridColumn: 3, gridRow: 7 }} className="flex items-center justify-center text-center text-xs font-semibold p-1 bg-pink-100 rounded">89-103</div>
+
                 {/* Lanthanide and Actinide Series Title */}
                 <div style={{ gridColumn: '1 / span 2', gridRow: 9 }} className="flex items-center justify-end pr-2 text-sm font-semibold text-gray-600">Lanthanides</div>
                 <div style={{ gridColumn: '1 / span 2', gridRow: 10 }} className="flex items-center justify-end pr-2 text-sm font-semibold text-gray-600">Actinides</div>

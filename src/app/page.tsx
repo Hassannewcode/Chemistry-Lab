@@ -70,6 +70,8 @@ const CHEMICAL_CATEGORIES: Record<string, Chemical[]> = {
         { formula: 'CH3OH', name: 'Methanol', effects: { color: '#f8f8ff' } },
         { formula: 'CH3COCH3', name: 'Acetone', effects: { color: '#f0ffff' } },
         { formula: 'C3H8O3', name: 'Glycerin', effects: { color: '#fafafa' } },
+        { formula: 'C6H14', name: 'Hexane', effects: { color: '#f5f5f5' } },
+        { formula: 'H2O2', name: 'Hydrogen Peroxide', effects: { color: '#e0ffff', bubbles: 1 } },
     ],
     ACIDS: [
         { formula: 'HCl', name: 'Hydrochloric Acid', effects: { color: '#b0e0e6', smoke: 0.1 } }, { formula: 'H2SO4', name: 'Sulfuric Acid', effects: { color: '#f0f8ff', smoke: 0.4 } },
@@ -86,7 +88,7 @@ const CHEMICAL_CATEGORIES: Record<string, Chemical[]> = {
         { formula: 'Mg(OH)2', name: 'Magnesium Hydroxide', effects: { color: '#fffafa' } }, { formula: 'LiOH', name: 'Lithium Hydroxide', effects: { color: '#f5fffa' } },
         { formula: 'Ba(OH)2', name: 'Barium Hydroxide', effects: { color: '#fff5ee' } }, { formula: 'Sr(OH)2', name: 'Strontium Hydroxide', effects: { color: '#ffefd5' } },
         { formula: 'NH4OH', name: 'Ammonium Hydroxide', effects: { color: '#f0f8ff' } }, { formula: 'Al(OH)3', name: 'Aluminum Hydroxide', effects: { color: '#f0fff0' } },
-        { formula: 'Fe(OH)2', name: 'Iron(II) Hydroxide', effects: { color: '#f5f5f5' } },
+        { formula: 'Fe(OH)2', name: 'Iron(II) Hydroxide', effects: { color: '#f5f5f5' } }, { formula: 'Fe(OH)3', name: 'Iron(III) Hydroxide', effects: { color: '#e0cdac' } },
     ],
     SALTS: [
         { formula: 'NaCl', name: 'Sodium Chloride', effects: { color: '#ffffff' } }, { formula: 'CuSO4', name: 'Copper Sulfate', effects: { color: '#87ceeb' } },
@@ -97,6 +99,7 @@ const CHEMICAL_CATEGORIES: Record<string, Chemical[]> = {
         { formula: 'Pb(NO3)2', name: 'Lead(II) Nitrate', effects: { color: '#fffafa' } }, { formula: 'KMnO4', name: 'Potassium Permanganate', effects: { color: '#8a2be2', explosion: 0.1 } },
         { formula: 'CuCl2', name: 'Copper(II) Chloride', effects: { color: '#add8e6' } }, { formula: 'Na2CO3', name: 'Sodium Carbonate', effects: { color: '#f0f0f0' } },
         { formula: 'Na2SO4', name: 'Sodium Sulfate', effects: { color: '#f5f5f5' } }, { formula: 'K2Cr2O7', name: 'Potassium Dichromate', effects: { color: '#ffa500', explosion: 0.2 } },
+        { formula: 'NaCN', name: 'Sodium Cyanide', effects: { color: '#f5f5f5' } }, { formula: 'CaSO4', name: 'Calcium Sulfate', effects: { color: '#f0f0f0' } },
     ],
     GASES: [
         { formula: 'O2', name: 'Oxygen', effects: { bubbles: 3 } }, { formula: 'H2', name: 'Hydrogen', effects: { bubbles: 5, explosion: 0.2 } },
@@ -114,7 +117,7 @@ const CHEMICAL_CATEGORIES: Record<string, Chemical[]> = {
         { formula: 'C3H8', name: 'Propane', effects: { bubbles: 4, explosion: 0.15 } }, { formula: 'C6H6', name: 'Benzene', effects: { color: '#fffacd' } },
         { formula: 'C2H2', name: 'Acetylene', effects: { bubbles: 5, explosion: 0.25 } },
         { formula: 'C7H8', name: 'Toluene', effects: { color: '#fffafa' } }, { formula: 'C8H18', name: 'Octane', effects: { explosion: 0.2 } },
-        { formula: 'C6H5OH', name: 'Phenol', effects: { color: '#f5f5f5' } },
+        { formula: 'C6H5OH', name: 'Phenol', effects: { color: '#f5f5f5' } }, { formula: 'CH2O', name: 'Formaldehyde', effects: { color: '#f0f8ff' } },
     ],
     SPRAYS: [
         { formula: 'Fine Metal Dust', name: 'Fine Metal Dust', effects: { sparkles: 20 } },
@@ -127,6 +130,8 @@ const CHEMICAL_CATEGORIES: Record<string, Chemical[]> = {
         { formula: 'pH Indicator', name: 'pH Indicator Dye', effects: { color: '#ff00ff' } },
         { formula: 'Graphene Aerogel', name: 'Graphene Aerogel', effects: { bubbles: 8, glow: 0.5, color: '#333333' } },
         { formula: 'Surfactant', name: 'Surfactant', effects: { sparkles: 10, bubbles: 2 } },
+        { formula: 'Fire Spray', name: 'Fire Spray', effects: { color: '#ff6600', glow: 1, smoke: 0.5, explosion: 0.05 } },
+        { formula: 'Ice Spray', name: 'Ice Spray', effects: { color: '#a6d9f7', glow: 0.3, sparkles: 3 } },
     ],
 };
 
