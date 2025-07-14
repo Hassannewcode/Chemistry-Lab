@@ -423,7 +423,7 @@ export default function Home() {
                   </Button>
               )}
             </div>
-            <div className="text-sm text-muted-foreground pt-2">
+            <div className="text-sm text-muted-foreground pt-2 max-h-[70vh] overflow-y-auto pr-4">
               {isInfoLoading && !infoContent && (
                 <div className="flex justify-center items-center p-8">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
