@@ -224,7 +224,7 @@ export default function Home() {
                 onDecrease={() => changeTemperature(-5)}
               />
 
-              <BeakerIcon className="h-72 w-72 text-blue-400" />
+              <BeakerIcon contents={beakerContents} className="h-72 w-72" />
             </div>
           </div>
           
