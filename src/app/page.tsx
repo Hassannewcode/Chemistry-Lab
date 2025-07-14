@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Beaker, Plus, Minus, Thermometer, ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3 } from 'lucide-react';
+import { Beaker, Plus, Minus, Thermometer, ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
 import { VerticalSlider } from '@/components/vertical-slider';
@@ -10,59 +10,62 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { conductReaction, ConductReactionInput, ConductReactionOutput } from '@/ai/flows/reactionFlow';
 import { getChemicalInfo, ChemicalInfoOutput } from '@/ai/flows/chemicalInfoFlow';
+import { getElementUsage, ElementUsageOutput } from '@/ai/flows/elementUsageFlow';
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { SoundManager } from '@/components/sound-manager';
 import { Progress } from '@/components/ui/progress';
 import { PeriodicTable } from '@/components/periodic-table';
+import { UsageChart } from '@/components/usage-chart';
 
 interface Chemical {
   formula: string;
   name: string;
+  isElement?: boolean;
   effects?: Partial<ChemicalEffect>;
 }
 
 const CHEMICAL_CATEGORIES: Record<string, Chemical[]> = {
     ELEMENTS: [
-        { formula: 'H', name: 'Hydrogen', effects: { color: '#f0f8ff', glow: 0.1 } }, { formula: 'He', name: 'Helium', effects: { color: '#d3d3d3', bubbles: 1 } },
-        { formula: 'Li', name: 'Lithium', effects: { color: '#e0e0e0', explosion: 0.2 } }, { formula: 'Be', name: 'Beryllium', effects: { color: '#c0c0c0' } },
-        { formula: 'B', name: 'Boron', effects: { color: '#a0a0a0' } }, { formula: 'C', name: 'Carbon', effects: { color: '#36454f' } },
-        { formula: 'N', name: 'Nitrogen', effects: { color: '#add8e6', bubbles: 1 } }, { formula: 'O', name: 'Oxygen', effects: { color: '#87ceeb', bubbles: 1 } },
-        { formula: 'F', name: 'Fluorine', effects: { color: '#98fb98', explosion: 0.1 } }, { formula: 'Ne', name: 'Neon', effects: { color: '#ffc0cb', glow: 0.5 } },
-        { formula: 'Na', name: 'Sodium', effects: { color: '#fafad2', explosion: 0.5 } }, { formula: 'Mg', name: 'Magnesium', effects: { color: '#dcdcdc' } },
-        { formula: 'Al', name: 'Aluminum', effects: { color: '#d3d3d3' } }, { formula: 'Si', name: 'Silicon', effects: { color: '#808080' } },
-        { formula: 'P', name: 'Phosphorus', effects: { color: '#ffc0cb', glow: 0.2, explosion: 0.3 } }, { formula: 'S', name: 'Sulfur', effects: { color: '#ffff00', smoke: 0.2 } },
-        { formula: 'Cl', name: 'Chlorine', effects: { color: '#90ee90', explosion: 0.1 } }, { formula: 'Ar', name: 'Argon', effects: { color: '#dda0dd', glow: 0.4 } },
-        { formula: 'K', name: 'Potassium', effects: { color: '#f0e68c', explosion: 0.6 } }, { formula: 'Ca', name: 'Calcium', effects: { color: '#f5f5dc' } },
-        { formula: 'Sc', name: 'Scandium', effects: { color: '#c0c0c0' } }, { formula: 'Ti', name: 'Titanium', effects: { color: '#b0c4de' } },
-        { formula: 'V', name: 'Vanadium', effects: { color: '#6a5acd' } }, { formula: 'Cr', name: 'Chromium', effects: { color: '#e6e6fa' } },
-        { formula: 'Mn', name: 'Manganese', effects: { color: '#ffdab9' } }, { formula: 'Fe', name: 'Iron', effects: { color: '#a0522d', smoke: 0.1 } },
-        { formula: 'Co', name: 'Cobalt', effects: { color: '#4682b4' } }, { formula: 'Ni', name: 'Nickel', effects: { color: '#b0e0e6' } },
-        { formula: 'Cu', name: 'Copper', effects: { color: '#b87333' } }, { formula: 'Zn', name: 'Zinc', effects: { color: '#d3d3d3' } },
-        { formula: 'Ga', name: 'Gallium', effects: { color: '#c0c0c0' } }, { formula: 'Ge', name: 'Germanium', effects: { color: '#a9a9a9' } },
-        { formula: 'As', name: 'Arsenic', effects: { color: '#808080' } }, { formula: 'Se', name: 'Selenium', effects: { color: '#ffc0cb' } },
-        { formula: 'Br', name: 'Bromine', effects: { color: '#a52a2a' } }, { formula: 'Kr', name: 'Krypton', effects: { color: '#afeeee', glow: 0.6 } },
-        { formula: 'Rb', name: 'Rubidium', effects: { color: '#f0e68c', explosion: 0.7 } }, { formula: 'Sr', name: 'Strontium', effects: { color: '#ff6347', glow: 0.3 } },
-        { formula: 'Y', name: 'Yttrium', effects: { color: '#d3d3d3' } }, { formula: 'Zr', name: 'Zirconium', effects: { color: '#c0c0c0' } },
-        { formula: 'Nb', name: 'Niobium', effects: { color: '#d3d3d3' } }, { formula: 'Mo', name: 'Molybdenum', effects: { color: '#b0c4de' } },
-        { formula: 'Tc', name: 'Technetium', effects: { color: '#c0c0c0', glow: 1.2 } }, { formula: 'Ru', name: 'Ruthenium', effects: { color: '#d3d3d3' } },
-        { formula: 'Rh', name: 'Rhodium', effects: { color: '#e6e6fa' } }, { formula: 'Pd', name: 'Palladium', effects: { color: '#d3d3d3' } },
-        { formula: 'Ag', name: 'Silver', effects: { color: '#c0c0c0', sparkles: 2 } }, { formula: 'Cd', name: 'Cadmium', effects: { color: '#d3d3d3' } },
-        { formula: 'In', name: 'Indium', effects: { color: '#c0c0c0' } }, { formula: 'Sn', name: 'Tin', effects: { color: '#d3d3d3' } },
-        { formula: 'Sb', name: 'Antimony', effects: { color: '#a9a9a9' } }, { formula: 'Te', name: 'Tellurium', effects: { color: '#808080' } },
-        { formula: 'I', name: 'Iodine', effects: { color: '#4b0082' } }, { formula: 'Xe', name: 'Xenon', effects: { color: '#87ceeb', glow: 0.8 } },
-        { formula: 'Cs', name: 'Caesium', effects: { color: '#f0e68c', explosion: 0.8 } }, { formula: 'Ba', name: 'Barium', effects: { color: '#f5f5dc' } },
-        { formula: 'La', name: 'Lanthanum', effects: { color: '#d3d3d3' } }, { formula: 'W', name: 'Tungsten', effects: { color: '#808080' } },
-        { formula: 'Re', name: 'Rhenium', effects: { color: '#c0c0c0' } }, { formula: 'Os', name: 'Osmium', effects: { color: '#b0c4de' } },
-        { formula: 'Ir', name: 'Iridium', effects: { color: '#e6e6fa' } }, { formula: 'Pt', name: 'Platinum', effects: { color: '#d3d3d3', sparkles: 1 } },
-        { formula: 'Au', name: 'Gold', effects: { color: '#ffd700', sparkles: 5 } }, { formula: 'Hg', name: 'Mercury', effects: { color: '#e0e0e0', smoke: 0.3 } },
-        { formula: 'Tl', name: 'Thallium', effects: { color: '#696969' } }, { formula: 'Pb', name: 'Lead', effects: { color: '#696969' } },
-        { formula: 'Bi', name: 'Bismuth', effects: { color: '#ffc0cb', sparkles: 1 } }, { formula: 'Po', name: 'Polonium', effects: { color: '#add8e6', glow: 1.8 } },
-        { formula: 'At', name: 'Astatine', effects: { color: '#4b0082', glow: 1.4 } }, { formula: 'Rn', name: 'Radon', effects: { color: '#e0ffff', glow: 1 } },
-        { formula: 'Fr', name: 'Francium', effects: { color: '#f0e68c', explosion: 0.9 } }, { formula: 'Ra', name: 'Radium', effects: { color: '#f5f5dc', glow: 1.5 } },
-        { formula: 'Ac', name: 'Actinium', effects: { color: '#c0c0c0', glow: 1.6 } }, { formula: 'Th', name: 'Thorium', effects: { color: '#a9a9a9', glow: 0.6 } },
-        { formula: 'Pa', name: 'Protactinium', effects: { color: '#d3d3d3', glow: 1.1 } }, { formula: 'U', name: 'Uranium', effects: { color: '#90ee90', glow: 0.7 } },
-        { formula: 'Np', name: 'Neptunium', effects: { color: '#4682b4', glow: 1.3 } }, { formula: 'Pu', name: 'Plutonium', effects: { color: '#ff69b4', glow: 0.9, explosion: 0.4 } },
+        { formula: 'H', name: 'Hydrogen', isElement: true, effects: { color: '#f0f8ff', glow: 0.1 } }, { formula: 'He', name: 'Helium', isElement: true, effects: { color: '#d3d3d3', bubbles: 1 } },
+        { formula: 'Li', name: 'Lithium', isElement: true, effects: { color: '#e0e0e0', explosion: 2 } }, { formula: 'Be', name: 'Beryllium', isElement: true, effects: { color: '#c0c0c0' } },
+        { formula: 'B', name: 'Boron', isElement: true, effects: { color: '#a0a0a0' } }, { formula: 'C', name: 'Carbon', isElement: true, effects: { color: '#36454f' } },
+        { formula: 'N', name: 'Nitrogen', isElement: true, effects: { color: '#add8e6', bubbles: 1 } }, { formula: 'O', name: 'Oxygen', isElement: true, effects: { color: '#87ceeb', bubbles: 1 } },
+        { formula: 'F', name: 'Fluorine', isElement: true, effects: { color: '#98fb98', explosion: 0.1 } }, { formula: 'Ne', name: 'Neon', isElement: true, effects: { color: '#ffc0cb', glow: 0.5 } },
+        { formula: 'Na', name: 'Sodium', isElement: true, effects: { color: '#fafad2', explosion: 5 } }, { formula: 'Mg', name: 'Magnesium', isElement: true, effects: { color: '#dcdcdc' } },
+        { formula: 'Al', name: 'Aluminum', isElement: true, effects: { color: '#d3d3d3' } }, { formula: 'Si', name: 'Silicon', isElement: true, effects: { color: '#808080' } },
+        { formula: 'P', name: 'Phosphorus', isElement: true, effects: { color: '#ffc0cb', glow: 0.2, explosion: 1.5 } }, { formula: 'S', name: 'Sulfur', isElement: true, effects: { color: '#ffff00', smoke: 0.2 } },
+        { formula: 'Cl', name: 'Chlorine', isElement: true, effects: { color: '#90ee90', explosion: 0.1 } }, { formula: 'Ar', name: 'Argon', isElement: true, effects: { color: '#dda0dd', glow: 0.4 } },
+        { formula: 'K', name: 'Potassium', isElement: true, effects: { color: '#f0e68c', explosion: 6 } }, { formula: 'Ca', name: 'Calcium', isElement: true, effects: { color: '#f5f5dc' } },
+        { formula: 'Sc', name: 'Scandium', isElement: true, effects: { color: '#c0c0c0' } }, { formula: 'Ti', name: 'Titanium', isElement: true, effects: { color: '#b0c4de' } },
+        { formula: 'V', name: 'Vanadium', isElement: true, effects: { color: '#6a5acd' } }, { formula: 'Cr', name: 'Chromium', isElement: true, effects: { color: '#e6e6fa' } },
+        { formula: 'Mn', name: 'Manganese', isElement: true, effects: { color: '#ffdab9' } }, { formula: 'Fe', name: 'Iron', isElement: true, effects: { color: '#a0522d', smoke: 0.1 } },
+        { formula: 'Co', name: 'Cobalt', isElement: true, effects: { color: '#4682b4' } }, { formula: 'Ni', name: 'Nickel', isElement: true, effects: { color: '#b0e0e6' } },
+        { formula: 'Cu', name: 'Copper', isElement: true, effects: { color: '#b87333' } }, { formula: 'Zn', name: 'Zinc', isElement: true, effects: { color: '#d3d3d3' } },
+        { formula: 'Ga', name: 'Gallium', isElement: true, effects: { color: '#c0c0c0' } }, { formula: 'Ge', name: 'Germanium', isElement: true, effects: { color: '#a9a9a9' } },
+        { formula: 'As', name: 'Arsenic', isElement: true, effects: { color: '#808080' } }, { formula: 'Se', name: 'Selenium', isElement: true, effects: { color: '#ffc0cb' } },
+        { formula: 'Br', name: 'Bromine', isElement: true, effects: { color: '#a52a2a' } }, { formula: 'Kr', name: 'Krypton', isElement: true, effects: { color: '#afeeee', glow: 0.6 } },
+        { formula: 'Rb', name: 'Rubidium', isElement: true, effects: { color: '#f0e68c', explosion: 7 } }, { formula: 'Sr', name: 'Strontium', isElement: true, effects: { color: '#ff6347', glow: 0.3 } },
+        { formula: 'Y', name: 'Yttrium', isElement: true, effects: { color: '#d3d3d3' } }, { formula: 'Zr', name: 'Zirconium', isElement: true, effects: { color: '#c0c0c0' } },
+        { formula: 'Nb', name: 'Niobium', isElement: true, effects: { color: '#d3d3d3' } }, { formula: 'Mo', name: 'Molybdenum', isElement: true, effects: { color: '#b0c4de' } },
+        { formula: 'Tc', name: 'Technetium', isElement: true, effects: { color: '#c0c0c0', glow: 1.2 } }, { formula: 'Ru', name: 'Ruthenium', isElement: true, effects: { color: '#d3d3d3' } },
+        { formula: 'Rh', name: 'Rhodium', isElement: true, effects: { color: '#e6e6fa' } }, { formula: 'Pd', name: 'Palladium', isElement: true, effects: { color: '#d3d3d3' } },
+        { formula: 'Ag', name: 'Silver', isElement: true, effects: { color: '#c0c0c0', sparkles: 2 } }, { formula: 'Cd', name: 'Cadmium', isElement: true, effects: { color: '#d3d3d3' } },
+        { formula: 'In', name: 'Indium', isElement: true, effects: { color: '#c0c0c0' } }, { formula: 'Sn', name: 'Tin', isElement: true, effects: { color: '#d3d3d3' } },
+        { formula: 'Sb', name: 'Antimony', isElement: true, effects: { color: '#a9a9a9' } }, { formula: 'Te', name: 'Tellurium', isElement: true, effects: { color: '#808080' } },
+        { formula: 'I', name: 'Iodine', isElement: true, effects: { color: '#4b0082' } }, { formula: 'Xe', name: 'Xenon', isElement: true, effects: { color: '#87ceeb', glow: 0.8 } },
+        { formula: 'Cs', name: 'Caesium', isElement: true, effects: { color: '#f0e68c', explosion: 8 } }, { formula: 'Ba', name: 'Barium', isElement: true, effects: { color: '#f5f5dc' } },
+        { formula: 'La', name: 'Lanthanum', isElement: true, effects: { color: '#d3d3d3' } }, { formula: 'W', name: 'Tungsten', isElement: true, effects: { color: '#808080' } },
+        { formula: 'Re', name: 'Rhenium', isElement: true, effects: { color: '#c0c0c0' } }, { formula: 'Os', name: 'Osmium', isElement: true, effects: { color: '#b0c4de' } },
+        { formula: 'Ir', name: 'Iridium', isElement: true, effects: { color: '#e6e6fa' } }, { formula: 'Pt', name: 'Platinum', isElement: true, effects: { color: '#d3d3d3', sparkles: 1 } },
+        { formula: 'Au', name: 'Gold', isElement: true, effects: { color: '#ffd700', sparkles: 5 } }, { formula: 'Hg', name: 'Mercury', isElement: true, effects: { color: '#e0e0e0', smoke: 0.3 } },
+        { formula: 'Tl', name: 'Thallium', isElement: true, effects: { color: '#696969' } }, { formula: 'Pb', name: 'Lead', isElement: true, effects: { color: '#696969' } },
+        { formula: 'Bi', name: 'Bismuth', isElement: true, effects: { color: '#ffc0cb', sparkles: 1 } }, { formula: 'Po', name: 'Polonium', isElement: true, effects: { color: '#add8e6', glow: 1.8 } },
+        { formula: 'At', name: 'Astatine', isElement: true, effects: { color: '#4b0082', glow: 1.4 } }, { formula: 'Rn', name: 'Radon', isElement: true, effects: { color: '#e0ffff', glow: 1 } },
+        { formula: 'Fr', name: 'Francium', isElement: true, effects: { color: '#f0e68c', explosion: 9 } }, { formula: 'Ra', name: 'Radium', isElement: true, effects: { color: '#f5f5dc', glow: 1.5 } },
+        { formula: 'Ac', name: 'Actinium', isElement: true, effects: { color: '#c0c0c0', glow: 1.6 } }, { formula: 'Th', name: 'Thorium', isElement: true, effects: { color: '#a9a9a9', glow: 0.6 } },
+        { formula: 'Pa', name: 'Protactinium', isElement: true, effects: { color: '#d3d3d3', glow: 1.1 } }, { formula: 'U', name: 'Uranium', isElement: true, effects: { color: '#90ee90', glow: 0.7 } },
+        { formula: 'Np', name: 'Neptunium', isElement: true, effects: { color: '#4682b4', glow: 1.3 } }, { formula: 'Pu', name: 'Plutonium', isElement: true, effects: { color: '#ff69b4', glow: 0.9, explosion: 4 } },
     ],
     LIQUIDS: [
         { formula: 'H2O', name: 'Water', effects: { color: '#add8e6' } },
@@ -150,8 +153,10 @@ export default function Home() {
 
   const [infoChemical, setInfoChemical] = useState<Chemical | null>(null);
   const [infoContent, setInfoContent] = useState<ChemicalInfoOutput | null>(null);
+  const [usageContent, setUsageContent] = useState<ElementUsageOutput | null>(null);
   const [isInfoLoading, setIsInfoLoading] = useState(false);
   const [isPeriodicTableOpen, setIsPeriodicTableOpen] = useState(false);
+  const [isUsageChartOpen, setIsUsageChartOpen] = useState(false);
 
 
   const handleAddChemical = (chemical: Chemical) => {
@@ -186,6 +191,8 @@ export default function Home() {
     setInfoChemical(chemical);
     setIsInfoLoading(true);
     setInfoContent(null);
+    setUsageContent(null);
+    setIsUsageChartOpen(false);
     try {
       const result = await getChemicalInfo({ name: chemical.name, formula: chemical.formula });
       setInfoContent(result);
@@ -201,6 +208,26 @@ export default function Home() {
       setIsInfoLoading(false);
     }
   };
+
+  const handleShowUsageChart = async () => {
+    if (!infoChemical) return;
+    setIsInfoLoading(true);
+    setUsageContent(null);
+    try {
+      const result = await getElementUsage({ name: infoChemical.name });
+      setUsageContent(result);
+      setIsUsageChartOpen(true);
+    } catch (error) {
+      console.error("Error fetching element usage:", error);
+      toast({
+        variant: "destructive",
+        title: "Usage Data Error",
+        description: "Could not fetch usage data for this element.",
+      });
+    } finally {
+      setIsInfoLoading(false);
+    }
+  }
 
   const handleStartReaction = async () => {
     if (beakerContents.length < 2) return;
@@ -386,14 +413,22 @@ export default function Home() {
       <Dialog open={!!infoChemical} onOpenChange={(isOpen) => !isOpen && setInfoChemical(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>About {infoChemical?.name} ({infoChemical?.formula})</DialogTitle>
+            <div className="flex justify-between items-center">
+              <DialogTitle>About {infoChemical?.name} ({infoChemical?.formula})</DialogTitle>
+              {infoChemical?.isElement && (
+                  <Button variant="outline" size="sm" onClick={handleShowUsageChart} disabled={isInfoLoading}>
+                      <BarChart className="mr-2 h-4 w-4"/>
+                      Usage
+                  </Button>
+              )}
+            </div>
             <div className="text-sm text-muted-foreground pt-2">
-              {isInfoLoading && (
+              {isInfoLoading && !infoContent && (
                 <div className="flex justify-center items-center p-8">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               )}
-              {infoContent && (
+              {infoContent && !isUsageChartOpen && (
                 <div className="mt-4 space-y-4 text-left text-sm text-foreground">
                   <div>
                     <h3 className="font-semibold mb-1">Description</h3>
@@ -438,6 +473,14 @@ export default function Home() {
                     <h3 className="font-semibold mb-1">Experiment Tips</h3>
                     <p>{infoContent.experimentTips}</p>
                   </div>
+                </div>
+              )}
+              {isUsageChartOpen && usageContent && (
+                <UsageChart data={usageContent} />
+              )}
+              {isInfoLoading && isUsageChartOpen && (
+                <div className="flex justify-center items-center p-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               )}
             </div>

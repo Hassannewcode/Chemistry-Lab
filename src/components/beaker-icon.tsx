@@ -15,6 +15,7 @@ export interface ChemicalEffect {
 interface Chemical {
     formula: string;
     name: string;
+    isElement?: boolean;
     effects?: Partial<ChemicalEffect>;
 }
 
@@ -101,19 +102,29 @@ const Sparkle: React.FC<{ cx: number; cy: number; size: number; delay: string; d
 
 const Explosion: React.FC<{ intensity: number }> = ({ intensity }) => {
     if (intensity <= 0) return null;
-    const size = 20 + intensity * 15;
-    const duration = 0.5 / Math.max(0.5, intensity * 0.5);
+    const size = 10 + intensity * 18; // Increased max size
+    const duration = 0.6 / Math.max(0.5, intensity * 0.3);
 
     return (
         <g>
-            <circle cx="100" cy="120" r="5" fill="#FFD700">
+            {/* Main Blast Wave */}
+            <circle cx="100" cy="120" r="5" fill="#FFD700" opacity="0.8">
                 <animate attributeName="r" from="5" to={size} dur={`${duration}s`} begin="0s" fill="freeze" />
-                <animate attributeName="opacity" from="1" to="0" dur={`${duration}s`} begin="0s" fill="freeze" />
+                <animate attributeName="opacity" from="0.8" to="0" dur={`${duration}s`} begin="0s" fill="freeze" />
             </circle>
-            <circle cx="100" cy="120" r="2" fill="#FF8C00">
-                <animate attributeName="r" from="2" to={size * 0.7} dur={`${duration * 0.8}s`} begin="0.05s" fill="freeze" />
+            {/* Secondary Inner Blast */}
+            <circle cx="100" cy="120" r="2" fill="#FF8C00" opacity="1">
+                <animate attributeName="r" from="2" to={size * 0.6} dur={`${duration * 0.8}s`} begin="0.05s" fill="freeze" />
                 <animate attributeName="opacity" from="1" to="0" dur={`${duration * 0.8}s`} begin="0.05s" fill="freeze" />
             </circle>
+            {/* Shockwave Rings */}
+            {Array.from({ length: Math.min(Math.floor(intensity / 2), 4) }).map((_, i) => (
+              <circle key={i} cx="100" cy="120" r="0" fill="none" stroke="#FFA500" strokeWidth="3" opacity="0.7">
+                  <animate attributeName="r" from="0" to={size * 1.2} dur={`${duration * 1.5}s`} begin={`${i * 0.08}s`} fill="freeze" />
+                  <animate attributeName="opacity" from="0.7" to="0" dur={`${duration * 1.5}s`} begin={`${i * 0.08}s`} fill="freeze" />
+                  <animate attributeName="stroke-width" from="3" to="0" dur={`${duration * 1.5}s`} begin={`${i * 0.08}s`} fill="freeze" />
+              </circle>
+            ))}
         </g>
     );
 };
