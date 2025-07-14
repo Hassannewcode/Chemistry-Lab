@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Beaker, Plus, Minus, Thermometer, ChevronsRight } from 'lucide-react';
@@ -16,33 +17,6 @@ export default function Home() {
             <p className="text-5xl font-semibold text-gray-600">
               2000+ reactions
             </p>
-          </div>
-          
-          <div className="space-y-6">
-            <div className="bg-white p-4 rounded-xl shadow-md">
-                <div className="bg-gray-200 p-1 rounded-full flex gap-1 max-w-xs mx-auto">
-                <Button
-                    variant="outline"
-                    className="flex-1 rounded-full bg-white text-gray-500 border-gray-300"
-                >
-                    CONTENTS
-                </Button>
-                <Button className="flex-1 rounded-full bg-gray-800 text-white hover:bg-gray-700">
-                    REACTIONS
-                </Button>
-                </div>
-            </div>
-
-            <div className="bg-gray-800 text-white p-6 rounded-2xl text-center shadow-lg">
-              <p className="text-lg">Cu(CH₃COO)₂ + 2LiOH</p>
-              <ChevronsRight className="mx-auto my-2 h-5 w-5" />
-              <p className="text-lg">Cu(OH)₂ + 2LiCH₃COO</p>
-            </div>
-
-            <div className="bg-[#E91E63] text-white p-6 rounded-2xl text-center shadow-lg">
-              <p className="text-6xl font-bold">2000+</p>
-              <p className="text-3xl">experiments</p>
-            </div>
           </div>
         </div>
 
