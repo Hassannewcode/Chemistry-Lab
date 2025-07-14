@@ -12,7 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const ConductReactionInputSchema = z.object({
-  chemicals: z.array(z.string()).describe('An array of up to 8 chemical formulas or spray names to react.'),
+  chemicals: z.array(z.string()).describe('An array of up to 12 chemical formulas or spray names to react.'),
   temperature: z.number().describe('The temperature for the reaction in Celsius.'),
   concentration: z.number().describe('The concentration of the reactants in Molarity (M).'),
 });
