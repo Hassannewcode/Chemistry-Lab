@@ -12,6 +12,7 @@ import { conductReaction, ConductReactionInput, ConductReactionOutput } from '@/
 import { getChemicalInfo, ChemicalInfoInput, ChemicalInfoOutput } from '@/ai/flows/chemicalInfoFlow';
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
+import { SoundManager } from '@/components/sound-manager';
 
 interface Chemical {
   formula: string;
@@ -209,6 +210,7 @@ export default function Home() {
 
   return (
     <div className="bg-[#f0f2f5] min-h-screen flex items-center justify-center p-4 md:p-8 font-sans text-[#3D3D3D]">
+      <SoundManager effects={reactionEffects} />
       <div className="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
         
         {/* Left Column: Information & Controls */}
