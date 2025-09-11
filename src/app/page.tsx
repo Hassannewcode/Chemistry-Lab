@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, DragEvent, useMemo } from 'react';
-import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search } from 'lucide-react';
+import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
 import { VerticalSlider } from '@/components/vertical-slider';
@@ -382,24 +382,36 @@ export default function Home() {
                 <Card className="bg-gray-50">
                   <CardHeader>
                     <CardTitle>{reactionResult.reactionName}</CardTitle>
+                    <CardDescription className="!mt-2 text-base italic text-gray-600">
+                        "{reactionResult.visualPreview}"
+                    </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <h3 className="font-semibold mb-1 text-sm">Visual Preview</h3>
-                      <p className="text-sm italic text-gray-600">"{reactionResult.visualPreview}"</p>
-                    </div>
+                  <CardContent className="space-y-4 text-sm">
                      <div>
-                      <h3 className="font-semibold mb-1 text-sm">Description</h3>
-                      <p className="text-sm">{reactionResult.description}</p>
+                      <h3 className="font-semibold mb-1">Description</h3>
+                      <p>{reactionResult.description}</p>
                     </div>
                     <div>
-                      <h3 className="font-semibold mb-1 text-sm">Products</h3>
-                      <p className="text-sm">
+                      <h3 className="font-semibold mb-1">Products</h3>
+                      <p>
                         {reactionResult.products.length > 0 ? reactionResult.products.map(p => `${p.formula} (${p.state})`).join(', ') : 'No new products formed.'}
                       </p>
                     </div>
-                     <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <h3 className="font-semibold mb-1">Real-World Analogies</h3>
+                            <div className="space-y-2">
+                                {reactionResult.analogies.map((analogy, index) => (
+                                    <div key={index} className="flex items-center gap-2 text-xs p-2 bg-gray-100 rounded-md">
+                                        <Lightbulb className="h-4 w-4 text-yellow-500" />
+                                        <span className="font-semibold">{analogy.aspect}:</span>
+                                        <span>~ {analogy.comparison}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="space-y-4">
+                           <div>
                               <h3 className="font-semibold mb-1">Destruction Scale</h3>
                               <div className="flex items-center gap-2">
                                   <Progress value={reactionResult.destructionScale * 10} className="w-[80%]" />
@@ -410,6 +422,7 @@ export default function Home() {
                               <h3 className="font-semibold mb-1">Real-World Success</h3>
                               <p>{reactionResult.realWorldProbability.success}%</p>
                           </div>
+                        </div>
                       </div>
                     <p className="text-sm text-yellow-800 bg-yellow-100 p-2 rounded-md"><b>Safety:</b> {reactionResult.safetyNotes}</p>
                   </CardContent>

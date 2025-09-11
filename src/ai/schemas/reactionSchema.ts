@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Zod schemas for the reaction flow.
  */
@@ -21,13 +20,23 @@ export const ConductReactionInputSchema = z.object({
 export type ConductReactionInput = z.infer<typeof ConductReactionInputSchema>;
 
 const ProductSchema = z.object({
-  formula: z.string().describe('The chemical formula of the product.'),
+  formula: z.string().describe('The chemical formula of a product.'),
   state: z
     .enum(['s', 'l', 'g', 'aq'])
     .describe(
       'The physical state of the product: solid (s), liquid (l), gas (g), or aqueous (aq).'
     ),
 });
+
+const AnalogySchema = z.object({
+  aspect: z
+    .string()
+    .describe('The aspect of the reaction being compared (e.g., "Energy Release", "Color", "Sound").'),
+  comparison: z
+    .string()
+    .describe("The real-world object or phenomenon it's being compared to (e.g., 'a small firecracker', 'the color of a sapphire', 'a gentle fizz')."),
+});
+
 
 export const ConductReactionOutputSchema = z.object({
   reactionName: z
@@ -81,6 +90,11 @@ export const ConductReactionOutputSchema = z.object({
     .max(10)
     .describe(
       'A rating from 0 (completely inert) to 10 (catastrophically destructive) of the potential destructive power of this reaction.'
+    ),
+  analogies: z
+    .array(AnalogySchema)
+    .describe(
+        "An array of 2-3 simple, real-world analogies to help visualize the reaction's scale or effects. For instance, if there's an explosion, compare its energy to 'a small firecracker.' If it glows, compare the brightness to 'a camera flash.' If it's a certain color, compare it to a common object like 'the color of a sapphire.'"
     ),
   effects: z
     .object({
