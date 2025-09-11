@@ -438,6 +438,7 @@ export default function Home() {
               className="w-full mt-4 h-14 text-xl" 
               onClick={handleStartReaction} 
               disabled={beakerContents.length < 2 || isLoading}
+              aria-label={isLoading ? "Simulating reaction, please wait" : "Start chemical reaction"}
             >
               {isLoading ? (
                 <>
@@ -562,5 +563,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

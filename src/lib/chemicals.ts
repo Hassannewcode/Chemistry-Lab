@@ -119,7 +119,7 @@ export const CHEMICAL_CATEGORIES: Record<string, Chemical[]> = {
         { formula: 'CH4', name: 'Methane', effects: { bubbles: 3, explosion: 0.1 } }, { formula: 'C6H12O6', name: 'Glucose', effects: { color: '#fafad2' } },
         { formula: 'C3H8', name: 'Propane', effects: { bubbles: 4, explosion: 0.15 } }, { formula: 'C6H6', name: 'Benzene', effects: { color: '#fffacd' } },
         { formula: 'C2H2', name: 'Acetylene', effects: { bubbles: 5, explosion: 0.25 } },
-        { formula: 'C7H8', name: 'Toluene', effects: { color: '#fffafa' } }, { formula: 'C8H18', name: 'Octane', effects: { explosion: 0.2 } },
+        { formula: 'C7H8', name: 'Toluene', effects: { color: '#fffafa' } }, { formula: 'C8H18', name: 'Octane (Gasoline)', effects: { explosion: 0.2 } },
         { formula: 'C6H5OH', name: 'Phenol', effects: { color: '#f5f5f5' } }, { formula: 'CH2O', name: 'Formaldehyde', effects: { color: '#f0f8ff' } },
         { formula: 'C2H4O2', name: 'Acetic Acid', effects: { color: '#f5f5f5' } }, { formula: 'C12H22O11', name: 'Sucrose', effects: { color: '#fffafa' } },
     ],
@@ -148,5 +148,3 @@ export const CHEMICAL_CATEGORIES: Record<string, Chemical[]> = {
         { formula: 'Ferrofluid', name: 'Ferrofluid', effects: { color: '#2F4F4F', smoke: 0.2 } },
     ],
 };
-
-    
