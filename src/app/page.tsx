@@ -8,6 +8,7 @@ import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
 import { VerticalSlider } from '@/components/vertical-slider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { conductReaction, ConductReactionInput, ConductReactionOutput } from '@/ai/flows/reactionFlow';
 import { getChemicalInfo, ChemicalInfoOutput } from '@/ai/flows/chemicalInfoFlow';
 import { getElementUsage, ElementUsageOutput } from '@/ai/flows/elementUsageFlow';
@@ -40,12 +41,22 @@ export default function Home() {
   const [isPeriodicTableOpen, setIsPeriodicTableOpen] = useState(false);
   const [isUsageChartOpen, setIsUsageChartOpen] = useState(false);
 
+  const [confirmingChemical, setConfirmingChemical] = useState<Chemical | null>(null);
+
 
   const handleAddChemical = (chemical: Chemical) => {
     if (beakerContents.length < 12) {
       setReactionEffects(null);
       setReactionResult(null);
       setBeakerContents([...beakerContents, chemical]);
+    }
+  };
+
+  const handleConfirmAddChemical = () => {
+    if (confirmingChemical) {
+      handleAddChemical(confirmingChemical);
+      toast({ title: `Added ${confirmingChemical.name} to beaker!` });
+      setConfirmingChemical(null);
     }
   };
   
@@ -212,20 +223,23 @@ export default function Home() {
                    <div key={chemical.formula} className="relative group">
                     <Button 
                       variant="outline"
-                      onClick={() => handleAddChemical(chemical)}
+                      onClick={() => setConfirmingChemical(chemical)}
                       disabled={beakerContents.length >= 12 || beakerContents.some(c => c.formula === chemical.formula)}
                       title={chemical.name}
                       className="w-full flex-col h-auto"
                       aria-label={`Add ${chemical.name} to beaker`}
                     >
-                      <span className="font-bold text-lg">{chemical.formula}</span>
-                      <span className="text-xs text-muted-foreground">{chemical.name}</span>
+                      <span className="font-bold text-lg truncate w-full">{chemical.formula}</span>
+                      <span className="text-xs text-muted-foreground truncate w-full">{chemical.name}</span>
                     </Button>
                     <Button 
                         size="icon" 
                         variant="ghost" 
                         className="absolute top-0 right-0 h-6 w-6 opacity-50 group-hover:opacity-100"
-                        onClick={() => handleShowInfo(chemical)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleShowInfo(chemical);
+                        }}
                         title={`Info on ${chemical.name}`}
                         aria-label={`Show info for ${chemical.name}`}
                     >
@@ -328,6 +342,22 @@ export default function Home() {
         </div>
       </div>
       <Toaster />
+
+      <AlertDialog open={!!confirmingChemical} onOpenChange={(isOpen) => !isOpen && setConfirmingChemical(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Chemical</AlertDialogTitle>
+            <AlertDialogDescription>
+              The item you selected is <strong>{confirmingChemical?.name} ({confirmingChemical?.formula})</strong>. Are you sure you want to add it to the beaker?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConfirmingChemical(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmAddChemical}>Confirm</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Dialog open={!!infoChemical} onOpenChange={(isOpen) => !isOpen && setInfoChemical(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
