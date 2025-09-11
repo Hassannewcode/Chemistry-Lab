@@ -148,3 +148,5 @@ export const CHEMICAL_CATEGORIES: Record<string, Chemical[]> = {
         { formula: 'Ferrofluid', name: 'Ferrofluid', effects: { color: '#2F4F4F', smoke: 0.2 } },
     ],
 };
+
+    

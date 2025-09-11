@@ -194,3 +194,5 @@ export const PeriodicTable: React.FC<PeriodicTableProps> = ({ onElementClick, be
         </TooltipProvider>
     );
 };
+
+    
