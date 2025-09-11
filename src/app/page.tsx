@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, DragEvent } from 'react';
+import { useState, DragEvent, useRef, useEffect } from 'react';
 import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
@@ -21,6 +21,7 @@ import { UsageChart } from '@/components/usage-chart';
 import { CHEMICAL_CATEGORIES, Chemical } from '@/lib/chemicals';
 
 type ChemicalCategory = keyof typeof CHEMICAL_CATEGORIES;
+const NAME_LENGTH_THRESHOLD = 18; // Names longer than this will trigger confirmation
 
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState<ChemicalCategory>('ELEMENTS');
@@ -51,6 +52,15 @@ export default function Home() {
       setBeakerContents([...beakerContents, chemical]);
     }
   };
+  
+  const handleChemicalClick = (chemical: Chemical) => {
+    if (chemical.name.length > NAME_LENGTH_THRESHOLD) {
+      setConfirmingChemical(chemical);
+    } else {
+      handleAddChemical(chemical);
+      toast({ title: `Added ${chemical.name} to beaker!` });
+    }
+  }
 
   const handleConfirmAddChemical = () => {
     if (confirmingChemical) {
@@ -223,7 +233,7 @@ export default function Home() {
                    <div key={chemical.formula} className="relative group">
                     <Button 
                       variant="outline"
-                      onClick={() => setConfirmingChemical(chemical)}
+                      onClick={() => handleChemicalClick(chemical)}
                       disabled={beakerContents.length >= 12 || beakerContents.some(c => c.formula === chemical.formula)}
                       title={chemical.name}
                       className="w-full flex-col h-auto"
@@ -450,4 +460,3 @@ export default function Home() {
   );
 }
 
-    
