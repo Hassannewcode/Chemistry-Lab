@@ -31,5 +31,3 @@ export const VerticalSlider: React.FC<VerticalSliderProps> = ({ className, label
     </div>
   );
 };
-
-    

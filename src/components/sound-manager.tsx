@@ -136,5 +136,3 @@ export const SoundManager: React.FC<SoundManagerProps> = ({ effects }) => {
 
     return null; // This component does not render anything
 };
-
-    

@@ -320,13 +320,34 @@ export default function Home() {
                 <CardHeader>
                   <CardTitle>{reactionResult.reactionName}</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="mb-2">{reactionResult.description}</p>
-                  <p className="mb-2">
-                    <b>Products:</b> 
-                    {reactionResult.products.map(p => `${p.formula} (${p.state})`).join(', ')}
-                  </p>
-                  <p className="mb-2 text-sm italic text-gray-600"><b>Analogy:</b> {reactionResult.analogy}</p>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold mb-1 text-sm">Visual Preview</h3>
+                    <p className="text-sm italic text-gray-600">"{reactionResult.visualPreview}"</p>
+                  </div>
+                   <div>
+                    <h3 className="font-semibold mb-1 text-sm">Description</h3>
+                    <p className="text-sm">{reactionResult.description}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-1 text-sm">Products</h3>
+                    <p className="text-sm">
+                      {reactionResult.products.map(p => `${p.formula} (${p.state})`).join(', ')}
+                    </p>
+                  </div>
+                   <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <h3 className="font-semibold mb-1">Destruction Scale</h3>
+                            <div className="flex items-center gap-2">
+                                <Progress value={reactionResult.destructionScale * 10} className="w-[80%]" />
+                                <span>{reactionResult.destructionScale}/10</span>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 className="font-semibold mb-1">Real-World Success</h3>
+                            <p>{reactionResult.realWorldProbability.success}%</p>
+                        </div>
+                    </div>
                   <p className="text-sm text-yellow-800 bg-yellow-100 p-2 rounded-md"><b>Safety:</b> {reactionResult.safetyNotes}</p>
                 </CardContent>
               </Card>
@@ -459,5 +480,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

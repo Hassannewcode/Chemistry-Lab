@@ -28,7 +28,12 @@ const ConductReactionOutputSchema = z.object({
     description: z.string().describe('A detailed but easy-to-understand description of what happens during the reaction. If sprays are involved, describe their visual effect on the reaction.'),
     products: z.array(ProductSchema).describe('An array of the chemical products formed, including their formula and physical state (solid, liquid, gas, or aqueous).'),
     safetyNotes: z.string().describe('Important safety warnings or interesting facts about the reaction. Be concise. Mention any spectacular visual results from sprays.'),
-    analogy: z.string().describe("A simple, real-world analogy for the reaction's result (e.g., 'A weak saline solution', 'Similar to a small firecracker', 'A colorful, bubbly soda')."),
+    visualPreview: z.string().describe("A vivid, imaginative description of the final result, like a mini demo. e.g., 'A brilliant blue liquid now fizzes gently, with tiny silver flakes suspended within, glowing faintly.'"),
+    realWorldProbability: z.object({
+      success: z.number().min(0).max(100).describe('The probability percentage (0-100) that this reaction would occur as described under ideal real-world lab conditions.'),
+      failure: z.number().min(0).max(100).describe('The probability percentage (0-100) that this reaction would fail or not occur as described in the real world.'),
+    }).describe('The estimated probability of this reaction occurring in a real lab.'),
+    destructionScale: z.number().min(0).max(10).describe('A rating from 0 (completely inert) to 10 (catastrophically destructive) of the potential destructive power of this reaction.'),
     effects: z.object({
       color: z.string().describe("A hex color code (e.g., '#ff0000') for the final liquid mixture. This should reflect the color of the products."),
       bubbles: z.number().min(0).max(10).describe("The intensity of bubble formation, from 0 (none) to 10 (very intense)."),
@@ -48,22 +53,23 @@ const prompt = ai.definePrompt({
   name: 'reactionPrompt',
   input: {schema: ConductReactionInputSchema},
   output: {schema: ConductReactionOutputSchema},
-  prompt: `You are a chemistry expert simulating a chemical reaction for a student. Some items might be non-chemical 'sprays' that add visual effects.
+  prompt: `You are a chemistry expert simulating a chemical reaction for a student. Some items might be non-chemical 'sprays' that add visual effects. Your analysis must be as realistic as possible.
 
   Reactants: {{chemicals}}
   Temperature: {{temperature}}°C
   Concentration: {{concentration}}M
 
   Based on these inputs, provide the following:
-  1. The name of the reaction. If sprays are used, you MUST give it a fun, descriptive, creative name (e.g. "Sparkling Volcano", "Graphene Mist", "Cryo-Coolant").
-  2. A clear, step-by-step description of the chemical process. Explain what is happening at a molecular level in simple terms. Incorporate the visual effects of any sprays into the description.
-  3. The chemical formulas of the main products and their physical state (solid, liquid, gas, or aqueous). If no reaction occurs, state that and list the original chemicals as the products in their original states. Sprays generally don't create new products but can be mentioned in the description.
-  4. A brief, important safety note or a fun fact related to the reaction or chemicals involved. Comment on the visual results.
-  5. The visual effects of the final products. Determine the resulting color, bubbles, smoke, sparkles, glow, and explosion intensity. Be creative and scientifically plausible. For example, a vigorous reaction might produce lots of bubbles and smoke. A reaction with gold might sparkle. A reaction involving alkali metals and water should be explosive.
-  6. A simple, relatable analogy for the final result (e.g., 'Similar to a small firecracker' or 'A simple saline solution').
+  1. The name of the reaction. If sprays are used, you MUST give it a fun, descriptive, creative name (e.g. "Sparkling Volcano", "Graphene Mist").
+  2. A clear, step-by-step description of the chemical process. Explain what is happening at a molecular level in simple, realistic terms.
+  3. The chemical formulas of the main products and their physical state (solid, liquid, gas, or aqueous). If no reaction occurs, state that and list the original chemicals. Sprays don't create products but affect the visual description.
+  4. A brief, important safety note or a fun fact.
+  5. The visual effects of the final products (color, bubbles, smoke, sparkles, glow, explosion). Be creative but scientifically plausible. An explosion must be for a highly exothermic or volatile reaction (e.g., alkali metals in water).
+  6. A "Visual Preview": A short, vivid, and imaginative text description of the final result, as if giving a demo.
+  7. "Real-World Probability": Estimate the percentage chance of success vs. failure for this reaction in a real lab. Consider purity, conditions, etc. The two probabilities must sum to 100.
+  8. "Destruction Scale": A 0-10 rating of the potential destructive power. 0 is inert, 10 is a catastrophic explosion.
 
-  Keep the language accessible and engaging for a high school student.
-  If the combination of chemicals does not typically react under the given conditions, state that clearly in the description, but still describe the visual mixing of the substances and set the final effects to be the average of the initial ingredients.`,
+  If the combination of chemicals does not react under the given conditions, state that clearly, but still describe the visual mixing.`,
 });
 
 const reactionFlow = ai.defineFlow(
@@ -77,5 +83,3 @@ const reactionFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    
