@@ -362,14 +362,14 @@ export default function Home() {
                 icon={<FlaskConical className="h-5 w-5" />}
                 onIncrease={() => changeConcentration(0.1)}
                 onDecrease={() => changeConcentration(-0.1)}
-                ariaLabel="Concentration control"
+                ariaLabel="Concentration"
               />
               <VerticalSlider
                 label={`${temperature}°C`}
                 icon={<Thermometer className="h-5 w-5" />}
                 onIncrease={() => changeTemperature(5)}
                 onDecrease={() => changeTemperature(-5)}
-                ariaLabel="Temperature control"
+                ariaLabel="Temperature"
               />
 
               <BeakerIcon contents={beakerContents} overrideEffects={reactionEffects} className="h-72 w-72" />
@@ -414,7 +414,7 @@ export default function Home() {
                            <div>
                               <h3 className="font-semibold mb-1">Destruction Scale</h3>
                               <div className="flex items-center gap-2">
-                                  <Progress value={reactionResult.destructionScale * 10} className="w-[80%]" />
+                                  <Progress value={reactionResult.destructionScale * 10} className="w-[80%]" aria-label={`Destruction scale: ${reactionResult.destructionScale} out of 10`} />
                                   <span>{reactionResult.destructionScale}/10</span>
                               </div>
                           </div>
@@ -562,3 +562,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

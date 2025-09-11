@@ -15,7 +15,7 @@ interface VerticalSliderProps {
 
 export const VerticalSlider: React.FC<VerticalSliderProps> = ({ className, label, icon, onIncrease, onDecrease, ariaLabel }) => {
   return (
-    <div className={cn("flex flex-col items-center space-y-3 mx-4", className)} role="group" aria-label={ariaLabel}>
+    <div className={cn("flex flex-col items-center space-y-3 mx-4", className)} role="group" aria-label={`${ariaLabel} control`}>
       <Button size="icon" onClick={onIncrease} className="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 shadow-md" aria-label={`Increase ${ariaLabel}`}>
         <Plus className="h-5 w-5" />
       </Button>

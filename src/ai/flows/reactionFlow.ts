@@ -34,7 +34,7 @@ const prompt = ai.definePrompt({
   6. A "Visual Preview": A short, vivid, and imaginative text description of the final result, as if giving a demo.
   7. "Real-World Probability": Estimate the percentage chance of success vs. failure for this reaction in a real lab. Consider purity, conditions, etc. The two probabilities must sum to 100.
   8. "Destruction Scale": A 0-10 rating of the potential destructive power. 0 is inert, 10 is a catastrophic explosion.
-  9. "Analogies": Provide 2-3 simple, real-world analogies for the reaction's effects. For instance, if there's an explosion, compare its energy to "a small firecracker." If it glows, compare the brightness to "a camera flash." If it's a certain color, compare it to a common object like "the color of a sapphire."
+  9. "Analogies": Provide 2-3 simple, real-world analogies for the reaction's effects. For instance, if there's an explosion, compare its energy to 'a small firecracker.' If it glows, compare the brightness to 'a camera flash.' If it's a certain color, compare it to a common object like 'the color of a sapphire.'
 
   If the combination of chemicals does not react under the given conditions, state that clearly, but still describe the visual mixing and provide analogies for the mixture itself.`,
 });
@@ -50,3 +50,5 @@ const reactionFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    
