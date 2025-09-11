@@ -18,10 +18,15 @@ const ConductReactionInputSchema = z.object({
 });
 export type ConductReactionInput = z.infer<typeof ConductReactionInputSchema>;
 
+const ProductSchema = z.object({
+  formula: z.string().describe('The chemical formula of the product.'),
+  state: z.enum(['s', 'l', 'g', 'aq']).describe('The physical state of the product: solid (s), liquid (l), gas (g), or aqueous (aq).')
+});
+
 const ConductReactionOutputSchema = z.object({
     reactionName: z.string().describe("The common or scientific name of the reaction, e.g., 'Neutralization' or 'Single Replacement'. If including sprays, name it something creative like 'Sparkling Volcano'."),
     description: z.string().describe('A detailed but easy-to-understand description of what happens during the reaction. If sprays are involved, describe their visual effect on the reaction.'),
-    products: z.array(z.string()).describe('An array of chemical formulas for the products formed. Sprays might not produce chemical products, but can be listed if they persist.'),
+    products: z.array(ProductSchema).describe('An array of the chemical products formed, including their formula and physical state (solid, liquid, gas, or aqueous).'),
     safetyNotes: z.string().describe('Important safety warnings or interesting facts about the reaction. Be concise. Mention any spectacular visual results from sprays.'),
     analogy: z.string().describe("A simple, real-world analogy for the reaction's result (e.g., 'A weak saline solution', 'Similar to a small firecracker', 'A colorful, bubbly soda')."),
     effects: z.object({
@@ -50,9 +55,9 @@ const prompt = ai.definePrompt({
   Concentration: {{concentration}}M
 
   Based on these inputs, provide the following:
-  1. The name of the reaction. If sprays are used, you MUST give it a fun, descriptive, creative name (e.g. "Sparkling Volcano", "Graphene Mist", "Icy Fire").
+  1. The name of the reaction. If sprays are used, you MUST give it a fun, descriptive, creative name (e.g. "Sparkling Volcano", "Graphene Mist", "Cryo-Coolant").
   2. A clear, step-by-step description of the chemical process. Explain what is happening at a molecular level in simple terms. Incorporate the visual effects of any sprays into the description.
-  3. The chemical formulas of the main products. If no reaction occurs, state that and list the original chemicals as the products. Sprays generally don't create new products but can be mentioned.
+  3. The chemical formulas of the main products and their physical state (solid, liquid, gas, or aqueous). If no reaction occurs, state that and list the original chemicals as the products in their original states. Sprays generally don't create new products but can be mentioned in the description.
   4. A brief, important safety note or a fun fact related to the reaction or chemicals involved. Comment on the visual results.
   5. The visual effects of the final products. Determine the resulting color, bubbles, smoke, sparkles, glow, and explosion intensity. Be creative and scientifically plausible. For example, a vigorous reaction might produce lots of bubbles and smoke. A reaction with gold might sparkle. A reaction involving alkali metals and water should be explosive.
   6. A simple, relatable analogy for the final result (e.g., 'Similar to a small firecracker' or 'A simple saline solution').

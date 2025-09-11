@@ -121,7 +121,7 @@ const elements = [
   { number: 91, symbol: 'Pa', name: 'Protactinium', group: 5, period: 10, category: 'actinide' },
   { number: 92, symbol: 'U', name: 'Uranium', group: 6, period: 10, category: 'actinide' },
   { number: 93, symbol: 'Np', name: 'Neptunium', group: 7, period: 10, category: 'actinide' },
-  { number: 94, symbol: 'Pu', 'name': 'Plutonium', group: 8, period: 10, category: 'actinide' },
+  { number: 94, symbol: 'Pu', name: 'Plutonium', group: 8, period: 10, category: 'actinide' },
   { number: 95, symbol: 'Am', name: 'Americium', group: 9, period: 10, category: 'actinide' },
   { number: 96, symbol: 'Cm', name: 'Curium', group: 10, period: 10, category: 'actinide' },
   { number: 97, symbol: 'Bk', name: 'Berkelium', group: 11, period: 10, category: 'actinide' },
@@ -169,6 +169,7 @@ export const PeriodicTable: React.FC<PeriodicTableProps> = ({ onElementClick, be
                                     categoryColors[el.category],
                                     isDisabled && "opacity-50 cursor-not-allowed hover:scale-100"
                                 )}
+                                aria-label={isDisabled ? `${el.name} (disabled)` : `Add ${el.name}`}
                             >
                                 <span className="text-gray-600 text-[10px]">{el.number}</span>
                                 <span className="font-bold text-base">{el.symbol}</span>
@@ -187,8 +188,8 @@ export const PeriodicTable: React.FC<PeriodicTableProps> = ({ onElementClick, be
                  <div style={{ gridColumn: 3, gridRow: 7 }} className="flex items-center justify-center text-center text-xs font-semibold p-1 bg-pink-100 rounded">89-103</div>
 
                 {/* Lanthanide and Actinide Series Title */}
-                <div style={{ gridColumn: '1 / span 2', gridRow: 9 }} className="flex items-center justify-end pr-2 text-sm font-semibold text-gray-600">Lanthanides</div>
-                <div style={{ gridColumn: '1 / span 2', gridRow: 10 }} className="flex items-center justify-end pr-2 text-sm font-semibold text-gray-600">Actinides</div>
+                <div style={{ gridColumn: '1 / span 2', gridRow: 9 }} className="flex items-center justify-end pr-2 text-sm font-semibold text-gray-600" aria-hidden="true">Lanthanides</div>
+                <div style={{ gridColumn: '1 / span 2', gridRow: 10 }} className="flex items-center justify-end pr-2 text-sm font-semibold text-gray-600" aria-hidden="true">Actinides</div>
             </div>
         </TooltipProvider>
     );

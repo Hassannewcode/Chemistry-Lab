@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, DragEvent } from 'react';
 import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
@@ -151,6 +151,22 @@ export default function Home() {
     setConcentration(prev => Math.max(0.1, Math.round((prev + amount) * 10)/10 ));
   }
 
+  // Drag and drop handlers for beaker contents
+  const handleDragStart = (e: DragEvent<HTMLSpanElement>, index: number) => {
+    e.dataTransfer.setData("chemicalIndex", index.toString());
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>, dropIndex: number) => {
+    const dragIndex = parseInt(e.dataTransfer.getData("chemicalIndex"), 10);
+    const newContents = [...beakerContents];
+    const [draggedItem] = newContents.splice(dragIndex, 1);
+    newContents.splice(dropIndex, 0, draggedItem);
+    setBeakerContents(newContents);
+  };
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault(); // Necessary to allow dropping
+  };
 
   return (
     <div className="bg-[#f0f2f5] min-h-screen flex items-center justify-center p-4 md:p-8 font-sans text-[#3D3D3D]">
@@ -200,6 +216,7 @@ export default function Home() {
                       disabled={beakerContents.length >= 12 || beakerContents.some(c => c.formula === chemical.formula)}
                       title={chemical.name}
                       className="w-full flex-col h-auto"
+                      aria-label={`Add ${chemical.name} to beaker`}
                     >
                       <span className="font-bold text-lg">{chemical.formula}</span>
                       <span className="text-xs text-muted-foreground">{chemical.name}</span>
@@ -210,6 +227,7 @@ export default function Home() {
                         className="absolute top-0 right-0 h-6 w-6 opacity-50 group-hover:opacity-100"
                         onClick={() => handleShowInfo(chemical)}
                         title={`Info on ${chemical.name}`}
+                        aria-label={`Show info for ${chemical.name}`}
                     >
                         <Info size={14} />
                     </Button>
@@ -226,13 +244,19 @@ export default function Home() {
           <div className="w-full">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold">Beaker</h2>
-                <div className="flex items-center gap-2 flex-wrap justify-end">
+                <div className="flex items-center gap-2 flex-wrap justify-end" onDragOver={handleDragOver}>
                   <p className="font-semibold">Contents:</p>
                   {beakerContents.length > 0 ? (
-                    beakerContents.map(c => (
-                      <span key={c.formula} className="flex items-center bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
+                    beakerContents.map((c, index) => (
+                      <span 
+                        key={c.formula}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, index)}
+                        onDrop={(e) => handleDrop(e, index)}
+                        className="flex items-center bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded-full cursor-grab active:cursor-grabbing"
+                      >
                         {c.formula}
-                        <button onClick={() => handleRemoveChemical(c.formula)} className="ml-2 text-blue-600 hover:text-blue-800">
+                        <button onClick={() => handleRemoveChemical(c.formula)} className="ml-2 text-blue-600 hover:text-blue-800" aria-label={`Remove ${c.name}`}>
                           <X size={14}/>
                         </button>
                       </span>
@@ -252,12 +276,14 @@ export default function Home() {
                 icon={<FlaskConical className="h-5 w-5" />}
                 onIncrease={() => changeConcentration(0.1)}
                 onDecrease={() => changeConcentration(-0.1)}
+                ariaLabel="Concentration control"
               />
               <VerticalSlider
                 label={`${temperature}°C`}
                 icon={<Thermometer className="h-5 w-5" />}
                 onIncrease={() => changeTemperature(5)}
                 onDecrease={() => changeTemperature(-5)}
+                ariaLabel="Temperature control"
               />
 
               <BeakerIcon contents={beakerContents} overrideEffects={reactionEffects} className="h-72 w-72" />
@@ -272,7 +298,10 @@ export default function Home() {
                 </CardHeader>
                 <CardContent>
                   <p className="mb-2">{reactionResult.description}</p>
-                  <p className="mb-2"><b>Products:</b> {reactionResult.products.join(', ')}</p>
+                  <p className="mb-2">
+                    <b>Products:</b> 
+                    {reactionResult.products.map(p => `${p.formula} (${p.state})`).join(', ')}
+                  </p>
                   <p className="mb-2 text-sm italic text-gray-600"><b>Analogy:</b> {reactionResult.analogy}</p>
                   <p className="text-sm text-yellow-800 bg-yellow-100 p-2 rounded-md"><b>Safety:</b> {reactionResult.safetyNotes}</p>
                 </CardContent>
@@ -332,27 +361,27 @@ export default function Home() {
                     <h3 className="font-semibold">Ratings</h3>
                     <div className="flex items-center gap-2">
                       <span className="w-28">Reactivity</span>
-                      <Progress value={infoContent.ratings.reactivity * 10} className="w-[60%]" />
+                      <Progress value={infoContent.ratings.reactivity * 10} className="w-[60%]" aria-label={`Reactivity: ${infoContent.ratings.reactivity} out of 10`} />
                     </div>
                      <div className="flex items-center gap-2">
                       <span className="w-28">Flammability</span>
-                      <Progress value={infoContent.ratings.flammability * 10} className="w-[60%]" />
+                      <Progress value={infoContent.ratings.flammability * 10} className="w-[60%]" aria-label={`Flammability: ${infoContent.ratings.flammability} out of 10`} />
                     </div>
                      <div className="flex items-center gap-2">
                       <span className="w-28">Explosiveness</span>
-                      <Progress value={infoContent.ratings.explosiveness * 10} className="w-[60%]" />
+                      <Progress value={infoContent.ratings.explosiveness * 10} className="w-[60%]" aria-label={`Explosiveness: ${infoContent.ratings.explosiveness} out of 10`} />
                     </div>
                      <div className="flex items-center gap-2">
                       <span className="w-28">Radioactivity</span>
-                      <Progress value={infoContent.ratings.radioactivity * 10} className="w-[60%]" />
+                      <Progress value={infoContent.ratings.radioactivity * 10} className="w-[60%]" aria-label={`Radioactivity: ${infoContent.ratings.radioactivity} out of 10`} />
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="w-28">Toxicity</span>
-                      <Progress value={infoContent.ratings.toxicity * 10} className="w-[60%]" />
+                      <Progress value={infoContent.ratings.toxicity * 10} className="w-[60%]" aria-label={`Toxicity: ${infoContent.ratings.toxicity} out of 10`} />
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="w-28">Corrosiveness</span>
-                      <Progress value={infoContent.ratings.corrosiveness * 10} className="w-[60%]" />
+                      <Progress value={infoContent.ratings.corrosiveness * 10} className="w-[60%]" aria-label={`Corrosiveness: ${infoContent.ratings.corrosiveness} out of 10`} />
                     </div>
                   </div>
                   <div>
@@ -390,5 +419,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
