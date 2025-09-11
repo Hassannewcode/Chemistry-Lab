@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState, DragEvent, useRef, useEffect } from 'react';
-import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer } from 'lucide-react';
+import { useState, DragEvent, useMemo } from 'react';
+import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
 import { VerticalSlider } from '@/components/vertical-slider';
@@ -19,6 +19,8 @@ import { Progress } from '@/components/ui/progress';
 import { PeriodicTable } from '@/components/periodic-table';
 import { UsageChart } from '@/components/usage-chart';
 import { CHEMICAL_CATEGORIES, Chemical } from '@/lib/chemicals';
+import { Input } from '@/components/ui/input';
+
 
 type ChemicalCategory = keyof typeof CHEMICAL_CATEGORIES;
 const NAME_LENGTH_THRESHOLD = 18; // Names longer than this will trigger confirmation
@@ -43,6 +45,18 @@ export default function Home() {
   const [isUsageChartOpen, setIsUsageChartOpen] = useState(false);
 
   const [confirmingChemical, setConfirmingChemical] = useState<Chemical | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredChemicals = useMemo(() => {
+    if (!searchQuery) {
+      return CHEMICAL_CATEGORIES[activeCategory];
+    }
+    return CHEMICAL_CATEGORIES[activeCategory].filter(
+      (chemical) =>
+        chemical.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        chemical.formula.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [activeCategory, searchQuery]);
 
 
   const handleAddChemical = (chemical: Chemical) => {
@@ -204,15 +218,26 @@ export default function Home() {
           </div>
           <Card className="shadow-lg">
             <CardHeader>
-              <div className="flex justify-between items-center">
-                  <div>
+              <div className="flex justify-between items-start flex-col sm:flex-row sm:items-center gap-4">
+                  <div className="flex-1">
                     <CardTitle>Select Chemicals</CardTitle>
-                    <CardDescription>Choose up to 12 chemicals & sprays to mix in the beaker.</CardDescription>
+                    <CardDescription>Choose up to 12 chemicals & sprays to mix.</CardDescription>
                   </div>
-                  <Button variant="outline" onClick={() => setIsPeriodicTableOpen(true)}>
-                    <Grid3x3 className="mr-2 h-4 w-4" />
-                    Periodic Table
-                  </Button>
+                  <div className='flex items-center gap-2'>
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                            placeholder="Search..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-10 w-40"
+                        />
+                    </div>
+                    <Button variant="outline" onClick={() => setIsPeriodicTableOpen(true)}>
+                      <Grid3x3 className="mr-2 h-4 w-4" />
+                      Periodic Table
+                    </Button>
+                  </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -229,7 +254,7 @@ export default function Home() {
                 ))}
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-60 overflow-y-auto pr-2">
-                {CHEMICAL_CATEGORIES[activeCategory].map(chemical => (
+                {filteredChemicals.map(chemical => (
                    <div key={chemical.formula} className="relative group">
                     <Button 
                       variant="outline"
@@ -332,7 +357,7 @@ export default function Home() {
                   <div>
                     <h3 className="font-semibold mb-1 text-sm">Products</h3>
                     <p className="text-sm">
-                      {reactionResult.products.map(p => `${p.formula} (${p.state})`).join(', ')}
+                      {reactionResult.products.length > 0 ? reactionResult.products.map(p => `${p.formula} (${p.state})`).join(', ') : 'No new products formed.'}
                     </p>
                   </div>
                    <div className="grid grid-cols-2 gap-4 text-sm">
