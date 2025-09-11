@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Plus, Minus } from 'lucide-react';
 import { Button } from './ui/button';
@@ -30,3 +31,5 @@ export const VerticalSlider: React.FC<VerticalSliderProps> = ({ className, label
     </div>
   );
 };
+
+    

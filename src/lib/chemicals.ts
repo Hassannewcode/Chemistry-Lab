@@ -121,8 +121,7 @@ export const CHEMICAL_CATEGORIES: Record<string, Chemical[]> = {
         { formula: 'C2H2', name: 'Acetylene', effects: { bubbles: 5, explosion: 0.25 } },
         { formula: 'C7H8', name: 'Toluene', effects: { color: '#fffafa' } }, { formula: 'C8H18', name: 'Octane', effects: { explosion: 0.2 } },
         { formula: 'C6H5OH', name: 'Phenol', effects: { color: '#f5f5f5' } }, { formula: 'CH2O', name: 'Formaldehyde', effects: { color: '#f0f8ff' } },
-        { formula: 'C2H4O2', name: 'Acetic Acid', effects: { color: '#f5f5f5' } },
-        { formula: 'C12H22O11', name: 'Sucrose', effects: { color: '#fffafa' } },
+        { formula: 'C2H4O2', name: 'Acetic Acid', effects: { color: '#f5f5f5' } }, { formula: 'C12H22O11', name: 'Sucrose', effects: { color: '#fffafa' } },
     ],
     DISPLACEMENT: [
         { formula: 'Zn + CuSO4', name: 'Zinc + Copper Sulfate', effects: { color: '#d3d3d3', bubbles: 2 } },
@@ -149,3 +148,5 @@ export const CHEMICAL_CATEGORIES: Record<string, Chemical[]> = {
         { formula: 'Ferrofluid', name: 'Ferrofluid', effects: { color: '#2F4F4F', smoke: 0.2 } },
     ],
 };
+
+    
