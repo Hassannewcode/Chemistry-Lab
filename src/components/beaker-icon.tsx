@@ -301,4 +301,5 @@ export const BeakerIcon: React.FC<BeakerIconProps> = ({ contents = [], overrideE
     </svg>
   );
 };
+
     
