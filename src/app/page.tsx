@@ -9,9 +9,9 @@ import { VerticalSlider } from '@/components/vertical-slider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { conductReaction, ConductReactionInput, ConductReactionOutput } from '@/ai/flows/reactionFlow';
-import { getChemicalInfo, ChemicalInfoOutput } from '@/ai/flows/chemicalInfoFlow';
-import { getElementUsage, ElementUsageOutput } from '@/ai/flows/elementUsageFlow';
+import { conductReaction } from '@/ai/flows/reactionFlow';
+import { getChemicalInfo } from '@/ai/flows/chemicalInfoFlow';
+import { getElementUsage } from '@/ai/flows/elementUsageFlow';
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { SoundManager } from '@/components/sound-manager';
@@ -20,6 +20,11 @@ import { PeriodicTable } from '@/components/periodic-table';
 import { UsageChart } from '@/components/usage-chart';
 import { CHEMICAL_CATEGORIES, Chemical } from '@/lib/chemicals';
 import { Input } from '@/components/ui/input';
+import { ChatInterface, ChatMessage } from '@/components/chat-interface';
+import { chatAboutReaction } from '@/ai/flows/chatFlow';
+import type { ConductReactionInput, ConductReactionOutput } from '@/ai/schemas/reactionSchema';
+import type { ChemicalInfoOutput } from '@/ai/schemas/chemicalInfoSchema';
+import type { ElementUsageOutput } from '@/ai/schemas/elementUsageSchema';
 
 
 type ChemicalCategory = keyof typeof CHEMICAL_CATEGORIES;
@@ -47,6 +52,9 @@ export default function Home() {
   const [confirmingChemical, setConfirmingChemical] = useState<Chemical | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+
   const filteredChemicals = useMemo(() => {
     if (!searchQuery) {
       return CHEMICAL_CATEGORIES[activeCategory];
@@ -58,11 +66,15 @@ export default function Home() {
     );
   }, [activeCategory, searchQuery]);
 
+  const resetSimulationState = () => {
+    setReactionResult(null);
+    setReactionEffects(null);
+    setChatHistory([]);
+  }
 
   const handleAddChemical = (chemical: Chemical) => {
     if (beakerContents.length < 12) {
-      setReactionEffects(null);
-      setReactionResult(null);
+      resetSimulationState();
       setBeakerContents([...beakerContents, chemical]);
     }
   };
@@ -97,15 +109,13 @@ export default function Home() {
   };
 
   const handleRemoveChemical = (chemicalFormula: string) => {
-    setReactionEffects(null);
-    setReactionResult(null);
+    resetSimulationState();
     setBeakerContents(beakerContents.filter(c => c.formula !== chemicalFormula));
   };
   
   const handleClearBeaker = () => {
     setBeakerContents([]);
-    setReactionResult(null);
-    setReactionEffects(null);
+    resetSimulationState();
   }
 
   const handleShowInfo = async (chemical: Chemical) => {
@@ -155,8 +165,7 @@ export default function Home() {
   const handleStartReaction = async () => {
     if (beakerContents.length < 2) return;
     setIsLoading(true);
-    setReactionResult(null);
-    setReactionEffects(null);
+    resetSimulationState();
     try {
       const input: ConductReactionInput = {
         chemicals: beakerContents.map(c => c.formula),
@@ -177,6 +186,34 @@ export default function Home() {
       setIsLoading(false);
     }
   };
+
+  const handleSendChatMessage = async (message: string) => {
+    if (!reactionResult) return;
+    
+    const newUserMessage: ChatMessage = { role: 'user', content: message };
+    setChatHistory(prev => [...prev, newUserMessage]);
+    setIsChatLoading(true);
+
+    try {
+        const result = await chatAboutReaction({
+            question: message,
+            reactionContext: {
+                reactants: beakerContents.map(c => c.formula),
+                temperature,
+                concentration,
+                reactionResult,
+            }
+        });
+        const aiMessage: ChatMessage = { role: 'assistant', content: result.answer };
+        setChatHistory(prev => [...prev, aiMessage]);
+    } catch (error) {
+        console.error("Error in chat:", error);
+        const errorMessage: ChatMessage = { role: 'assistant', content: "Sorry, I encountered an error trying to respond. Please try again." };
+        setChatHistory(prev => [...prev, errorMessage]);
+    } finally {
+        setIsChatLoading(false);
+    }
+  }
 
   const changeTemperature = (amount: number) => {
     setTemperature(prev => Math.max(-273, prev + amount));
@@ -291,7 +328,7 @@ export default function Home() {
         <div className="bg-white rounded-2xl shadow-2xl p-6 flex flex-col items-center justify-between border-2 border-gray-200 min-h-[600px]">
           
           <div className="w-full">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
                 <h2 className="text-2xl font-bold">Beaker</h2>
                 <div className="flex items-center gap-2 flex-wrap justify-end" onDragOver={handleDragOver}>
                   <p className="font-semibold">Contents:</p>
@@ -341,41 +378,48 @@ export default function Home() {
           
           <div className='w-full mt-4'>
             {reactionResult && !isLoading && (
-              <Card className="bg-gray-50">
-                <CardHeader>
-                  <CardTitle>{reactionResult.reactionName}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold mb-1 text-sm">Visual Preview</h3>
-                    <p className="text-sm italic text-gray-600">"{reactionResult.visualPreview}"</p>
-                  </div>
-                   <div>
-                    <h3 className="font-semibold mb-1 text-sm">Description</h3>
-                    <p className="text-sm">{reactionResult.description}</p>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-1 text-sm">Products</h3>
-                    <p className="text-sm">
-                      {reactionResult.products.length > 0 ? reactionResult.products.map(p => `${p.formula} (${p.state})`).join(', ') : 'No new products formed.'}
-                    </p>
-                  </div>
-                   <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <h3 className="font-semibold mb-1">Destruction Scale</h3>
-                            <div className="flex items-center gap-2">
-                                <Progress value={reactionResult.destructionScale * 10} className="w-[80%]" />
-                                <span>{reactionResult.destructionScale}/10</span>
-                            </div>
-                        </div>
-                        <div>
-                            <h3 className="font-semibold mb-1">Real-World Success</h3>
-                            <p>{reactionResult.realWorldProbability.success}%</p>
-                        </div>
+              <div className='max-h-[40vh] overflow-y-auto pr-2 space-y-4'>
+                <Card className="bg-gray-50">
+                  <CardHeader>
+                    <CardTitle>{reactionResult.reactionName}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold mb-1 text-sm">Visual Preview</h3>
+                      <p className="text-sm italic text-gray-600">"{reactionResult.visualPreview}"</p>
                     </div>
-                  <p className="text-sm text-yellow-800 bg-yellow-100 p-2 rounded-md"><b>Safety:</b> {reactionResult.safetyNotes}</p>
-                </CardContent>
-              </Card>
+                     <div>
+                      <h3 className="font-semibold mb-1 text-sm">Description</h3>
+                      <p className="text-sm">{reactionResult.description}</p>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-1 text-sm">Products</h3>
+                      <p className="text-sm">
+                        {reactionResult.products.length > 0 ? reactionResult.products.map(p => `${p.formula} (${p.state})`).join(', ') : 'No new products formed.'}
+                      </p>
+                    </div>
+                     <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                              <h3 className="font-semibold mb-1">Destruction Scale</h3>
+                              <div className="flex items-center gap-2">
+                                  <Progress value={reactionResult.destructionScale * 10} className="w-[80%]" />
+                                  <span>{reactionResult.destructionScale}/10</span>
+                              </div>
+                          </div>
+                          <div>
+                              <h3 className="font-semibold mb-1">Real-World Success</h3>
+                              <p>{reactionResult.realWorldProbability.success}%</p>
+                          </div>
+                      </div>
+                    <p className="text-sm text-yellow-800 bg-yellow-100 p-2 rounded-md"><b>Safety:</b> {reactionResult.safetyNotes}</p>
+                  </CardContent>
+                </Card>
+                <ChatInterface
+                    messages={chatHistory}
+                    onSendMessage={handleSendChatMessage}
+                    isLoading={isChatLoading}
+                />
+              </div>
             )}
             <Button 
               className="w-full mt-4 h-14 text-xl" 
@@ -505,5 +549,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
