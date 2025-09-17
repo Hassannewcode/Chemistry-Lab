@@ -256,12 +256,12 @@ export default function Home() {
             </p>
           </div>
           <Card className="shadow-lg">
-            <CardHeader className="flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <CardHeader className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <CardTitle>Select Chemicals</CardTitle>
                   <CardDescription>Choose up to 12 chemicals & sprays to mix.</CardDescription>
                 </div>
-                <div className='flex items-center gap-2 flex-wrap justify-end'>
+                <div className='flex items-center gap-2'>
                   <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input 
