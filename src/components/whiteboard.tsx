@@ -1,7 +1,7 @@
 'use client'
 
 import { Tldraw } from 'tldraw'
-import '@tldraw/tldraw/tldraw.css'
+import 'tldraw/tldraw.css'
 
 export function Whiteboard() {
 	return (
