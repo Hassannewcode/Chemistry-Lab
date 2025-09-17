@@ -14,7 +14,7 @@ function WelcomeMessage() {
 		// A small delay to ensure the editor is ready
 		setTimeout(() => {
 			const textShape = {
-				id: 'text-1',
+				id: 'shape:text-1',
 				type: 'text',
 				x: 120,
 				y: 180,
@@ -28,7 +28,7 @@ function WelcomeMessage() {
 			editor.createShapes([textShape]);
 
 			setTimeout(() => {
-				editor.select('text-1');
+				editor.select('shape:text-1');
 				editor.zoomToSelection({
 					padding: 2,
 					animation: { duration: 500 },
