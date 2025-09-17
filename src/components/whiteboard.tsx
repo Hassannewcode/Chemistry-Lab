@@ -1,3 +1,4 @@
+
 'use client'
 
 import { Tldraw, useEditor, TLComponents, TLUiComponents, track } from 'tldraw'
@@ -60,6 +61,8 @@ function Content({ chemicals }: WhiteboardProps) {
 
 		// A small delay to ensure the editor is ready
 		setTimeout(() => {
+			if (!editor.allShapeIds) return; // Guard against race condition
+
 			const existingShapes = Array.from(editor.allShapeIds);
 			const shapesToCreate: any[] = [];
 			const shapeIdsToSelect: string[] = [];
