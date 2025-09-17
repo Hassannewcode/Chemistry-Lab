@@ -1,7 +1,7 @@
 
 'use client'
 
-import { Tldraw, useEditor, TLComponents, TLUiComponents, track, getSvgAsImage } from 'tldraw'
+import { Tldraw, useEditor, TLComponents, TLUiComponents, track, getSvgAsImage, Editor } from 'tldraw'
 import 'tldraw/tldraw.css'
 import { useEffect, useState } from 'react';
 import type { Chemical } from '@/lib/chemicals';
@@ -29,6 +29,7 @@ const WelcomeMessage = ({ onDismiss }: { onDismiss: () => void }) => {
 				zIndex: 1000,
 				textAlign: 'center',
 				maxWidth: '400px',
+                pointerEvents: 'all', // Make sure it can receive clicks for the button
 			}}
 		>
 			<h2 style={{ marginTop: 0, fontSize: '1.5rem', color: '#333' }}>Welcome to the Invention Canvas!</h2>
@@ -59,7 +60,6 @@ function CustomUi({ addMessageToChat }: { addMessageToChat: (message: string) =>
 	const editor = useEditor()
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
-    const [showWelcome, setShowWelcome] = useState(true);
 
 	const handleAnalyze = async () => {
 		setIsLoading(true);
@@ -138,7 +138,6 @@ ${result.prediction}
 
 	return (
 		<div style={{ position: 'absolute', zIndex: 300, top: '10px', right: '10px', display: 'flex', gap: '10px' }}>
-            {showWelcome && <WelcomeMessage onDismiss={() => setShowWelcome(false)} />}
 			<button
 				onClick={handleAnalyze}
 				disabled={isLoading}
@@ -221,11 +220,27 @@ function Content({ chemicals }: Pick<WhiteboardProps, 'chemicals'>) {
 
 
 export function Whiteboard({ chemicals, addMessageToChat }: WhiteboardProps) {
+    const [showWelcome, setShowWelcome] = useState(true);
+    const [editor, setEditor] = useState<Editor | null>(null);
+
+    const handlePointerDown = () => {
+        if(showWelcome) {
+            setShowWelcome(false);
+        }
+    }
+
 	return (
 		<div style={{ position: 'absolute', inset: 0 }}>
 			<Tldraw 
+                onMount={(editor) => setEditor(editor)}
+                onPointerDown={handlePointerDown}
                 components={{
-                    UI: (props) => <CustomUi {...props} addMessageToChat={addMessageToChat} />
+                    UI: (props) => (
+                        <>
+                            <CustomUi {...props} addMessageToChat={addMessageToChat} />
+                            {showWelcome && <WelcomeMessage onDismiss={() => setShowWelcome(false)} />}
+                        </>
+                    )
                 }}
             >
 				<Content chemicals={chemicals} />
