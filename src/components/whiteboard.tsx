@@ -1,13 +1,14 @@
 
 'use client'
 
-import { Tldraw, useEditor, TLComponents, TLUiComponents, track, getSvgAsImage, Editor } from 'tldraw'
+import { Tldraw, useEditor, Editor } from 'tldraw'
 import 'tldraw/tldraw.css'
 import { useEffect, useState } from 'react';
 import type { Chemical } from '@/lib/chemicals';
 import { analyzeWhiteboard } from '@/ai/flows/whiteboardAnalysisFlow';
 import { Loader2, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getSvgAsImage } from 'tldraw';
 
 interface WhiteboardProps {
     chemicals: Chemical[];
@@ -94,7 +95,6 @@ ${result.prediction}
             // Add analysis to chat and create a shape on canvas
             addMessageToChat(analysisText);
 
-            const allShapes = Array.from(editor.allShapeIds);
             const analysisShapeId = 'shape:analysis-result';
             const existingAnalysisShape = editor.getShape(analysisShapeId);
             
@@ -221,7 +221,6 @@ function Content({ chemicals }: Pick<WhiteboardProps, 'chemicals'>) {
 
 export function Whiteboard({ chemicals, addMessageToChat }: WhiteboardProps) {
     const [showWelcome, setShowWelcome] = useState(true);
-    const [editor, setEditor] = useState<Editor | null>(null);
 
     const handlePointerDown = () => {
         if(showWelcome) {
@@ -232,7 +231,6 @@ export function Whiteboard({ chemicals, addMessageToChat }: WhiteboardProps) {
 	return (
 		<div style={{ position: 'absolute', inset: 0 }}>
 			<Tldraw 
-                onMount={(editor) => setEditor(editor)}
                 onPointerDown={handlePointerDown}
                 components={{
                     UI: (props) => (
