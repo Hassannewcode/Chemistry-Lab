@@ -262,7 +262,7 @@ export default function Home() {
                     <CardTitle>Select Chemicals</CardTitle>
                     <CardDescription>Choose up to 12 chemicals & sprays to mix.</CardDescription>
                   </div>
-                  <div className='flex items-center gap-2'>
+                  <div className='flex items-center gap-2 flex-wrap'>
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input 
@@ -568,14 +568,16 @@ export default function Home() {
       </Dialog>
 
       <Dialog open={isWhiteboardOpen} onOpenChange={setIsWhiteboardOpen}>
-        <DialogContent className="max-w-none w-full h-full p-0">
-            <DialogHeader className="sr-only">
+        <DialogContent className="max-w-none w-full h-[90vh] flex flex-col p-0">
+            <DialogHeader className="p-4 pb-0">
               <DialogTitle>Whiteboard</DialogTitle>
               <DialogDescription>
                 An interactive whiteboard for jotting down notes and diagrams.
               </DialogDescription>
             </DialogHeader>
-            <Whiteboard />
+            <div className="relative flex-1">
+              <Whiteboard />
+            </div>
             <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground z-10 bg-white">
                 <X className="h-4 w-4" />
                 <span className="sr-only">Close</span>
@@ -587,4 +589,3 @@ export default function Home() {
   );
 }
 
-    
