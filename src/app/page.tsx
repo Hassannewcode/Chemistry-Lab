@@ -256,32 +256,30 @@ export default function Home() {
             </p>
           </div>
           <Card className="shadow-lg">
-            <CardHeader>
-              <div className="flex justify-between items-start flex-col sm:flex-row sm:items-center gap-4">
-                  <div className="flex-1">
-                    <CardTitle>Select Chemicals</CardTitle>
-                    <CardDescription>Choose up to 12 chemicals & sprays to mix.</CardDescription>
+            <CardHeader className="flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <CardTitle>Select Chemicals</CardTitle>
+                  <CardDescription>Choose up to 12 chemicals & sprays to mix.</CardDescription>
+                </div>
+                <div className='flex items-center gap-2 flex-wrap justify-end'>
+                  <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                          placeholder="Search..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-10 w-32"
+                      />
                   </div>
-                  <div className='flex items-center gap-2 flex-wrap'>
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                            placeholder="Search..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 w-40"
-                        />
-                    </div>
-                    <Button variant="outline" onClick={() => setIsPeriodicTableOpen(true)}>
-                      <Grid3x3 className="mr-2 h-4 w-4" />
-                      Periodic Table
-                    </Button>
-                     <Button variant="outline" onClick={() => setIsWhiteboardOpen(true)}>
-                      <PenSquare className="mr-2 h-4 w-4" />
-                      Whiteboard
-                    </Button>
-                  </div>
-              </div>
+                  <Button variant="outline" onClick={() => setIsPeriodicTableOpen(true)}>
+                    <Grid3x3 className="mr-2 h-4 w-4" />
+                    Periodic Table
+                  </Button>
+                   <Button variant="outline" onClick={() => setIsWhiteboardOpen(true)}>
+                    <PenSquare className="mr-2 h-4 w-4" />
+                    Whiteboard
+                  </Button>
+                </div>
             </CardHeader>
             <CardContent>
                <div className="w-full bg-gray-200 p-1 rounded-full mb-6 flex flex-wrap justify-center gap-1">
@@ -589,3 +587,4 @@ export default function Home() {
   );
 }
 
+    
