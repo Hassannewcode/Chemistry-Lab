@@ -275,9 +275,8 @@ export default function Home() {
                     <Grid3x3 className="mr-2 h-4 w-4" />
                     Periodic Table
                   </Button>
-                   <Button variant="outline" onClick={() => setIsWhiteboardOpen(true)}>
-                    <PenSquare className="mr-2 h-4 w-4" />
-                    Whiteboard
+                   <Button variant="outline" size="icon" onClick={() => setIsWhiteboardOpen(true)} aria-label="Open whiteboard">
+                    <PenSquare className="h-4 w-4" />
                   </Button>
                 </div>
             </CardHeader>
