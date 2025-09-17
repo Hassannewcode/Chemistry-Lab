@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, DragEvent, useMemo } from 'react';
-import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb } from 'lucide-react';
+import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
 import { VerticalSlider } from '@/components/vertical-slider';
@@ -25,6 +25,7 @@ import { chatAboutReaction } from '@/ai/flows/chatFlow';
 import type { ConductReactionInput, ConductReactionOutput } from '@/ai/schemas/reactionSchema';
 import type { ChemicalInfoOutput } from '@/ai/schemas/chemicalInfoSchema';
 import type { ElementUsageOutput } from '@/ai/schemas/elementUsageSchema';
+import { Whiteboard } from '@/components/whiteboard';
 
 
 type ChemicalCategory = keyof typeof CHEMICAL_CATEGORIES;
@@ -48,6 +49,7 @@ export default function Home() {
   const [isUsageChartLoading, setIsUsageChartLoading] = useState(false);
   const [isPeriodicTableOpen, setIsPeriodicTableOpen] = useState(false);
   const [isUsageChartOpen, setIsUsageChartOpen] = useState(false);
+  const [isWhiteboardOpen, setIsWhiteboardOpen] = useState(false);
 
   const [confirmingChemical, setConfirmingChemical] = useState<Chemical | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -273,6 +275,10 @@ export default function Home() {
                     <Button variant="outline" onClick={() => setIsPeriodicTableOpen(true)}>
                       <Grid3x3 className="mr-2 h-4 w-4" />
                       Periodic Table
+                    </Button>
+                     <Button variant="outline" onClick={() => setIsWhiteboardOpen(true)}>
+                      <PenSquare className="mr-2 h-4 w-4" />
+                      Whiteboard
                     </Button>
                   </div>
               </div>
@@ -560,6 +566,13 @@ export default function Home() {
             <PeriodicTable onElementClick={handleAddElementFromTable} beakerContents={beakerContents} />
         </DialogContent>
       </Dialog>
+
+      <Dialog open={isWhiteboardOpen} onOpenChange={setIsWhiteboardOpen}>
+        <DialogContent className="max-w-none w-screen h-screen p-0">
+          <Whiteboard />
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
