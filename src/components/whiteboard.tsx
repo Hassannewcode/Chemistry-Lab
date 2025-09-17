@@ -55,19 +55,24 @@ const WelcomeMessage = ({ onDismiss }: { onDismiss: () => void }) => {
 	)
 }
 
-function CustomUi() {
+function CustomUi({ addMessageToChat }: { addMessageToChat: (message: string) => void }) {
 	const editor = useEditor()
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
-    const [analysisResult, setAnalysisResult] = useState<{title: string, apparatus: string, prediction: string} | null>(null);
     const [showWelcome, setShowWelcome] = useState(true);
 
 	const handleAnalyze = async () => {
 		setIsLoading(true);
-        setAnalysisResult(null);
 
         try {
-            const svg = await editor.getSvg(Array.from(editor.allShapeIds));
+            // Give a little buffer for the shapes to be fully rendered
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            const svg = await editor.getSvg(Array.from(editor.allShapeIds), {
+                scale: 1.5,
+                background: true,
+            });
+
             if (!svg) {
                 throw new Error('Could not generate SVG from whiteboard content.');
             }
@@ -77,30 +82,47 @@ function CustomUi() {
             const result = await analyzeWhiteboard({ diagram: dataUrl });
 
             const analysisText = `
-                ### Whiteboard Analysis: ${result.title}
-                **Apparatus:**
-                ${result.apparatus}
-                **Prediction:**
-                ${result.prediction}
+### Whiteboard Analysis: "${result.title}"
+
+**Apparatus:**
+${result.apparatus}
+
+**Prediction:**
+${result.prediction}
             `;
 
-            // Create a shape on the canvas with the analysis
-            editor.createShapes([
-                {
-                    id: 'shape:analysis-result',
-                    type: 'text',
-                    x: 100,
-                    y: editor.viewport.camera.y + editor.viewport.screenBounds.height - 300,
-                    props: {
-                        text: analysisText,
-                        size: 'm',
-                        align: 'start',
-                        w: 400
+            // Add analysis to chat and create a shape on canvas
+            addMessageToChat(analysisText);
+
+            const allShapes = Array.from(editor.allShapeIds);
+            const analysisShapeId = 'shape:analysis-result';
+            const existingAnalysisShape = editor.getShape(analysisShapeId);
+            
+            const newShapeProps = {
+                text: analysisText,
+                size: 'm',
+                align: 'start',
+                w: 400
+            };
+
+            if (existingAnalysisShape) {
+                editor.updateShapes([{ id: analysisShapeId, type: 'text', props: newShapeProps }]);
+            } else {
+                 editor.createShapes([
+                    {
+                        id: analysisShapeId,
+                        type: 'text',
+                        x: editor.viewport.camera.x + 50,
+                        y: editor.viewport.camera.y + editor.viewport.screenBounds.height - 350,
+                        props: newShapeProps
                     }
-                }
-            ]);
-            editor.select('shape:analysis-result');
-            editor.zoomToSelection();
+                ]);
+            }
+           
+            editor.select(analysisShapeId);
+            editor.bringToFront([analysisShapeId]);
+            editor.zoomToSelection({ padding: 2, animation: { duration: 500 } });
+
 
 		} catch (e: any) {
 			console.error(e)
@@ -140,7 +162,7 @@ function CustomUi() {
 }
 
 
-function Content({ chemicals }: WhiteboardProps) {
+function Content({ chemicals }: Pick<WhiteboardProps, 'chemicals'>) {
 	const editor = useEditor()
 
 	useEffect(() => {
@@ -155,8 +177,8 @@ function Content({ chemicals }: WhiteboardProps) {
 			const shapeIdsToSelect: string[] = [];
 			
 			chemicals.forEach((chemical, index) => {
-				const shapeId = `shape:chemical-${chemical.formula}`;
-				if (!existingShapes.includes(shapeId)) {
+				const shapeId = `shape:chemical-${chemical.formula.replace(/\s/g, '_')}`;
+				if (!editor.getShape(shapeId)) {
 					shapesToCreate.push({
 						id: shapeId,
 						type: 'geo',
@@ -168,8 +190,9 @@ function Content({ chemicals }: WhiteboardProps) {
 							h: 100,
 							fill: 'solid',
 							color: 'light-violet',
-							label: chemical.formula,
-							size: 'm',
+                            font: 'draw',
+							text: chemical.formula,
+							size: 'xl',
 						},
 					});
 				}
@@ -202,7 +225,7 @@ export function Whiteboard({ chemicals, addMessageToChat }: WhiteboardProps) {
 		<div style={{ position: 'absolute', inset: 0 }}>
 			<Tldraw 
                 components={{
-                    UI: CustomUi
+                    UI: (props) => <CustomUi {...props} addMessageToChat={addMessageToChat} />
                 }}
             >
 				<Content chemicals={chemicals} />
