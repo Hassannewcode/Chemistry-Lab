@@ -60,7 +60,7 @@ function Content({ chemicals }: WhiteboardProps) {
 
 		// A small delay to ensure the editor is ready
 		setTimeout(() => {
-			const existingShapes = Array.from(editor.getShapeIds());
+			const existingShapes = Array.from(editor.allShapeIds);
 			const shapesToCreate: any[] = [];
 			const shapeIdsToSelect: string[] = [];
 
