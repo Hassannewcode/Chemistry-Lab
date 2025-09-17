@@ -190,13 +190,20 @@ export default function Home() {
   };
 
   const handleSendChatMessage = async (message: string) => {
-    if (!reactionResult) return;
+    if (!reactionResult && chatHistory.length === 0) return;
     
     const newUserMessage: ChatMessage = { role: 'user', content: message };
     setChatHistory(prev => [...prev, newUserMessage]);
     setIsChatLoading(true);
 
     try {
+        if (!reactionResult) {
+            // Handle case where chat is initiated without a reaction
+            const aiMessage: ChatMessage = { role: 'assistant', content: "Please run a reaction first before asking questions about it." };
+            setChatHistory(prev => [...prev, aiMessage]);
+            return;
+        }
+
         const result = await chatAboutReaction({
             question: message,
             reactionContext: {
@@ -216,6 +223,10 @@ export default function Home() {
         setIsChatLoading(false);
     }
   }
+
+    const addMessageToChat = (content: string, role: 'user' | 'assistant' = 'assistant') => {
+        setChatHistory(prev => [...prev, { role, content }]);
+    }
 
   const changeTemperature = (amount: number) => {
     setTemperature(prev => Math.max(-273, prev + amount));
@@ -256,28 +267,28 @@ export default function Home() {
             </p>
           </div>
           <Card className="shadow-lg">
-            <CardHeader className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <CardTitle>Select Chemicals</CardTitle>
-                  <CardDescription>Choose up to 12 chemicals & sprays to mix.</CardDescription>
+                    <CardTitle>Select Chemicals</CardTitle>
+                    <CardDescription>Choose up to 12 chemicals & sprays to mix.</CardDescription>
                 </div>
                 <div className='flex items-center gap-2'>
-                  <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                          placeholder="Search..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="pl-10 w-32"
-                      />
-                  </div>
-                  <Button variant="outline" onClick={() => setIsPeriodicTableOpen(true)}>
-                    <Grid3x3 className="mr-2 h-4 w-4" />
-                    Periodic Table
-                  </Button>
-                   <Button variant="outline" size="icon" onClick={() => setIsWhiteboardOpen(true)} aria-label="Open whiteboard">
-                    <PenSquare className="h-4 w-4" />
-                  </Button>
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                            placeholder="Search..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-10 w-32"
+                        />
+                    </div>
+                    <Button variant="outline" onClick={() => setIsPeriodicTableOpen(true)}>
+                        <Grid3x3 className="mr-2 h-4 w-4" />
+                        Periodic Table
+                    </Button>
+                    <Button variant="outline" size="icon" onClick={() => setIsWhiteboardOpen(true)} aria-label="Open whiteboard">
+                        <PenSquare className="h-4 w-4" />
+                    </Button>
                 </div>
             </CardHeader>
             <CardContent>
@@ -380,60 +391,63 @@ export default function Home() {
           </div>
           
           <div className='w-full mt-4'>
-            {reactionResult && !isLoading && (
+            {((reactionResult && !isLoading) || chatHistory.length > 0) && (
               <div className='max-h-[40vh] overflow-y-auto pr-2 space-y-4'>
-                <Card className="bg-gray-50">
-                  <CardHeader>
-                    <CardTitle>{reactionResult.reactionName}</CardTitle>
-                    <CardDescription className="!mt-2 text-base italic text-gray-600">
-                        "{reactionResult.visualPreview}"
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4 text-sm">
-                     <div>
-                      <h3 className="font-semibold mb-1">Description</h3>
-                      <p>{reactionResult.description}</p>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold mb-1">Products</h3>
-                      <p>
-                        {reactionResult.products.length > 0 ? reactionResult.products.map(p => `${p.formula} (${p.state})`).join(', ') : 'No new products formed.'}
-                      </p>
-                    </div>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {reactionResult && (
+                    <Card className="bg-gray-50">
+                    <CardHeader>
+                        <CardTitle>{reactionResult.reactionName}</CardTitle>
+                        <CardDescription className="!mt-2 text-base italic text-gray-600">
+                            "{reactionResult.visualPreview}"
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4 text-sm">
                         <div>
-                            <h3 className="font-semibold mb-1">Real-World Analogies</h3>
-                            <div className="space-y-2">
-                                {reactionResult.analogies.map((analogy, index) => (
-                                    <div key={index} className="flex items-center gap-2 text-xs p-2 bg-gray-100 rounded-md">
-                                        <Lightbulb className="h-4 w-4 text-yellow-500" />
-                                        <span className="font-semibold">{analogy.aspect}:</span>
-                                        <span>~ {analogy.comparison}</span>
-                                    </div>
-                                ))}
+                        <h3 className="font-semibold mb-1">Description</h3>
+                        <p>{reactionResult.description}</p>
+                        </div>
+                        <div>
+                        <h3 className="font-semibold mb-1">Products</h3>
+                        <p>
+                            {reactionResult.products.length > 0 ? reactionResult.products.map(p => `${p.formula} (${p.state})`).join(', ') : 'No new products formed.'}
+                        </p>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <h3 className="font-semibold mb-1">Real-World Analogies</h3>
+                                <div className="space-y-2">
+                                    {reactionResult.analogies.map((analogy, index) => (
+                                        <div key={index} className="flex items-center gap-2 text-xs p-2 bg-gray-100 rounded-md">
+                                            <Lightbulb className="h-4 w-4 text-yellow-500" />
+                                            <span className="font-semibold">{analogy.aspect}:</span>
+                                            <span>~ {analogy.comparison}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                            <div>
+                                <h3 className="font-semibold mb-1">Destruction Scale</h3>
+                                <div className="flex items-center gap-2">
+                                    <Progress value={reactionResult.destructionScale * 10} className="w-[80%]" aria-label={`Destruction scale: ${reactionResult.destructionScale} out of 10`} />
+                                    <span>{reactionResult.destructionScale}/10</span>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold mb-1">Real-World Success</h3>
+                                <p>{reactionResult.realWorldProbability.success}%</p>
+                            </div>
                             </div>
                         </div>
-                        <div className="space-y-4">
-                           <div>
-                              <h3 className="font-semibold mb-1">Destruction Scale</h3>
-                              <div className="flex items-center gap-2">
-                                  <Progress value={reactionResult.destructionScale * 10} className="w-[80%]" aria-label={`Destruction scale: ${reactionResult.destructionScale} out of 10`} />
-                                  <span>{reactionResult.destructionScale}/10</span>
-                              </div>
-                          </div>
-                          <div>
-                              <h3 className="font-semibold mb-1">Real-World Success</h3>
-                              <p>{reactionResult.realWorldProbability.success}%</p>
-                          </div>
-                        </div>
-                      </div>
-                    <p className="text-sm text-yellow-800 bg-yellow-100 p-2 rounded-md"><b>Safety:</b> {reactionResult.safetyNotes}</p>
-                  </CardContent>
-                </Card>
+                        <p className="text-sm text-yellow-800 bg-yellow-100 p-2 rounded-md"><b>Safety:</b> {reactionResult.safetyNotes}</p>
+                    </CardContent>
+                    </Card>
+                )}
                 <ChatInterface
                     messages={chatHistory}
                     onSendMessage={handleSendChatMessage}
                     isLoading={isChatLoading}
+                    hasReaction={!!reactionResult}
                 />
               </div>
             )}
@@ -573,7 +587,7 @@ export default function Home() {
               </DialogDescription>
             </DialogHeader>
             <div className="relative flex-1">
-              <Whiteboard chemicals={beakerContents} />
+                <Whiteboard chemicals={beakerContents} addMessageToChat={addMessageToChat} />
             </div>
             <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground z-10 bg-white">
                 <X className="h-4 w-4" />
@@ -585,5 +599,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

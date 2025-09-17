@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Avatar, AvatarFallback } from './ui/avatar';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -18,9 +18,10 @@ interface ChatInterfaceProps {
   messages: ChatMessage[];
   onSendMessage: (message: string) => void;
   isLoading: boolean;
+  hasReaction: boolean;
 }
 
-export const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMessage, isLoading }) => {
+export const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMessage, isLoading, hasReaction }) => {
   const [inputValue, setInputValue] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -47,6 +48,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMe
     }
   };
 
+  const canChat = hasReaction || messages.length > 0;
+
   return (
     <div className="mt-4 border rounded-lg bg-gray-50 p-4 space-y-4">
         <h3 className="font-semibold text-sm text-center text-gray-700">Ask a follow-up question</h3>
@@ -59,9 +62,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMe
                         <AvatarFallback><Bot size={14}/></AvatarFallback>
                     </Avatar>
                 )}
-                <div className={cn('max-w-xs md:max-w-md rounded-lg p-3 text-sm', message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
-                    <p>{message.content}</p>
-                </div>
+                <div 
+                    className={cn(
+                        'max-w-xs md:max-w-md rounded-lg p-3 text-sm prose', 
+                        message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                    )}
+                    dangerouslySetInnerHTML={{ __html: message.content.replace(/\n/g, '<br />') }}
+                />
+
                 {message.role === 'user' && (
                     <Avatar className="h-6 w-6">
                         <AvatarFallback><User size={14}/></AvatarFallback>
@@ -86,14 +94,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMe
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="e.g., Is this reaction dangerous?"
-          disabled={isLoading}
+          placeholder={canChat ? "e.g., Is this reaction dangerous?" : "Run a reaction first..."}
+          disabled={isLoading || !canChat}
         />
-        <Button onClick={handleSendMessage} disabled={isLoading || !inputValue.trim()} size="icon">
+        <Button onClick={handleSendMessage} disabled={isLoading || !inputValue.trim() || !canChat} size="icon">
             <Send className="h-4 w-4" />
         </Button>
       </div>
     </div>
   );
 };
-    
