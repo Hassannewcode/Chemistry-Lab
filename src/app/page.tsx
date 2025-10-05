@@ -72,7 +72,7 @@ export default function Home() {
   const [customChemicalName, setCustomChemicalName] = useState('');
   const [isCreatingCustom, setIsCreatingCustom] = useState(false);
   const [customChemicals, setCustomChemicals] = useState<Chemical[]>([]);
-  const [showFormulasForCustom, setShowFormulasForCustom] = useState(false);
+  const [showCommonName, setShowCommonName] = useState(false);
   
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -271,7 +271,7 @@ export default function Home() {
     resetSimulationState();
     try {
       const input: ConductReactionInput = {
-        chemicals: beakerContents.map(c => c.formula),
+        chemicals: beakerContents.map(c => c.promptName || c.formula),
         temperature,
         concentration
       };
@@ -310,7 +310,7 @@ export default function Home() {
         const result = await chatAboutReaction({
             question: message,
             reactionContext: {
-                reactants: beakerContents.map(c => c.formula),
+                reactants: beakerContents.map(c => c.promptName || c.formula),
                 temperature,
                 concentration,
                 reactionResult,
@@ -478,7 +478,7 @@ const handleRevertHistory = (state: LabState) => {
                                 <Sparkles className="h-4 w-4 mr-2" />
                                 Create a Custom Item
                             </Button>
-                            <Button variant="outline" size="icon" onClick={() => setShowFormulasForCustom(p => !p)} title="Toggle Name/Formula">
+                            <Button variant="outline" size="icon" onClick={() => setShowCommonName(p => !p)} title="Toggle Common/Scientific Name">
                                 <Replace className="h-4 w-4" />
                             </Button>
                         </div>
@@ -494,12 +494,12 @@ const handleRevertHistory = (state: LabState) => {
                                             variant="outline"
                                             onClick={() => handleChemicalClick(chemical)}
                                             disabled={beakerContents.length >= 12 || beakerContents.some(c => c.formula === chemical.formula)}
-                                            title={chemical.name}
+                                            title={showCommonName ? chemical.name : chemical.promptName}
                                             className="w-full flex-col h-auto"
                                             aria-label={`Add ${chemical.name} to beaker`}
                                         >
-                                            <span className="font-bold text-lg truncate w-full">{showFormulasForCustom ? chemical.formula : (chemical.promptName || chemical.name)}</span>
-                                            <span className="text-xs text-muted-foreground truncate w-full">{showFormulasForCustom ? (chemical.promptName || chemical.name) : chemical.formula}</span>
+                                            <span className="font-bold text-lg truncate w-full">{showCommonName ? chemical.promptName : chemical.name}</span>
+                                            <span className="text-xs text-muted-foreground truncate w-full">{chemical.formula}</span>
                                         </Button>
                                         <Button 
                                             size="icon" 
@@ -517,6 +517,7 @@ const handleRevertHistory = (state: LabState) => {
                                     </div>
                                 </TooltipTrigger>
                                 <TooltipContent>
+                                    <p>Original input: {chemical.promptName}</p>
                                     <p>Scientific name: {chemical.name}</p>
                                 </TooltipContent>
                             </Tooltip>
@@ -940,7 +941,5 @@ const handleRevertHistory = (state: LabState) => {
     </div>
   );
 }
-
-    
 
     

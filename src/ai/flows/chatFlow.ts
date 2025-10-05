@@ -19,6 +19,7 @@ const prompt = ai.definePrompt({
   prompt: `You are a brilliant, knowledgeable, and direct chemistry expert. You are analyzing the results of a virtual experiment.
   A user will ask you a question about the reaction that just occurred. Use the provided context to form your answer.
   Be helpful, accurate, and straightforward. Do not be evasive. If the user asks about the potential dangers or destructive power, answer factually based on the data.
+  When referring to reactants, use their common name if available (e.g. 'Baking Soda' instead of 'NaHCO3').
 
   **Reaction Context:**
   - **Reactants**: {{reactionContext.reactants}}
@@ -79,4 +80,5 @@ const chatFlow = ai.defineFlow(
     return output!;
   }
 );
+
     
