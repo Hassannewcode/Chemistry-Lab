@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, DragEvent, useMemo } from 'react';
-import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare } from 'lucide-react';
+import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
 import { VerticalSlider } from '@/components/vertical-slider';
@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { conductReaction } from '@/ai/flows/reactionFlow';
 import { getChemicalInfo } from '@/ai/flows/chemicalInfoFlow';
 import { getElementUsage } from '@/ai/flows/elementUsageFlow';
+import { createChemical } from '@/ai/flows/createChemicalFlow';
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { SoundManager } from '@/components/sound-manager';
@@ -28,7 +29,7 @@ import type { ElementUsageOutput } from '@/ai/schemas/elementUsageSchema';
 import { Whiteboard } from '@/components/whiteboard';
 
 
-type ChemicalCategory = keyof typeof CHEMICAL_CATEGORIES;
+type ChemicalCategory = keyof typeof CHEMICAL_CATEGORIES | 'CUSTOM';
 const NAME_LENGTH_THRESHOLD = 18; // Names longer than this will trigger confirmation
 
 export default function Home() {
@@ -53,20 +54,34 @@ export default function Home() {
 
   const [confirmingChemical, setConfirmingChemical] = useState<Chemical | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [customChemicalName, setCustomChemicalName] = useState('');
+  const [isCreatingCustom, setIsCreatingCustom] = useState(false);
+  const [customChemicals, setCustomChemicals] = useState<Chemical[]>([]);
 
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
 
-  const filteredChemicals = useMemo(() => {
-    if (!searchQuery) {
-      return CHEMICAL_CATEGORIES[activeCategory];
+  const allChemicalCategories = useMemo(() => {
+    const categories: Record<string, Chemical[]> = {...CHEMICAL_CATEGORIES};
+    if (customChemicals.length > 0) {
+      categories.CUSTOM = customChemicals;
     }
-    return CHEMICAL_CATEGORIES[activeCategory].filter(
+    return categories;
+  }, [customChemicals]);
+
+  const filteredChemicals = useMemo(() => {
+    if (activeCategory === 'CUSTOM') {
+        return customChemicals;
+    }
+    if (!searchQuery) {
+      return allChemicalCategories[activeCategory] || [];
+    }
+    return (allChemicalCategories[activeCategory] || []).filter(
       (chemical) =>
         chemical.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         chemical.formula.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [activeCategory, searchQuery]);
+  }, [activeCategory, searchQuery, allChemicalCategories, customChemicals]);
 
   const resetSimulationState = () => {
     setReactionResult(null);
@@ -217,6 +232,43 @@ export default function Home() {
     }
   }
 
+  const handleCreateCustomChemical = async () => {
+    if (!customChemicalName.trim()) return;
+    setIsCreatingCustom(true);
+    try {
+        const result = await createChemical({ name: customChemicalName });
+        if (result.found && result.formula && result.name) {
+            const newChemical: Chemical = {
+                formula: result.formula,
+                name: result.name,
+                isElement: false,
+                effects: result.effects || {},
+            };
+            setCustomChemicals(prev => [...prev, newChemical]);
+            setCustomChemicalName('');
+            toast({
+                title: 'Chemical Created!',
+                description: `${newChemical.name} (${newChemical.formula}) is now available.`,
+            });
+        } else {
+            toast({
+                variant: "destructive",
+                title: 'Chemical Not Found',
+                description: `Could not find a real chemical named "${customChemicalName}".`,
+            });
+        }
+    } catch (error) {
+        console.error("Error creating custom chemical:", error);
+        toast({
+            variant: "destructive",
+            title: "Creation Error",
+            description: "An AI error occurred while creating the chemical.",
+        });
+    } finally {
+        setIsCreatingCustom(false);
+    }
+};
+
   const changeTemperature = (amount: number) => {
     setTemperature(prev => Math.max(-273, prev + amount));
   }
@@ -282,7 +334,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
                <div className="w-full bg-gray-200 p-1 rounded-full mb-6 flex flex-wrap justify-center gap-1">
-                {(Object.keys(CHEMICAL_CATEGORIES) as ChemicalCategory[]).map(category => (
+                {(Object.keys(allChemicalCategories) as ChemicalCategory[]).map(category => (
                   <Button 
                     key={category}
                     variant={activeCategory === category ? 'default' : 'ghost'}
@@ -293,36 +345,88 @@ export default function Home() {
                   </Button>
                 ))}
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-60 overflow-y-auto pr-2">
-                {filteredChemicals.map(chemical => (
-                   <div key={chemical.formula} className="relative group">
-                    <Button 
-                      variant="outline"
-                      onClick={() => handleChemicalClick(chemical)}
-                      disabled={beakerContents.length >= 12 || beakerContents.some(c => c.formula === chemical.formula)}
-                      title={chemical.name}
-                      className="w-full flex-col h-auto"
-                      aria-label={`Add ${chemical.name} to beaker`}
-                    >
-                      <span className="font-bold text-lg truncate w-full">{chemical.formula}</span>
-                      <span className="text-xs text-muted-foreground truncate w-full">{chemical.name}</span>
+              
+              {activeCategory === 'CUSTOM' ? (
+                <div className="space-y-4">
+                  <div className="flex gap-2">
+                    <Input 
+                      placeholder="e.g., Vinegar, Baking Soda..."
+                      value={customChemicalName}
+                      onChange={(e) => setCustomChemicalName(e.target.value)}
+                      disabled={isCreatingCustom}
+                    />
+                    <Button onClick={handleCreateCustomChemical} disabled={isCreatingCustom || !customChemicalName.trim()}>
+                      {isCreatingCustom ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                      <span className="ml-2">Create</span>
                     </Button>
-                    <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        className="absolute top-0 right-0 h-6 w-6 opacity-50 group-hover:opacity-100"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleShowInfo(chemical);
-                        }}
-                        title={`Info on ${chemical.name}`}
-                        aria-label={`Show info for ${chemical.name}`}
-                    >
-                        <Info size={14} />
-                    </Button>
-                   </div>
-                ))}
-              </div>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-52 overflow-y-auto pr-2">
+                    {customChemicals.length === 0 && !isCreatingCustom ? (
+                      <p className="col-span-full text-center text-muted-foreground text-sm">No custom chemicals created yet.</p>
+                    ) : (
+                      filteredChemicals.map(chemical => (
+                        <div key={chemical.formula} className="relative group">
+                          <Button 
+                            variant="outline"
+                            onClick={() => handleChemicalClick(chemical)}
+                            disabled={beakerContents.length >= 12 || beakerContents.some(c => c.formula === chemical.formula)}
+                            title={chemical.name}
+                            className="w-full flex-col h-auto"
+                            aria-label={`Add ${chemical.name} to beaker`}
+                          >
+                            <span className="font-bold text-lg truncate w-full">{chemical.formula}</span>
+                            <span className="text-xs text-muted-foreground truncate w-full">{chemical.name}</span>
+                          </Button>
+                          <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              className="absolute top-0 right-0 h-6 w-6 opacity-50 group-hover:opacity-100"
+                              onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleShowInfo(chemical);
+                              }}
+                              title={`Info on ${chemical.name}`}
+                              aria-label={`Show info for ${chemical.name}`}
+                          >
+                              <Info size={14} />
+                          </Button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-60 overflow-y-auto pr-2">
+                  {filteredChemicals.map(chemical => (
+                    <div key={chemical.formula} className="relative group">
+                      <Button 
+                        variant="outline"
+                        onClick={() => handleChemicalClick(chemical)}
+                        disabled={beakerContents.length >= 12 || beakerContents.some(c => c.formula === chemical.formula)}
+                        title={chemical.name}
+                        className="w-full flex-col h-auto"
+                        aria-label={`Add ${chemical.name} to beaker`}
+                      >
+                        <span className="font-bold text-lg truncate w-full">{chemical.formula}</span>
+                        <span className="text-xs text-muted-foreground truncate w-full">{chemical.name}</span>
+                      </Button>
+                      <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="absolute top-0 right-0 h-6 w-6 opacity-50 group-hover:opacity-100"
+                          onClick={(e) => {
+                              e.stopPropagation();
+                              handleShowInfo(chemical);
+                          }}
+                          title={`Info on ${chemical.name}`}
+                          aria-label={`Show info for ${chemical.name}`}
+                      >
+                          <Info size={14} />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

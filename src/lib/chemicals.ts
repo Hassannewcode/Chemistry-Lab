@@ -8,6 +8,8 @@ export interface Chemical {
   effects?: Partial<ChemicalEffect>;
 }
 
+// We are adding CUSTOM as a placeholder key.
+// The actual custom chemicals will be managed in the page component's state.
 export const CHEMICAL_CATEGORIES: Record<string, Chemical[]> = {
     ELEMENTS: [
         { formula: 'H', name: 'Hydrogen', isElement: true, effects: { color: '#f0f8ff', glow: 0.1 } }, { formula: 'He', name: 'Helium', isElement: true, effects: { color: '#d3d3d3', bubbles: 1 } },
@@ -147,4 +149,5 @@ export const CHEMICAL_CATEGORIES: Record<string, Chemical[]> = {
         { formula: 'Bioluminescent Algae', name: 'Bioluminescent Algae', effects: { glow: 1.5, color: '#00ff7f' } },
         { formula: 'Ferrofluid', name: 'Ferrofluid', effects: { color: '#2F4F4F', smoke: 0.2 } },
     ],
+    CUSTOM: [],
 };
