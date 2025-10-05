@@ -72,6 +72,7 @@ export default function Home() {
   const [customChemicalName, setCustomChemicalName] = useState('');
   const [isCreatingCustom, setIsCreatingCustom] = useState(false);
   const [customChemicals, setCustomChemicals] = useState<Chemical[]>([]);
+  const [showFormulasForCustom, setShowFormulasForCustom] = useState(false);
   
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -477,6 +478,9 @@ const handleRevertHistory = (state: LabState) => {
                                 <Sparkles className="h-4 w-4 mr-2" />
                                 Create a Custom Item
                             </Button>
+                            <Button variant="outline" size="icon" onClick={() => setShowFormulasForCustom(p => !p)} title="Toggle Name/Formula">
+                                <Replace className="h-4 w-4" />
+                            </Button>
                         </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-52 overflow-y-auto pr-2">
                         {customChemicals.length === 0 ? (
@@ -494,8 +498,8 @@ const handleRevertHistory = (state: LabState) => {
                                             className="w-full flex-col h-auto"
                                             aria-label={`Add ${chemical.name} to beaker`}
                                         >
-                                            <span className="font-bold text-lg truncate w-full">{chemical.promptName || chemical.name}</span>
-                                            <span className="text-xs text-muted-foreground truncate w-full">{chemical.formula}</span>
+                                            <span className="font-bold text-lg truncate w-full">{showFormulasForCustom ? chemical.formula : (chemical.promptName || chemical.name)}</span>
+                                            <span className="text-xs text-muted-foreground truncate w-full">{showFormulasForCustom ? (chemical.promptName || chemical.name) : chemical.formula}</span>
                                         </Button>
                                         <Button 
                                             size="icon" 
@@ -936,5 +940,7 @@ const handleRevertHistory = (state: LabState) => {
     </div>
   );
 }
+
+    
 
     
