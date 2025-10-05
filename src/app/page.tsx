@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, DragEvent, useMemo, useEffect } from 'react';
-import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles } from 'lucide-react';
+import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles, Menu, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
 import { VerticalSlider } from '@/components/vertical-slider';
@@ -27,10 +27,15 @@ import type { ConductReactionInput, ConductReactionOutput } from '@/ai/schemas/r
 import type { ChemicalInfoOutput } from '@/ai/schemas/chemicalInfoSchema';
 import type { ElementUsageOutput } from '@/ai/schemas/elementUsageSchema';
 import { Whiteboard } from '@/components/whiteboard';
-
+import { PastExperiments, LabState } from '@/components/past-experiments';
 
 type ChemicalCategory = keyof typeof CHEMICAL_CATEGORIES | 'CUSTOM';
 const NAME_LENGTH_THRESHOLD = 18; // Names longer than this will trigger confirmation
+
+interface SimulationHistoryEntry {
+  timestamp: string;
+  result: ConductReactionOutput;
+}
 
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState<ChemicalCategory>('ELEMENTS');
@@ -51,6 +56,9 @@ export default function Home() {
   const [isPeriodicTableOpen, setIsPeriodicTableOpen] = useState(false);
   const [isUsageChartOpen, setIsUsageChartOpen] = useState(false);
   const [isWhiteboardOpen, setIsWhiteboardOpen] = useState(false);
+  const [isPastLabsOpen, setIsPastLabsOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [simulationHistory, setSimulationHistory] = useState<SimulationHistoryEntry[]>([]);
 
   const [confirmingChemical, setConfirmingChemical] = useState<Chemical | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -237,6 +245,11 @@ export default function Home() {
       const result = await conductReaction(input);
       setReactionResult(result);
       setReactionEffects(result.effects);
+      const newHistoryEntry: SimulationHistoryEntry = {
+        timestamp: new Date().toLocaleString(),
+        result: result,
+      };
+      setSimulationHistory(prev => [newHistoryEntry, ...prev]);
     } catch (error) {
       console.error("Error conducting reaction:", error);
       toast({
@@ -339,6 +352,27 @@ export default function Home() {
     e.preventDefault(); // Necessary to allow dropping
   };
 
+  const getCurrentLabState = (): LabState => ({
+    beakerContents,
+    customChemicals,
+    temperature,
+    concentration,
+    reactionResult,
+    chatHistory,
+  });
+
+  const loadLabState = (state: LabState) => {
+    setBeakerContents(state.beakerContents);
+    setCustomChemicals(state.customChemicals);
+    setTemperature(state.temperature);
+    setConcentration(state.concentration);
+    setReactionResult(state.reactionResult);
+    setReactionEffects(state.reactionResult?.effects || null);
+    setChatHistory(state.chatHistory);
+    toast({ title: "Lab Loaded", description: "The experiment state has been restored." });
+  };
+
+
   if (!isMounted) {
     return null; // Or a loading spinner
   }
@@ -363,6 +397,9 @@ export default function Home() {
                   <CardDescription>Choose up to 12 chemicals & sprays to mix.</CardDescription>
                 </div>
                 <div className='flex items-center gap-2'>
+                   <Button variant="outline" size="icon" onClick={() => setIsPastLabsOpen(true)} aria-label="Open past labs">
+                      <Menu className="h-4 w-4" />
+                    </Button>
                   <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input 
@@ -485,7 +522,12 @@ export default function Home() {
           
           <div className="w-full">
             <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-                <h2 className="text-2xl font-bold">Beaker</h2>
+                <div className="flex items-center gap-2">
+                    <h2 className="text-2xl font-bold">Beaker</h2>
+                    <Button variant="ghost" size="icon" onClick={() => setIsHistoryOpen(true)} disabled={simulationHistory.length === 0}>
+                        <History className="h-5 w-5" />
+                    </Button>
+                </div>
                 <div className="flex items-center gap-2 flex-wrap justify-end" onDragOver={handleDragOver}>
                   <p className="font-semibold">Contents:</p>
                   {beakerContents.length > 0 ? (
@@ -613,6 +655,13 @@ export default function Home() {
       </div>
       <Toaster />
 
+      <PastExperiments
+        isOpen={isPastLabsOpen}
+        onOpenChange={setIsPastLabsOpen}
+        currentLabState={getCurrentLabState()}
+        onLoadLab={loadLabState}
+      />
+
       <AlertDialog open={!!confirmingChemical} onOpenChange={(isOpen) => !isOpen && setConfirmingChemical(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -732,6 +781,37 @@ export default function Home() {
                 <X className="h-4 w-4" />
                 <span className="sr-only">Close</span>
             </DialogClose>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Simulation History (Current Session)</DialogTitle>
+            <DialogDescription>A log of all reactions run in this session.</DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto pr-4">
+            {simulationHistory.length > 0 ? (
+              <div className="space-y-4">
+                {simulationHistory.map((entry, index) => (
+                  <Card key={index}>
+                    <CardHeader>
+                      <CardTitle className="text-base">{entry.result.reactionName}</CardTitle>
+                      <CardDescription>{entry.timestamp}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm">
+                        <span className="font-semibold">Products: </span>
+                        {entry.result.products.map(p => p.formula).join(', ') || 'None'}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <p>No simulations run in this session yet.</p>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
