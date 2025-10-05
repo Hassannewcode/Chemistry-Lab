@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, DragEvent, useMemo, useEffect } from 'react';
@@ -494,7 +495,7 @@ const handleRevertHistory = (state: LabState) => {
                                             variant="outline"
                                             onClick={() => handleChemicalClick(chemical)}
                                             disabled={beakerContents.length >= 12 || beakerContents.some(c => c.formula === chemical.formula)}
-                                            title={showCommonName ? chemical.promptName : chemical.name}
+                                            title={showCommonName ? chemical.name : chemical.promptName}
                                             className="w-full flex-col h-auto"
                                             aria-label={`Add ${chemical.name} to beaker`}
                                         >
