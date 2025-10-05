@@ -12,8 +12,8 @@ export type CreateChemicalInput = z.infer<typeof CreateChemicalInputSchema>;
 
 export const CreateChemicalOutputSchema = z.object({
   found: z.boolean().describe('Whether a real chemical was found.'),
-  formula: z.string().describe('The chemical formula of the created chemical.'),
-  name: z.string().describe('The scientific name of the created chemical.'),
+  formula: z.string().optional().describe('The chemical formula of the created chemical.'),
+  name: z.string().optional().describe('The scientific name of the created chemical.'),
   isElement: z.boolean().optional().describe('Always false for custom chemicals.'),
   effects: z.object({
       color: z
