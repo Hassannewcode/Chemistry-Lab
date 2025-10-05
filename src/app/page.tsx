@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, DragEvent, useMemo, useEffect } from 'react';
-import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles, Menu, History, RotateCcw, Beaker, Atom, Wrench, HelpCircle } from 'lucide-react';
+import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles, Menu, History, RotateCcw, Beaker, Atom, Wrench, HelpCircle, Replace } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
 import { VerticalSlider } from '@/components/vertical-slider';
@@ -72,6 +72,7 @@ export default function Home() {
   const [customChemicalName, setCustomChemicalName] = useState('');
   const [isCreatingCustom, setIsCreatingCustom] = useState(false);
   const [customChemicals, setCustomChemicals] = useState<Chemical[]>([]);
+  const [showCustomFormula, setShowCustomFormula] = useState(false);
 
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -471,51 +472,61 @@ const handleRevertHistory = (state: LabState) => {
               {activeCategory === 'CUSTOM' ? (
                  <TooltipProvider>
                     <div className="space-y-4">
-                    <Button onClick={handleOpenCustomCreation} className="w-full">
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        Create a Custom Item
-                    </Button>
+                        <div className="flex gap-2">
+                            <Button onClick={handleOpenCustomCreation} className="flex-1">
+                                <Sparkles className="h-4 w-4 mr-2" />
+                                Create a Custom Item
+                            </Button>
+                            {customChemicals.length > 0 && (
+                                <Button variant="outline" size="icon" onClick={() => setShowCustomFormula(prev => !prev)} aria-label="Toggle custom item view">
+                                    <Replace className="h-4 w-4" />
+                                </Button>
+                            )}
+                        </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-52 overflow-y-auto pr-2">
                         {customChemicals.length === 0 ? (
                         <p className="col-span-full text-center text-muted-foreground text-sm pt-4">No custom items created yet.</p>
                         ) : (
-                        filteredChemicals.map(chemical => (
-                            <Tooltip key={chemical.formula}>
-                                <TooltipTrigger asChild>
-                                    <div className="relative group">
-                                        <Button 
-                                            variant="outline"
-                                            onClick={() => handleChemicalClick(chemical)}
-                                            disabled={beakerContents.length >= 12 || beakerContents.some(c => c.formula === chemical.formula)}
-                                            title={chemical.name}
-                                            className="w-full flex-col h-auto"
-                                            aria-label={`Add ${chemical.name} to beaker`}
-                                        >
-                                            <span className="font-bold text-lg truncate w-full">{chemical.formula}</span>
-                                            <span className="text-xs text-muted-foreground truncate w-full">{chemical.name}</span>
-                                        </Button>
-                                        <Button 
-                                            size="icon" 
-                                            variant="ghost" 
-                                            className="absolute top-0 right-0 h-6 w-6 opacity-50 group-hover:opacity-100"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleShowInfo(chemical);
-                                            }}
-                                            title={`Info on ${chemical.name}`}
-                                            aria-label={`Show info for ${chemical.name}`}
-                                        >
-                                            <Info size={14} />
-                                        </Button>
-                                    </div>
-                                </TooltipTrigger>
-                                {chemical.promptName && (
-                                <TooltipContent>
-                                    <p>Original prompt: &quot;{chemical.promptName}&quot;</p>
-                                </TooltipContent>
-                                )}
-                            </Tooltip>
-                        ))
+                        filteredChemicals.map(chemical => {
+                            const mainText = showCustomFormula ? chemical.formula : (chemical.promptName || chemical.name);
+                            const subText = showCustomFormula ? (chemical.promptName || chemical.name) : chemical.formula;
+                            
+                            return (
+                                <Tooltip key={chemical.formula}>
+                                    <TooltipTrigger asChild>
+                                        <div className="relative group">
+                                            <Button 
+                                                variant="outline"
+                                                onClick={() => handleChemicalClick(chemical)}
+                                                disabled={beakerContents.length >= 12 || beakerContents.some(c => c.formula === chemical.formula)}
+                                                title={chemical.name}
+                                                className="w-full flex-col h-auto"
+                                                aria-label={`Add ${chemical.name} to beaker`}
+                                            >
+                                                <span className="font-bold text-lg truncate w-full">{mainText}</span>
+                                                <span className="text-xs text-muted-foreground truncate w-full">{subText}</span>
+                                            </Button>
+                                            <Button 
+                                                size="icon" 
+                                                variant="ghost" 
+                                                className="absolute top-0 right-0 h-6 w-6 opacity-50 group-hover:opacity-100"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleShowInfo(chemical);
+                                                }}
+                                                title={`Info on ${chemical.name}`}
+                                                aria-label={`Show info for ${chemical.name}`}
+                                            >
+                                                <Info size={14} />
+                                            </Button>
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Scientific name: {chemical.name}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            )
+                        })
                         )}
                     </div>
                     </div>
