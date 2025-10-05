@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, DragEvent, useMemo, useEffect } from 'react';
-import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles, Menu, History } from 'lucide-react';
+import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles, Menu, History, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
 import { VerticalSlider } from '@/components/vertical-slider';
@@ -34,7 +34,7 @@ const NAME_LENGTH_THRESHOLD = 18; // Names longer than this will trigger confirm
 
 interface SimulationHistoryEntry {
   timestamp: string;
-  result: ConductReactionOutput;
+  state: LabState;
 }
 
 export default function Home() {
@@ -232,6 +232,26 @@ export default function Home() {
     }
   }
 
+  const getCurrentLabState = (): LabState => ({
+    beakerContents,
+    customChemicals,
+    temperature,
+    concentration,
+    reactionResult,
+    chatHistory,
+  });
+
+  const loadLabState = (state: LabState) => {
+    setBeakerContents(state.beakerContents);
+    setCustomChemicals(state.customChemicals);
+    setTemperature(state.temperature);
+    setConcentration(state.concentration);
+    setReactionResult(state.reactionResult);
+    setReactionEffects(state.reactionResult?.effects || null);
+    setChatHistory(state.chatHistory);
+    toast({ title: "Lab Loaded", description: "The experiment state has been restored." });
+  };
+
   const handleStartReaction = async () => {
     if (beakerContents.length < 2) return;
     setIsLoading(true);
@@ -245,9 +265,13 @@ export default function Home() {
       const result = await conductReaction(input);
       setReactionResult(result);
       setReactionEffects(result.effects);
+      
+      const currentState = getCurrentLabState();
+      const stateWithResult = { ...currentState, reactionResult: result, chatHistory: [] };
+
       const newHistoryEntry: SimulationHistoryEntry = {
         timestamp: new Date().toLocaleString(),
-        result: result,
+        state: stateWithResult,
       };
       setSimulationHistory(prev => [newHistoryEntry, ...prev]);
     } catch (error) {
@@ -327,6 +351,15 @@ export default function Home() {
     }
 };
 
+const handleRevertHistory = (state: LabState) => {
+    loadLabState(state);
+    setIsHistoryOpen(false);
+    toast({
+      title: "State Reverted",
+      description: "The lab has been reverted to the selected point in history.",
+    });
+  };
+
   const changeTemperature = (amount: number) => {
     setTemperature(prev => Math.max(-273, prev + amount));
   }
@@ -351,27 +384,6 @@ export default function Home() {
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault(); // Necessary to allow dropping
   };
-
-  const getCurrentLabState = (): LabState => ({
-    beakerContents,
-    customChemicals,
-    temperature,
-    concentration,
-    reactionResult,
-    chatHistory,
-  });
-
-  const loadLabState = (state: LabState) => {
-    setBeakerContents(state.beakerContents);
-    setCustomChemicals(state.customChemicals);
-    setTemperature(state.temperature);
-    setConcentration(state.concentration);
-    setReactionResult(state.reactionResult);
-    setReactionEffects(state.reactionResult?.effects || null);
-    setChatHistory(state.chatHistory);
-    toast({ title: "Lab Loaded", description: "The experiment state has been restored." });
-  };
-
 
   if (!isMounted) {
     return null; // Or a loading spinner
@@ -788,23 +800,33 @@ export default function Home() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Simulation History (Current Session)</DialogTitle>
-            <DialogDescription>A log of all reactions run in this session.</DialogDescription>
+            <DialogDescription>A log of all reactions run in this session. You can revert to a previous state.</DialogDescription>
           </DialogHeader>
           <div className="max-h-[60vh] overflow-y-auto pr-4">
             {simulationHistory.length > 0 ? (
               <div className="space-y-4">
                 {simulationHistory.map((entry, index) => (
-                  <Card key={index}>
+                  <Card key={index} className="relative group">
                     <CardHeader>
-                      <CardTitle className="text-base">{entry.result.reactionName}</CardTitle>
+                      <CardTitle className="text-base">{entry.state.reactionResult?.reactionName}</CardTitle>
                       <CardDescription>{entry.timestamp}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm">
+                        <span className="font-semibold">Reactants: </span>
+                        {entry.state.beakerContents.map(p => p.formula).join(', ') || 'None'}
+                      </p>
+                      <p className="text-sm">
                         <span className="font-semibold">Products: </span>
-                        {entry.result.products.map(p => p.formula).join(', ') || 'None'}
+                        {entry.state.reactionResult?.products.map(p => p.formula).join(', ') || 'None'}
                       </p>
                     </CardContent>
+                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button variant="outline" size="sm" onClick={() => handleRevertHistory(entry.state)}>
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        Revert to this state
+                      </Button>
+                    </div>
                   </Card>
                 ))}
               </div>
