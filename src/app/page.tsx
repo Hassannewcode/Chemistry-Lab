@@ -29,6 +29,7 @@ import type { ElementUsageOutput } from '@/ai/schemas/elementUsageSchema';
 import type { CreateChemicalInput } from '@/ai/schemas/createChemicalSchema';
 import { Whiteboard } from '@/components/whiteboard';
 import { PastExperiments, LabState } from '@/components/past-experiments';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type ChemicalCategory = keyof typeof CHEMICAL_CATEGORIES | 'CUSTOM';
 const NAME_LENGTH_THRESHOLD = 18; // Names longer than this will trigger confirmation
@@ -345,6 +346,7 @@ export default function Home() {
                 name: result.name,
                 isElement: result.isElement || false,
                 effects: result.effects || {},
+                promptName: customChemicalName, // Save the original user input
             };
             setCustomChemicals(prev => [...prev, newChemical]);
             setCustomChemicalName('');
@@ -467,46 +469,57 @@ const handleRevertHistory = (state: LabState) => {
               </div>
               
               {activeCategory === 'CUSTOM' ? (
-                <div className="space-y-4">
-                  <Button onClick={handleOpenCustomCreation} className="w-full">
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      Create a Custom Item
-                  </Button>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-52 overflow-y-auto pr-2">
-                    {customChemicals.length === 0 ? (
-                      <p className="col-span-full text-center text-muted-foreground text-sm pt-4">No custom items created yet.</p>
-                    ) : (
-                      filteredChemicals.map(chemical => (
-                        <div key={chemical.formula} className="relative group">
-                          <Button 
-                            variant="outline"
-                            onClick={() => handleChemicalClick(chemical)}
-                            disabled={beakerContents.length >= 12 || beakerContents.some(c => c.formula === chemical.formula)}
-                            title={chemical.name}
-                            className="w-full flex-col h-auto"
-                            aria-label={`Add ${chemical.name} to beaker`}
-                          >
-                            <span className="font-bold text-lg truncate w-full">{chemical.formula}</span>
-                            <span className="text-xs text-muted-foreground truncate w-full">{chemical.name}</span>
-                          </Button>
-                          <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              className="absolute top-0 right-0 h-6 w-6 opacity-50 group-hover:opacity-100"
-                              onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleShowInfo(chemical);
-                              }}
-                              title={`Info on ${chemical.name}`}
-                              aria-label={`Show info for ${chemical.name}`}
-                          >
-                              <Info size={14} />
-                          </Button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
+                 <TooltipProvider>
+                    <div className="space-y-4">
+                    <Button onClick={handleOpenCustomCreation} className="w-full">
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Create a Custom Item
+                    </Button>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-52 overflow-y-auto pr-2">
+                        {customChemicals.length === 0 ? (
+                        <p className="col-span-full text-center text-muted-foreground text-sm pt-4">No custom items created yet.</p>
+                        ) : (
+                        filteredChemicals.map(chemical => (
+                            <Tooltip key={chemical.formula}>
+                                <TooltipTrigger asChild>
+                                    <div className="relative group">
+                                        <Button 
+                                            variant="outline"
+                                            onClick={() => handleChemicalClick(chemical)}
+                                            disabled={beakerContents.length >= 12 || beakerContents.some(c => c.formula === chemical.formula)}
+                                            title={chemical.name}
+                                            className="w-full flex-col h-auto"
+                                            aria-label={`Add ${chemical.name} to beaker`}
+                                        >
+                                            <span className="font-bold text-lg truncate w-full">{chemical.formula}</span>
+                                            <span className="text-xs text-muted-foreground truncate w-full">{chemical.name}</span>
+                                        </Button>
+                                        <Button 
+                                            size="icon" 
+                                            variant="ghost" 
+                                            className="absolute top-0 right-0 h-6 w-6 opacity-50 group-hover:opacity-100"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleShowInfo(chemical);
+                                            }}
+                                            title={`Info on ${chemical.name}`}
+                                            aria-label={`Show info for ${chemical.name}`}
+                                        >
+                                            <Info size={14} />
+                                        </Button>
+                                    </div>
+                                </TooltipTrigger>
+                                {chemical.promptName && (
+                                <TooltipContent>
+                                    <p>Original prompt: &quot;{chemical.promptName}&quot;</p>
+                                </TooltipContent>
+                                )}
+                            </Tooltip>
+                        ))
+                        )}
+                    </div>
+                    </div>
+                 </TooltipProvider>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-60 overflow-y-auto pr-2">
                   {filteredChemicals.map(chemical => (

@@ -6,6 +6,7 @@ export interface Chemical {
   name: string;
   isElement?: boolean;
   effects?: Partial<ChemicalEffect>;
+  promptName?: string; // The original user input for a custom chemical
 }
 
 // We are adding CUSTOM as a placeholder key.
