@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, DragEvent, useMemo } from 'react';
+import { useState, DragEvent, useMemo, useEffect } from 'react';
 import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
@@ -60,6 +60,51 @@ export default function Home() {
 
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Load state from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedBeakerContents = localStorage.getItem('beakerContents');
+        if (savedBeakerContents) {
+          setBeakerContents(JSON.parse(savedBeakerContents));
+        }
+        const savedCustomChemicals = localStorage.getItem('customChemicals');
+        if (savedCustomChemicals) {
+          setCustomChemicals(JSON.parse(savedCustomChemicals));
+        }
+        const savedTemperature = localStorage.getItem('temperature');
+        if (savedTemperature) {
+          setTemperature(JSON.parse(savedTemperature));
+        }
+        const savedConcentration = localStorage.getItem('concentration');
+        if (savedConcentration) {
+          setConcentration(JSON.parse(savedConcentration));
+        }
+      } catch (error) {
+        console.error("Failed to load state from localStorage", error);
+      }
+    }
+  }, []);
+
+  // Save state to localStorage on change
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isMounted) {
+      try {
+        localStorage.setItem('beakerContents', JSON.stringify(beakerContents));
+        localStorage.setItem('customChemicals', JSON.stringify(customChemicals));
+        localStorage.setItem('temperature', JSON.stringify(temperature));
+        localStorage.setItem('concentration', JSON.stringify(concentration));
+      } catch (error) {
+        console.error("Failed to save state to localStorage", error);
+      }
+    }
+  }, [beakerContents, customChemicals, temperature, concentration, isMounted]);
 
   const allChemicalCategories = useMemo(() => {
     const categories: Record<string, Chemical[]> = {...CHEMICAL_CATEGORIES};
@@ -293,6 +338,10 @@ export default function Home() {
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault(); // Necessary to allow dropping
   };
+
+  if (!isMounted) {
+    return null; // Or a loading spinner
+  }
 
   return (
     <div className="bg-[#f0f2f5] min-h-screen flex items-center justify-center p-4 md:p-8 font-sans text-[#3D3D3D]">
@@ -689,5 +738,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
