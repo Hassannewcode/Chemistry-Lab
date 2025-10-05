@@ -35,6 +35,9 @@ const getChemicalProperties = ai.defineTool(
       'rust': { name: 'Iron(III) Oxide', formula: 'Fe2O3' },
       'laughing gas': { name: 'Nitrous Oxide', formula: 'N2O' },
       'quartz': { name: 'Silicon Dioxide', formula: 'SiO2' },
+      'lemon': { name: 'Citric Acid', formula: 'C6H8O7' },
+      'copper wire': { name: 'Copper', formula: 'Cu' },
+      'vacuum': { name: 'Vacuum', formula: 'Vac' },
     };
     const lookupKey = input.name.toLowerCase();
     if (commonChemicals[lookupKey]) {
@@ -53,23 +56,37 @@ const prompt = ai.definePrompt({
   input: {schema: CreateChemicalInputSchema},
   output: {schema: CreateChemicalOutputSchema},
   tools: [getChemicalProperties],
-  prompt: `You are a chemistry expert creating a new chemical for a simulation based on user input.
+  prompt: `You are a chemistry expert creating a new item for a simulation based on user input.
 
-  The user wants to create a chemical named: "{{name}}".
+  The user wants to create an item named: "{{name}}"
+  They have categorized this item as: "{{category}}"
 
-  1. First, use the getChemicalProperties tool to determine if this is a known common chemical and to get its real formula and scientific name.
-  2. If the tool returns 'found: false', you MUST respond with 'found: false' and do not fill out any other fields.
-  3. If the tool returns 'found: true', you MUST use the exact 'name' and 'formula' provided by the tool. Do not hallucinate a different name or formula.
-  4. Based on the real chemical properties, generate a simple set of visual effects for the simulation.
-      - color: A hex code representing the chemical's appearance in a solution or as a substance.
+  1.  **Analyze Category**:
+      - If **Category is 'ordinary'**: The user wants a single, simple chemical. Use the 'name' to find its properties.
+      - If **Category is 'compound'**: The user is listing multiple items to mix. The 'name' will be a comma-separated list (e.g., "Vinegar, Baking Soda"). You MUST treat this as a pre-reaction. Generate a new name and formula for the *resulting mixture* (e.g., "Sodium Acetate Solution"). For the visual effects, simulate the reaction of these components (e.g., Vinegar + Baking Soda = lots of bubbles).
+      - If **Category is 'utility'**: The user is creating a tool or non-chemical item (e.g., "Copper Wire", "Vacuum"). Do not treat it as a chemical. For 'Copper Wire', find the properties for 'Copper'. For something like 'Vacuum', give it a unique formula like 'Vac' and inert effects (0 for all). The name should be the utility name.
+      - If **Category is 'custom'**: Interpret the user's intent freely. It could be a real but obscure chemical or a slightly fictional one. Be creative but grounded in scientific principles.
+
+  2.  **Get Properties**:
+      - For 'ordinary' and 'utility' items that map to a real chemical, use the getChemicalProperties tool to find the real formula and scientific name.
+      - For 'compound' or 'custom' items, you will determine the name and formula yourself based on the components or description. You do not need to use the tool if you are creating a new compound name/formula.
+
+  3.  **Handle Not Found**: If the tool is used and returns 'found: false' for an 'ordinary' item, you MUST respond with 'found: false' and do not fill out any other fields. For other categories, this is less likely to happen.
+
+  4.  **Use Correct Info**: If the tool returns 'found: true', you MUST use the exact 'name' and 'formula' provided by the tool.
+
+  5.  **Generate Effects**: Based on the final chemical/item, generate plausible visual effects:
+      - color: A hex code.
       - bubbles: 0-10 intensity.
       - smoke: 0-1 density.
       - sparkles: 0-50 count.
       - glow: 0-2 intensity.
       - explosion: 0-10 intensity.
-     Be scientifically plausible. For example, 'Sodium Bicarbonate' should produce bubbles, and 'Sodium' should have a high explosion potential with water. 'Sodium Chloride' (salt) should be inert.
-  5. Set 'isElement' to false.
-  6. Set 'found' to true.`,
+      Be scientifically plausible. 'Sodium Bicarbonate' should produce bubbles. 'Sodium' should have a high explosion potential with water. 'NaCl' should be inert.
+
+  6.  **Set isElement**: This is 'true' only if the final item is a single element from the periodic table (e.g., 'Cu' from 'Copper Wire'). Otherwise, it is 'false'.
+
+  7.  **Set 'found'**: Set to true if you successfully create an item.`,
 });
 
 const createChemicalFlow = ai.defineFlow(

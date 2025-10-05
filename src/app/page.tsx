@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, DragEvent, useMemo, useEffect } from 'react';
-import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles, Menu, History, RotateCcw } from 'lucide-react';
+import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles, Menu, History, RotateCcw, Beaker, Atom, Wrench, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
 import { VerticalSlider } from '@/components/vertical-slider';
@@ -26,11 +26,14 @@ import { chatAboutReaction } from '@/ai/flows/chatFlow';
 import type { ConductReactionInput, ConductReactionOutput } from '@/ai/schemas/reactionSchema';
 import type { ChemicalInfoOutput } from '@/ai/schemas/chemicalInfoSchema';
 import type { ElementUsageOutput } from '@/ai/schemas/elementUsageSchema';
+import type { CreateChemicalInput } from '@/ai/schemas/createChemicalSchema';
 import { Whiteboard } from '@/components/whiteboard';
 import { PastExperiments, LabState } from '@/components/past-experiments';
 
 type ChemicalCategory = keyof typeof CHEMICAL_CATEGORIES | 'CUSTOM';
 const NAME_LENGTH_THRESHOLD = 18; // Names longer than this will trigger confirmation
+
+type CustomCreationCategory = 'ordinary' | 'compound' | 'utility' | 'custom';
 
 interface SimulationHistoryEntry {
   timestamp: string;
@@ -62,6 +65,9 @@ export default function Home() {
 
   const [confirmingChemical, setConfirmingChemical] = useState<Chemical | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const [isCustomCreationOpen, setIsCustomCreationOpen] = useState(false);
+  const [customCreationCategory, setCustomCreationCategory] = useState<CustomCreationCategory | null>(null);
   const [customChemicalName, setCustomChemicalName] = useState('');
   const [isCreatingCustom, setIsCreatingCustom] = useState(false);
   const [customChemicals, setCustomChemicals] = useState<Chemical[]>([]);
@@ -124,7 +130,11 @@ export default function Home() {
 
   const filteredChemicals = useMemo(() => {
     if (activeCategory === 'CUSTOM') {
-        return customChemicals;
+        return customChemicals.filter(
+            (chemical) =>
+                chemical.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                chemical.formula.toLowerCase().includes(searchQuery.toLowerCase())
+        );
     }
     if (!searchQuery) {
       return allChemicalCategories[activeCategory] || [];
@@ -313,30 +323,42 @@ export default function Home() {
         setIsChatLoading(false);
     }
   }
-
+  
+  const handleOpenCustomCreation = () => {
+    setIsCustomCreationOpen(true);
+    setCustomCreationCategory(null);
+    setCustomChemicalName('');
+  };
+  
   const handleCreateCustomChemical = async () => {
-    if (!customChemicalName.trim()) return;
+    if (!customChemicalName.trim() || !customCreationCategory) return;
     setIsCreatingCustom(true);
     try {
-        const result = await createChemical({ name: customChemicalName });
+        const input: CreateChemicalInput = {
+          name: customChemicalName,
+          category: customCreationCategory
+        };
+        const result = await createChemical(input);
         if (result.found && result.formula && result.name) {
             const newChemical: Chemical = {
                 formula: result.formula,
                 name: result.name,
-                isElement: false,
+                isElement: result.isElement || false,
                 effects: result.effects || {},
             };
             setCustomChemicals(prev => [...prev, newChemical]);
             setCustomChemicalName('');
+            setCustomCreationCategory(null);
+            setIsCustomCreationOpen(false);
             toast({
-                title: 'Chemical Created!',
+                title: 'Item Created!',
                 description: `${newChemical.name} (${newChemical.formula}) is now available.`,
             });
         } else {
             toast({
                 variant: "destructive",
-                title: 'Chemical Not Found',
-                description: `Could not find a real chemical named "${customChemicalName}".`,
+                title: 'Creation Failed',
+                description: `Could not create an item named "${customChemicalName}". It might not be a recognized chemical or compound.`,
             });
         }
     } catch (error) {
@@ -344,7 +366,7 @@ export default function Home() {
         toast({
             variant: "destructive",
             title: "Creation Error",
-            description: "An AI error occurred while creating the chemical.",
+            description: "An AI error occurred while creating the item.",
         });
     } finally {
         setIsCreatingCustom(false);
@@ -446,21 +468,13 @@ const handleRevertHistory = (state: LabState) => {
               
               {activeCategory === 'CUSTOM' ? (
                 <div className="space-y-4">
-                  <div className="flex gap-2">
-                    <Input 
-                      placeholder="e.g., Vinegar, Baking Soda..."
-                      value={customChemicalName}
-                      onChange={(e) => setCustomChemicalName(e.target.value)}
-                      disabled={isCreatingCustom}
-                    />
-                    <Button onClick={handleCreateCustomChemical} disabled={isCreatingCustom || !customChemicalName.trim()}>
-                      {isCreatingCustom ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                      <span className="ml-2">Create</span>
-                    </Button>
-                  </div>
+                  <Button onClick={handleOpenCustomCreation} className="w-full">
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Create a Custom Item
+                  </Button>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-52 overflow-y-auto pr-2">
-                    {customChemicals.length === 0 && !isCreatingCustom ? (
-                      <p className="col-span-full text-center text-muted-foreground text-sm">No custom chemicals created yet.</p>
+                    {customChemicals.length === 0 ? (
+                      <p className="col-span-full text-center text-muted-foreground text-sm pt-4">No custom items created yet.</p>
                     ) : (
                       filteredChemicals.map(chemical => (
                         <div key={chemical.formula} className="relative group">
@@ -718,6 +732,16 @@ const handleRevertHistory = (state: LabState) => {
                     <h3 className="font-semibold mb-1">Traits</h3>
                     <p>{infoContent.traits}</p>
                   </div>
+                  {infoContent.priceData && infoContent.priceData.length > 0 && (
+                    <div>
+                        <h3 className="font-semibold mb-1">Average Price</h3>
+                        <div className="space-y-1 text-xs">
+                        {infoContent.priceData.map(data => (
+                            <p key={data.country}><strong>{data.country}:</strong> {data.price} {data.unit}</p>
+                        ))}
+                        </div>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <h3 className="font-semibold">Ratings</h3>
                     <div className="flex items-center gap-2">
@@ -796,6 +820,64 @@ const handleRevertHistory = (state: LabState) => {
         </DialogContent>
       </Dialog>
       
+       <Dialog open={isCustomCreationOpen} onOpenChange={setIsCustomCreationOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create a Custom Item</DialogTitle>
+            <DialogDescription>
+              What kind of item do you want to create? The AI will generate its properties based on your choice.
+            </DialogDescription>
+          </DialogHeader>
+          {!customCreationCategory ? (
+            <div className="grid grid-cols-2 gap-4 py-4">
+              <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => setCustomCreationCategory('ordinary')}>
+                <Beaker className="h-6 w-6" />
+                <span className="text-center">Ordinary Item</span>
+                <p className="text-xs text-muted-foreground">e.g., "Vinegar", "Baking Soda"</p>
+              </Button>
+              <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => setCustomCreationCategory('compound')}>
+                <Atom className="h-6 w-6" />
+                <span className="text-center">Compound</span>
+                <p className="text-xs text-muted-foreground">e.g., "Vinegar, Baking Soda"</p>
+              </Button>
+              <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => setCustomCreationCategory('utility')}>
+                <Wrench className="h-6 w-6" />
+                <span className="text-center">Utility</span>
+                 <p className="text-xs text-muted-foreground">e.g., "Copper Wire", "Vacuum"</p>
+              </Button>
+              <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => setCustomCreationCategory('custom')}>
+                <HelpCircle className="h-6 w-6" />
+                <span className="text-center">Other</span>
+                 <p className="text-xs text-muted-foreground">e.g., A fictional material</p>
+              </Button>
+            </div>
+          ) : (
+            <div className="pt-4 space-y-4">
+                <p className="font-semibold text-center">
+                    Creating a/an <span className="text-primary">{customCreationCategory}</span> item.
+                </p>
+                <Input
+                    placeholder={
+                        customCreationCategory === 'compound' ? "e.g., Vinegar, Baking Soda, Lemon" :
+                        customCreationCategory === 'utility' ? "e.g., Copper Wire, Vacuum" :
+                        "e.g., Baking Soda"
+                    }
+                    value={customChemicalName}
+                    onChange={(e) => setCustomChemicalName(e.target.value)}
+                    disabled={isCreatingCustom}
+                />
+                <div className="flex justify-end gap-2">
+                    <Button variant="ghost" onClick={() => setCustomCreationCategory(null)} disabled={isCreatingCustom}>Back</Button>
+                    <Button onClick={handleCreateCustomChemical} disabled={isCreatingCustom || !customChemicalName.trim()}>
+                        {isCreatingCustom ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                        <span className="ml-2">Create</span>
+                    </Button>
+                </div>
+            </div>
+          )}
+        </DialogContent>
+       </Dialog>
+
       <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>

@@ -68,5 +68,10 @@ export const ChemicalInfoOutputSchema = z.object({
     .describe(
       'A few fun, simple, and safe experiment ideas or combinations to try with this chemical in the simulator. Be creative and encouraging.'
     ),
+  priceData: z.array(z.object({
+    country: z.string().describe('A major producing country.'),
+    price: z.string().describe('The average price per unit, including currency.'),
+    unit: z.string().describe('The unit of measurement (e.g., "per kg", "per liter").')
+  })).describe('Average pricing information from major producing countries.'),
 });
 export type ChemicalInfoOutput = z.infer<typeof ChemicalInfoOutputSchema>;
