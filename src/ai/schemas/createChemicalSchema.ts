@@ -15,6 +15,7 @@ export const CreateChemicalOutputSchema = z.object({
   found: z.boolean().describe('Whether a real chemical was found or an item was successfully created.'),
   formula: z.string().optional().describe('The chemical formula of the created chemical.'),
   name: z.string().optional().describe('The scientific or common name of the created chemical.'),
+  commonName: z.string().optional().describe('The simple, common name for the item (e.g., "Baking Soda").'),
   isElement: z.boolean().optional().describe('True if the item is a single element, false otherwise.'),
   effects: z.object({
       color: z

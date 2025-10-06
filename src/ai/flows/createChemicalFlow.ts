@@ -17,33 +17,40 @@ import {
 const getChemicalProperties = ai.defineTool(
   {
     name: 'getChemicalProperties',
-    description: 'Looks up the formula and scientific name of a chemical from its common name.',
+    description: 'Looks up the formula, scientific name, and common name of a chemical from its common name.',
     inputSchema: z.object({name: z.string()}),
     outputSchema: z.object({
         name: z.string().describe('The scientific (IUPAC) name.'),
+        commonName: z.string().describe('The simple, common name (e.g., "Baking Soda").'),
         formula: z.string().describe('The chemical formula.'),
         found: z.boolean().describe('Whether the chemical was found.'),
     }),
   },
   async (input) => {
-    const commonChemicals: Record<string, { name: string; formula: string }> = {
-      vinegar: { name: 'Acetic Acid', formula: 'CH3COOH' },
-      'baking soda': { name: 'Sodium Bicarbonate', formula: 'NaHCO3' },
-      'table salt': { name: 'Sodium Chloride', formula: 'NaCl' },
-      'rubbing alcohol': { name: 'Isopropyl Alcohol', formula: 'C3H8O' },
-      'bleach': { name: 'Sodium Hypochlorite', formula: 'NaClO' },
-      'rust': { name: 'Iron(III) Oxide', formula: 'Fe2O3' },
-      'laughing gas': { name: 'Nitrous Oxide', formula: 'N2O' },
-      'quartz': { name: 'Silicon Dioxide', formula: 'SiO2' },
-      'lemon': { name: 'Citric Acid', formula: 'C6H8O7' },
-      'copper wire': { name: 'Copper', formula: 'Cu' },
-      'vacuum': { name: 'Vacuum', formula: 'Vac' },
+    const commonChemicals: Record<string, { name: string; commonName: string; formula: string }> = {
+      vinegar: { name: 'Acetic Acid', commonName: 'Vinegar', formula: 'CH3COOH' },
+      'baking soda': { name: 'Sodium Bicarbonate', commonName: 'Baking Soda', formula: 'NaHCO3' },
+      'table salt': { name: 'Sodium Chloride', commonName: 'Salt', formula: 'NaCl' },
+      'rubbing alcohol': { name: 'Isopropyl Alcohol', commonName: 'Rubbing Alcohol', formula: 'C3H8O' },
+      'bleach': { name: 'Sodium Hypochlorite', commonName: 'Bleach', formula: 'NaClO' },
+      'rust': { name: 'Iron(III) Oxide', commonName: 'Rust', formula: 'Fe2O3' },
+      'laughing gas': { name: 'Nitrous Oxide', commonName: 'Laughing Gas', formula: 'N2O' },
+      'quartz': { name: 'Silicon Dioxide', commonName: 'Quartz', formula: 'SiO2' },
+      'lemon': { name: 'Citric Acid', commonName: 'Lemon Juice', formula: 'C6H8O7' },
+      'copper wire': { name: 'Copper', commonName: 'Copper Wire', formula: 'Cu' },
+      'vacuum': { name: 'Vacuum', commonName: 'Vacuum', formula: 'Vac' },
     };
     const lookupKey = input.name.toLowerCase();
     if (commonChemicals[lookupKey]) {
       return { ...commonChemicals[lookupKey], found: true };
     }
-    return { name: '', formula: '', found: false };
+    // Fallback for names that might be both common and scientific
+    for (const key in commonChemicals) {
+        if (commonChemicals[key].name.toLowerCase() === lookupKey) {
+            return { ...commonChemicals[key], found: true };
+        }
+    }
+    return { name: '', commonName: '', formula: '', found: false };
   }
 );
 
@@ -63,17 +70,17 @@ const prompt = ai.definePrompt({
 
   1.  **Analyze Category**:
       - If **Category is 'ordinary'**: The user wants a single, simple chemical. Use the 'name' to find its properties.
-      - If **Category is 'compound'**: The user is listing multiple items to mix. The 'name' will be a comma-separated list (e.g., "Vinegar, Baking Soda"). You MUST treat this as a pre-reaction. Generate a new name and formula for the *resulting mixture* (e.g., "Sodium Acetate Solution"). For the visual effects, simulate the reaction of these components (e.g., Vinegar + Baking Soda = lots of bubbles).
-      - If **Category is 'utility'**: The user is creating a tool or non-chemical item (e.g., "Copper Wire", "Vacuum"). Do not treat it as a chemical. For 'Copper Wire', find the properties for 'Copper'. For something like 'Vacuum', give it a unique formula like 'Vac' and inert effects (0 for all). The name should be the utility name.
-      - If **Category is 'custom'**: Interpret the user's intent freely. It could be a real but obscure chemical or a slightly fictional one. Be creative but grounded in scientific principles.
+      - If **Category is 'compound'**: The user is listing multiple items to mix. The 'name' will be a comma-separated list (e.g., "Vinegar, Baking Soda"). You MUST treat this as a pre-reaction. Generate a new name, formula, and a simple common name for the *resulting mixture* (e.g., "Sodium Acetate Solution"). For the visual effects, simulate the reaction of these components (e.g., Vinegar + Baking Soda = lots of bubbles).
+      - If **Category is 'utility'**: The user is creating a tool or non-chemical item (e.g., "Copper Wire", "Vacuum"). Do not treat it as a chemical. For 'Copper Wire', find the properties for 'Copper'. For something like 'Vacuum', give it a unique formula like 'Vac' and inert effects (0 for all). The name and common name should be the utility name.
+      - If **Category is 'custom'**: Interpret the user's intent freely. It could be a real but obscure chemical or a slightly fictional one. Be creative but grounded in scientific principles. Generate a scientific name, common name, and formula.
 
   2.  **Get Properties**:
-      - For 'ordinary' and 'utility' items that map to a real chemical, use the getChemicalProperties tool to find the real formula and scientific name.
-      - For 'compound' or 'custom' items, you will determine the name and formula yourself based on the components or description. You do not need to use the tool if you are creating a new compound name/formula.
+      - For 'ordinary' and 'utility' items that map to a real chemical, use the getChemicalProperties tool to find the real formula, scientific name, and common name.
+      - For 'compound' or 'custom' items, you will determine the name, common name, and formula yourself based on the components or description. You do not need to use the tool if you are creating a new compound.
 
   3.  **Handle Not Found**: If the tool is used and returns 'found: false' for an 'ordinary' item, you MUST respond with 'found: false' and do not fill out any other fields. For other categories, this is less likely to happen.
 
-  4.  **Use Correct Info**: If the tool returns 'found: true', you MUST use the exact 'name' and 'formula' provided by the tool.
+  4.  **Use Correct Info**: If the tool returns 'found: true', you MUST use the exact 'name', 'commonName', and 'formula' provided by the tool.
 
   5.  **Generate Effects**: Based on the final chemical/item, generate plausible visual effects:
       - color: A hex code.

@@ -136,6 +136,7 @@ export default function Home() {
         return customChemicals.filter(
             (chemical) =>
                 (chemical.promptName && chemical.promptName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                (chemical.commonName && chemical.commonName.toLowerCase().includes(searchQuery.toLowerCase())) ||
                 chemical.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 chemical.formula.toLowerCase().includes(searchQuery.toLowerCase())
         );
@@ -343,10 +344,11 @@ export default function Home() {
           category: customCreationCategory
         };
         const result = await createChemical(input);
-        if (result.found && result.formula && result.name) {
+        if (result.found && result.formula && result.name && result.commonName) {
             const newChemical: Chemical = {
                 formula: result.formula,
                 name: result.name,
+                commonName: result.commonName,
                 isElement: result.isElement || false,
                 effects: result.effects || {},
                 promptName: customChemicalName, // Save the original user input
@@ -495,7 +497,7 @@ const handleRevertHistory = (state: LabState) => {
                                             variant="outline"
                                             onClick={() => handleChemicalClick(chemical)}
                                             disabled={beakerContents.length >= 12 || beakerContents.some(c => c.formula === chemical.formula)}
-                                            title={showCommonName ? chemical.name : chemical.promptName}
+                                            title={chemical.name}
                                             className="w-full flex-col h-auto"
                                             aria-label={`Add ${chemical.name} to beaker`}
                                         >
@@ -518,8 +520,8 @@ const handleRevertHistory = (state: LabState) => {
                                     </div>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    <p>Original input: {chemical.promptName}</p>
-                                    <p>Scientific name: {chemical.name}</p>
+                                    <p>Scientific: {chemical.name}</p>
+                                    <p>Original: {chemical.promptName}</p>
                                 </TooltipContent>
                             </Tooltip>
                         ))

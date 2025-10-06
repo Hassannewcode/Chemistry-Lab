@@ -4,6 +4,7 @@ import type { ChemicalEffect } from '@/components/beaker-icon';
 export interface Chemical {
   formula: string;
   name: string;
+  commonName?: string; // The simple, common name (e.g., "Baking Soda")
   isElement?: boolean;
   effects?: Partial<ChemicalEffect>;
   promptName?: string; // The original user input for a custom chemical
