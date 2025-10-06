@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, DragEvent, useMemo, useEffect } from 'react';
-import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles, Menu, History, RotateCcw, Beaker, Atom, Wrench, HelpCircle, Replace } from 'lucide-react';
+import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles, Menu, History, RotateCcw, Beaker, Atom, Wrench, HelpCircle, Replace, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
 import { VerticalSlider } from '@/components/vertical-slider';
@@ -69,6 +69,8 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   
   const [isCustomCreationOpen, setIsCustomCreationOpen] = useState(false);
+  const [editingChemical, setEditingChemical] = useState<Chemical | null>(null);
+  const [deletingChemical, setDeletingChemical] = useState<Chemical | null>(null);
   const [customCreationCategory, setCustomCreationCategory] = useState<CustomCreationCategory | null>(null);
   const [customChemicalName, setCustomChemicalName] = useState('');
   const [customChemicalDescription, setCustomChemicalDescription] = useState('');
@@ -352,21 +354,31 @@ export default function Home() {
     }
   }
   
-  const handleOpenCustomCreation = () => {
+  const handleOpenCustomCreation = (chemicalToEdit: Chemical | null = null) => {
+    if (chemicalToEdit) {
+        setEditingChemical(chemicalToEdit);
+        setCustomChemicalName(chemicalToEdit.promptName || chemicalToEdit.name);
+        // This is a simplification. We assume custom items have a category stored.
+        // A more robust solution might store the original category on the chemical object.
+        setCustomCreationCategory('custom'); // Forcing a category for simplicity
+        setCustomChemicalDescription(''); // Description editing can be complex.
+    } else {
+        setEditingChemical(null);
+        setCustomChemicalName('');
+        setCustomChemicalDescription('');
+        setCustomCreationCategory(null);
+    }
     setIsCustomCreationOpen(true);
-    setCustomCreationCategory(null);
-    setCustomChemicalName('');
-    setCustomChemicalDescription('');
   };
   
-  const handleCreateCustomChemical = async () => {
+const handleCreateOrUpdateCustomChemical = async () => {
     if (!customChemicalName.trim() || !customCreationCategory) return;
     setIsCreatingCustom(true);
     try {
         const input: CreateChemicalInput = {
-          name: customChemicalName,
-          category: customCreationCategory,
-          description: customChemicalDescription,
+            name: customChemicalName,
+            category: customCreationCategory,
+            description: customChemicalDescription,
         };
         const result = await createChemical(input);
 
@@ -377,38 +389,57 @@ export default function Home() {
                 commonName: result.commonName,
                 isElement: result.isElement || false,
                 effects: result.effects || {},
-                promptName: customChemicalName, // Save the original user input
+                promptName: customChemicalName,
             };
-            setCustomChemicals(prev => [...prev, newChemical]);
-            setCustomChemicalName('');
-            setCustomChemicalDescription('');
-            setCustomCreationCategory(null);
+
+            if (editingChemical) {
+                // Update existing chemical
+                setCustomChemicals(prev => prev.map(c => c.formula === editingChemical.formula ? newChemical : c));
+                toast({
+                    title: 'Item Updated!',
+                    description: `Renamed to ${newChemical.commonName}.`,
+                });
+            } else {
+                // Add new chemical
+                setCustomChemicals(prev => [...prev, newChemical]);
+                 toast({
+                    title: 'Item Created!',
+                    description: result.suggestion 
+                        ? `${newChemical.commonName} is now available. ${result.suggestion}`
+                        : `${newChemical.commonName} (${newChemical.formula}) is now available.`,
+                });
+            }
+           
             setIsCustomCreationOpen(false);
-            
-            toast({
-                title: 'Item Created!',
-                description: result.suggestion 
-                    ? `${newChemical.commonName} is now available. ${result.suggestion}`
-                    : `${newChemical.commonName} (${newChemical.formula}) is now available.`,
-            });
+            setEditingChemical(null);
+
         } else {
             toast({
                 variant: "destructive",
-                title: 'Creation Failed',
-                description: result.suggestion || `Could not create an item named "${customChemicalName}". It might not be a recognized chemical or compound.`,
+                title: editingChemical ? 'Update Failed' : 'Creation Failed',
+                description: result.suggestion || `Could not process an item named "${customChemicalName}".`,
             });
         }
     } catch (error) {
-        console.error("Error creating custom chemical:", error);
+        console.error("Error creating/updating custom chemical:", error);
         toast({
             variant: "destructive",
-            title: "Creation Error",
-            description: "An AI error occurred while creating the item.",
+            title: "AI Error",
+            description: "An AI error occurred while processing the item.",
         });
     } finally {
         setIsCreatingCustom(false);
     }
 };
+
+const handleDeleteCustomChemical = () => {
+    if (!deletingChemical) return;
+    setCustomChemicals(prev => prev.filter(c => c.formula !== deletingChemical.formula));
+    // Also remove from beaker if present
+    setBeakerContents(prev => prev.filter(c => c.formula !== deletingChemical.formula));
+    toast({ title: 'Item Deleted', description: `${deletingChemical.commonName} has been removed.` });
+    setDeletingChemical(null);
+}
 
 const handleRevertHistory = (state: LabState) => {
     loadLabState(state);
@@ -507,7 +538,7 @@ const handleRevertHistory = (state: LabState) => {
                  <TooltipProvider>
                     <div className="space-y-4">
                         <div className="flex gap-2">
-                            <Button onClick={handleOpenCustomCreation} className="flex-1">
+                            <Button onClick={() => handleOpenCustomCreation()} className="flex-1">
                                 <Sparkles className="h-4 w-4 mr-2" />
                                 Create a Custom Item
                             </Button>
@@ -531,25 +562,22 @@ const handleRevertHistory = (state: LabState) => {
                                             <span className="font-bold text-lg truncate w-full">{chemical.commonName}</span>
                                             <span className="text-xs text-muted-foreground truncate w-full">{chemical.formula}</span>
                                         </Button>
-                                        <Button 
-                                            size="icon" 
-                                            variant="ghost" 
-                                            className="absolute top-0 right-0 h-6 w-6 opacity-50 group-hover:opacity-100"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleShowInfo(chemical);
-                                            }}
-                                            title={`Info on ${chemical.name}`}
-                                            aria-label={`Show info for ${chemical.name}`}
-                                        >
-                                            <Info size={14} />
-                                        </Button>
+                                        <div className="absolute top-0 right-0 flex opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); handleShowInfo(chemical); }} title={`Info on ${chemical.name}`} aria-label={`Show info for ${chemical.name}`}>
+                                                <Info size={14} />
+                                            </Button>
+                                            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); handleOpenCustomCreation(chemical); }} title={`Edit ${chemical.name}`} aria-label={`Edit ${chemical.name}`}>
+                                                <PenSquare size={14} />
+                                            </Button>
+                                            <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); setDeletingChemical(chemical); }} title={`Delete ${chemical.name}`} aria-label={`Delete ${chemical.name}`}>
+                                                <Trash2 size={14} />
+                                            </Button>
+                                        </div>
                                     </div>
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <p>Scientific: {chemical.name}</p>
                                     <p>Original: {chemical.promptName}</p>
-                                    <p>Common: {chemical.commonName}</p>
                                 </TooltipContent>
                             </Tooltip>
                         ))
@@ -609,7 +637,7 @@ const handleRevertHistory = (state: LabState) => {
                   {beakerContents.length > 0 ? (
                     beakerContents.map((c, index) => (
                       <span 
-                        key={c.formula}
+                        key={`${c.formula}-${index}`}
                         draggable
                         onDragStart={(e) => handleDragStart(e, index)}
                         onDrop={(e) => handleDrop(e, index)}
@@ -884,7 +912,7 @@ const handleRevertHistory = (state: LabState) => {
        <Dialog open={isCustomCreationOpen} onOpenChange={setIsCustomCreationOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create a Custom Item</DialogTitle>
+             <DialogTitle>{editingChemical ? 'Edit Custom Item' : 'Create a Custom Item'}</DialogTitle>
             <DialogDescription>
               {customCreationCategory === 'custom'
                 ? "Describe your invention. The AI will generate its properties."
@@ -892,7 +920,7 @@ const handleRevertHistory = (state: LabState) => {
               }
             </DialogDescription>
           </DialogHeader>
-          {!customCreationCategory ? (
+          {!customCreationCategory && !editingChemical ? (
             <div className="grid grid-cols-2 gap-4 py-4">
               <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => setCustomCreationCategory('ordinary')}>
                 <Beaker className="h-6 w-6" />
@@ -918,7 +946,7 @@ const handleRevertHistory = (state: LabState) => {
           ) : (
             <div className="pt-4 space-y-4">
                 <p className="font-semibold text-center">
-                    Creating a/an <span className="text-primary">{customCreationCategory}</span> item.
+                    {editingChemical ? 'Editing' : 'Creating a/an'} <span className="text-primary">{customCreationCategory}</span> item.
                 </p>
                 <Input
                     placeholder={
@@ -941,16 +969,31 @@ const handleRevertHistory = (state: LabState) => {
                   />
                 )}
                 <div className="flex justify-end gap-2">
-                    <Button variant="ghost" onClick={() => setCustomCreationCategory(null)} disabled={isCreatingCustom}>Back</Button>
-                    <Button onClick={handleCreateCustomChemical} disabled={isCreatingCustom || !customChemicalName.trim()}>
+                    <Button variant="ghost" onClick={() => setIsCustomCreationOpen(false)} disabled={isCreatingCustom}>Cancel</Button>
+                    <Button onClick={handleCreateOrUpdateCustomChemical} disabled={isCreatingCustom || !customChemicalName.trim()}>
                         {isCreatingCustom ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                        <span className="ml-2">Create</span>
+                        <span className="ml-2">{editingChemical ? 'Update' : 'Create'}</span>
                     </Button>
                 </div>
             </div>
           )}
         </DialogContent>
        </Dialog>
+      
+       <AlertDialog open={!!deletingChemical} onOpenChange={(isOpen) => !isOpen && setDeletingChemical(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete <strong>{deletingChemical?.commonName}</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeletingChemical(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteCustomChemical} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
         <DialogContent className="max-w-2xl">
