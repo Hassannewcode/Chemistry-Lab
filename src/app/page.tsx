@@ -14,6 +14,7 @@ import { conductReaction } from '@/ai/flows/reactionFlow';
 import { getChemicalInfo } from '@/ai/flows/chemicalInfoFlow';
 import { getElementUsage } from '@/ai/flows/elementUsageFlow';
 import { createChemical } from '@/ai/flows/createChemicalFlow';
+import { getCommonName } from '@/ai/flows/commonNameFlow';
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { SoundManager } from '@/components/sound-manager';
@@ -23,7 +24,6 @@ import { UsageChart } from '@/components/usage-chart';
 import { CHEMICAL_CATEGORIES, Chemical } from '@/lib/chemicals';
 import { Input } from '@/components/ui/input';
 import { ChatInterface, ChatMessage } from '@/components/chat-interface';
-import { chatAboutReaction } from '@/ai/flows/chatFlow';
 import type { ConductReactionInput, ConductReactionOutput } from '@/ai/schemas/reactionSchema';
 import type { ChemicalInfoOutput } from '@/ai/schemas/chemicalInfoSchema';
 import type { ElementUsageOutput } from '@/ai/schemas/elementUsageSchema';
@@ -78,6 +78,9 @@ export default function Home() {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+
+  const [isFindingCommonName, setIsFindingCommonName] = useState(false);
+  const [foundCommonName, setFoundCommonName] = useState<string | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -209,6 +212,7 @@ export default function Home() {
     setInfoContent(null);
     setUsageContent(null);
     setIsUsageChartOpen(false);
+    setFoundCommonName(null);
     try {
       const result = await getChemicalInfo({ name: chemical.name, formula: chemical.formula });
       setInfoContent(result);
@@ -222,6 +226,25 @@ export default function Home() {
       setInfoChemical(null); // Close dialog on error
     } finally {
       setIsInfoLoading(false);
+    }
+  };
+
+  const handleFindCommonName = async () => {
+    if (!infoChemical) return;
+    setIsFindingCommonName(true);
+    setFoundCommonName(null);
+    try {
+        const result = await getCommonName({ scientificName: infoChemical.name, formula: infoChemical.formula });
+        setFoundCommonName(result.commonName);
+    } catch (error) {
+        console.error("Error finding common name:", error);
+        toast({
+            variant: "destructive",
+            title: "AI Error",
+            description: "Could not find a common name for this chemical.",
+        });
+    } finally {
+        setIsFindingCommonName(false);
     }
   };
 
@@ -501,7 +524,7 @@ const handleRevertHistory = (state: LabState) => {
                                             className="w-full flex-col h-auto"
                                             aria-label={`Add ${chemical.name} to beaker`}
                                         >
-                                            <span className="font-bold text-lg truncate w-full">{showCommonName ? chemical.commonName : chemical.name}</span>
+                                            <span className="font-bold text-lg truncate w-full">{showCommonName ? chemical.promptName : chemical.name}</span>
                                             <span className="text-xs text-muted-foreground truncate w-full">{chemical.formula}</span>
                                         </Button>
                                         <Button 
@@ -730,13 +753,24 @@ const handleRevertHistory = (state: LabState) => {
           <DialogHeader>
             <div className="flex justify-between items-center">
               <DialogTitle>About {infoChemical?.name} ({infoChemical?.formula})</DialogTitle>
-              {infoChemical?.isElement && (
-                  <Button variant="outline" size="sm" onClick={handleShowUsageChart} disabled={isInfoLoading || isUsageChartLoading}>
-                      <BarChart className="mr-2 h-4 w-4"/>
-                      {isUsageChartLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Usage'}
+                <div className='flex items-center gap-2'>
+                  {infoChemical?.isElement && (
+                      <Button variant="outline" size="sm" onClick={handleShowUsageChart} disabled={isInfoLoading || isUsageChartLoading}>
+                          <BarChart className="mr-2 h-4 w-4"/>
+                          {isUsageChartLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Usage'}
+                      </Button>
+                  )}
+                  <Button variant="outline" size="sm" onClick={handleFindCommonName} disabled={isFindingCommonName || isInfoLoading}>
+                        {isFindingCommonName ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                        <span className="ml-2">Find Common Name</span>
                   </Button>
-              )}
+                </div>
             </div>
+            {foundCommonName && (
+                <DialogDescription className="text-lg text-primary font-semibold pt-2">
+                    Common Name: {foundCommonName}
+                </DialogDescription>
+            )}
           </DialogHeader>
           <div className="text-sm text-muted-foreground pt-2 max-h-[70vh] overflow-y-auto pr-4">
               {isInfoLoading && (

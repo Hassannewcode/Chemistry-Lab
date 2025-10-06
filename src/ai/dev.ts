@@ -5,5 +5,6 @@ import './flows/chemicalInfoFlow';
 import './flows/elementUsageFlow';
 import './flows/chatFlow';
 import './flows/createChemicalFlow';
+import './flows/commonNameFlow';
 
     
