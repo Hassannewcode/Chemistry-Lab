@@ -79,8 +79,7 @@ export default function Home() {
 
   const [isFindingCommonName, setIsFindingCommonName] = useState(false);
   const [foundCommonName, setFoundCommonName] = useState<string | null>(null);
-  const [showCommonName, setShowCommonName] = useState(false);
-
+  
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -367,15 +366,6 @@ export default function Home() {
         };
         const result = await createChemical(input);
 
-        if (result.suggestion) {
-          toast({
-              variant: "destructive",
-              title: 'Suggestion',
-              description: result.suggestion,
-          });
-          return;
-        }
-
         if (result.found && result.formula && result.name && result.commonName) {
             const newChemical: Chemical = {
                 formula: result.formula,
@@ -389,15 +379,18 @@ export default function Home() {
             setCustomChemicalName('');
             setCustomCreationCategory(null);
             setIsCustomCreationOpen(false);
+            
             toast({
                 title: 'Item Created!',
-                description: `${newChemical.commonName} (${newChemical.formula}) is now available.`,
+                description: result.suggestion 
+                    ? `${newChemical.commonName} is now available. ${result.suggestion}`
+                    : `${newChemical.commonName} (${newChemical.formula}) is now available.`,
             });
         } else {
             toast({
                 variant: "destructive",
                 title: 'Creation Failed',
-                description: `Could not create an item named "${customChemicalName}". It might not be a recognized chemical or compound.`,
+                description: result.suggestion || `Could not create an item named "${customChemicalName}". It might not be a recognized chemical or compound.`,
             });
         }
     } catch (error) {
@@ -513,9 +506,6 @@ const handleRevertHistory = (state: LabState) => {
                                 <Sparkles className="h-4 w-4 mr-2" />
                                 Create a Custom Item
                             </Button>
-                             <Button variant="outline" size="icon" onClick={() => setShowCommonName(p => !p)} title="Toggle Common/Scientific Name">
-                                <Replace className="h-4 w-4" />
-                            </Button>
                         </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-52 overflow-y-auto pr-2">
                         {customChemicals.length === 0 ? (
@@ -531,9 +521,9 @@ const handleRevertHistory = (state: LabState) => {
                                             disabled={beakerContents.length >= 12 || beakerContents.some(c => c.formula === chemical.formula)}
                                             title={chemical.name}
                                             className="w-full flex-col h-auto"
-                                            aria-label={`Add ${chemical.name} to beaker`}
+                                            aria-label={`Add ${chemical.commonName} to beaker`}
                                         >
-                                            <span className="font-bold text-lg truncate w-full">{showCommonName ? chemical.commonName : chemical.name}</span>
+                                            <span className="font-bold text-lg truncate w-full">{chemical.commonName}</span>
                                             <span className="text-xs text-muted-foreground truncate w-full">{chemical.formula}</span>
                                         </Button>
                                         <Button 

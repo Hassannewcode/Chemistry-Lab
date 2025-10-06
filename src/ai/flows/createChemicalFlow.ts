@@ -63,22 +63,20 @@ const prompt = ai.definePrompt({
   input: {schema: CreateChemicalInputSchema},
   output: {schema: CreateChemicalOutputSchema},
   tools: [getChemicalProperties],
-  prompt: `You are a chemistry expert creating a new item for a simulation based on user input. Your primary goal is to create the item, but also to guide the user if they select the wrong category.
+  prompt: `You are a chemistry expert creating a new item for a simulation based on user input. Your goal is to create the item as requested, but also to provide helpful guidance if the category seems mismatched.
 
   The user wants to create an item named: "{{name}}"
   They have categorized this item as: "{{category}}"
 
-  1.  **Analyze Category vs. Name**:
-      -   First, determine if the user's input 'name' is appropriate for the selected 'category'.
-      -   **If Mismatch**:
-          -   If category is 'ordinary' but name is "Vinegar, Baking Soda" (contains a comma), it's a compound. Set 'found' to false and set 'suggestion' to "This looks like a compound. Please use the 'Compound' category to mix items."
-          -   If category is 'ordinary' but name is "Vacuum" or "Copper Wire" (a non-chemical utility), it's a utility item. Set 'found' to false and set 'suggestion' to "This looks like a utility item. Please try creating it in the 'Utility' category."
-          -   If category is 'utility' but name is "Water" or "Sodium Bicarbonate" (a simple chemical), it's an ordinary item. Set 'found' to false and set 'suggestion' to "This looks like a simple chemical. Please try creating it in the 'Ordinary' category."
-          -   If you provide a suggestion, DO NOT generate any other properties for the chemical. Just return found: false and the suggestion.
+  1.  **Analyze for Category Mismatch**:
+      -   First, determine if the user's input 'name' seems mismatched for the selected 'category'.
+      -   **If Mismatch Detected**:
+          -   If category is 'ordinary' but name is "Vinegar, Baking Soda" (contains a comma), the suggestion is: "This looks like a compound. Try the 'Compound' category for mixtures."
+          -   If category is 'ordinary' but name is "Vacuum" or "Copper Wire" (a non-chemical utility), the suggestion is: "This looks like a utility item. Try the 'Utility' category next time."
+          -   If category is 'utility' but name is "Water" or "Sodium Bicarbonate" (a simple chemical), the suggestion is: "This looks like a simple chemical. Try the 'Ordinary' category next time."
+      -   **Crucially, even if you generate a suggestion, you must still proceed to create the item based on the user's original request.** The suggestion is helpful advice, not a blocker.
 
-      -   **If No Mismatch, Proceed**:
-
-  2.  **Process by Category**:
+  2.  **Process by Category (as requested by user)**:
       -   If **Category is 'ordinary'**: The user wants a single, simple chemical. Use the 'name' to find its properties using the getChemicalProperties tool.
       -   If **Category is 'compound'**: The user is listing multiple items to mix. The 'name' will be a comma-separated list (e.g., "Vinegar, Baking Soda"). You MUST treat this as a pre-reaction. Generate a new name, formula, and a simple common name for the *resulting mixture* (e.g., "Sodium Acetate Solution"). For the visual effects, simulate the reaction of these components (e.g., Vinegar + Baking Soda = lots of bubbles).
       -   If **Category is 'utility'**: The user is creating a tool or non-chemical item (e.g., "Copper Wire", "Vacuum"). Do not treat it as a chemical. For 'Copper Wire', find the properties for 'Copper'. For something like 'Vacuum', give it a unique formula like 'Vac' and inert effects (0 for all). The name and common name should be the utility name.
@@ -88,7 +86,7 @@ const prompt = ai.definePrompt({
       -   For 'ordinary' and 'utility' items that map to a real chemical, use the getChemicalProperties tool to find the real formula, scientific name, and common name.
       -   For 'compound' or 'custom' items, you will determine the name, common name, and formula yourself based on the components or description.
 
-  4.  **Handle Not Found**: If the tool is used and returns 'found: false' for an 'ordinary' item, you MUST respond with 'found: false' and do not fill out any other fields.
+  4.  **Handle Not Found**: If the tool is used and returns 'found: false' for an 'ordinary' item, you MUST respond with 'found: false' and do not fill out any other fields, except for a suggestion if applicable.
 
   5.  **Use Correct Info**: If the tool returns 'found: true', you MUST use the exact 'name', 'commonName', and 'formula' provided by the tool.
 
