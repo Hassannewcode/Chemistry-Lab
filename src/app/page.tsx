@@ -22,6 +22,7 @@ import { PeriodicTable } from '@/components/periodic-table';
 import { UsageChart } from '@/components/usage-chart';
 import { CHEMICAL_CATEGORIES, Chemical } from '@/lib/chemicals';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { ChatInterface, ChatMessage } from '@/components/chat-interface';
 import type { ConductReactionInput, ConductReactionOutput } from '@/ai/schemas/reactionSchema';
 import type { ChemicalInfoOutput } from '@/ai/schemas/chemicalInfoSchema';
@@ -70,6 +71,7 @@ export default function Home() {
   const [isCustomCreationOpen, setIsCustomCreationOpen] = useState(false);
   const [customCreationCategory, setCustomCreationCategory] = useState<CustomCreationCategory | null>(null);
   const [customChemicalName, setCustomChemicalName] = useState('');
+  const [customChemicalDescription, setCustomChemicalDescription] = useState('');
   const [isCreatingCustom, setIsCreatingCustom] = useState(false);
   const [customChemicals, setCustomChemicals] = useState<Chemical[]>([]);
   
@@ -354,6 +356,7 @@ export default function Home() {
     setIsCustomCreationOpen(true);
     setCustomCreationCategory(null);
     setCustomChemicalName('');
+    setCustomChemicalDescription('');
   };
   
   const handleCreateCustomChemical = async () => {
@@ -362,7 +365,8 @@ export default function Home() {
     try {
         const input: CreateChemicalInput = {
           name: customChemicalName,
-          category: customCreationCategory
+          category: customCreationCategory,
+          description: customChemicalDescription,
         };
         const result = await createChemical(input);
 
@@ -377,6 +381,7 @@ export default function Home() {
             };
             setCustomChemicals(prev => [...prev, newChemical]);
             setCustomChemicalName('');
+            setCustomChemicalDescription('');
             setCustomCreationCategory(null);
             setIsCustomCreationOpen(false);
             
@@ -881,7 +886,10 @@ const handleRevertHistory = (state: LabState) => {
           <DialogHeader>
             <DialogTitle>Create a Custom Item</DialogTitle>
             <DialogDescription>
-              What kind of item do you want to create? The AI will generate its properties based on your choice.
+              {customCreationCategory === 'custom'
+                ? "Describe your invention. The AI will generate its properties."
+                : "What kind of item do you want to create? The AI will generate its properties based on your choice."
+              }
             </DialogDescription>
           </DialogHeader>
           {!customCreationCategory ? (
@@ -904,7 +912,7 @@ const handleRevertHistory = (state: LabState) => {
               <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => setCustomCreationCategory('custom')}>
                 <HelpCircle className="h-6 w-6" />
                 <span className="text-center">Other</span>
-                 <p className="text-xs text-muted-foreground">e.g., A fictional material</p>
+                 <p className="text-xs text-muted-foreground">Invent a fictional material</p>
               </Button>
             </div>
           ) : (
@@ -916,12 +924,22 @@ const handleRevertHistory = (state: LabState) => {
                     placeholder={
                         customCreationCategory === 'compound' ? "e.g., Vinegar, Baking Soda, Lemon" :
                         customCreationCategory === 'utility' ? "e.g., Copper Wire, Vacuum" :
+                        customCreationCategory === 'custom' ? "Item Name (e.g., Glowing Shard)" :
                         "e.g., Baking Soda"
                     }
                     value={customChemicalName}
                     onChange={(e) => setCustomChemicalName(e.target.value)}
                     disabled={isCreatingCustom}
                 />
+                {customCreationCategory === 'custom' && (
+                  <Textarea
+                    placeholder="Describe it... (e.g., A crystal that hums with a faint blue light and feels cold to the touch)"
+                    value={customChemicalDescription}
+                    onChange={(e) => setCustomChemicalDescription(e.target.value)}
+                    disabled={isCreatingCustom}
+                    rows={3}
+                  />
+                )}
                 <div className="flex justify-end gap-2">
                     <Button variant="ghost" onClick={() => setCustomCreationCategory(null)} disabled={isCreatingCustom}>Back</Button>
                     <Button onClick={handleCreateCustomChemical} disabled={isCreatingCustom || !customChemicalName.trim()}>

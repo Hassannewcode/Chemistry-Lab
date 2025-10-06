@@ -6,14 +6,15 @@
 import {z} from 'genkit';
 
 export const CreateChemicalInputSchema = z.object({
-  name: z.string().describe('The common name or description of the chemical/item to create.'),
+  name: z.string().describe('The common name or title of the chemical/item to create.'),
   category: z.enum(['ordinary', 'compound', 'utility', 'custom']).describe('The user-selected category for the creation request.'),
+  description: z.string().optional().describe('A user-provided description for a custom item.'),
 });
 export type CreateChemicalInput = z.infer<typeof CreateChemicalInputSchema>;
 
 export const CreateChemicalOutputSchema = z.object({
   found: z.boolean().describe('Whether a real chemical was found or an item was successfully created.'),
-  suggestion: z.string().optional().describe("A suggestion for the user if the category doesn't match the input name (e.g., 'Try the Utility category for that item')."),
+  suggestion: z.string().optional().describe("An informative message for the user if a category was auto-corrected (e.g., 'I noticed this is a utility, so I've categorized it as such.')."),
   formula: z.string().optional().describe('The chemical formula of the created chemical.'),
   name: z.string().optional().describe('The scientific or common name of the created chemical.'),
   commonName: z.string().optional().describe('The simple, common name for the item (e.g., "Baking Soda").'),
