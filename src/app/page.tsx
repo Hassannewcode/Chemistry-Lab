@@ -944,5 +944,3 @@ const handleRevertHistory = (state: LabState) => {
     </div>
   );
 }
-
-    
