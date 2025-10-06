@@ -478,6 +478,15 @@ const handleRevertHistory = (state: LabState) => {
   const changeConcentration = (amount: number) => {
     setConcentration(prev => Math.max(0.1, Math.round((prev + amount) * 10)/10 ));
   }
+  
+  const handleTemperatureChange = (newTemp: number) => {
+    setTemperature(Math.max(-273, newTemp));
+  };
+
+  const handleConcentrationChange = (newConc: number) => {
+    setConcentration(Math.max(0.1, newConc));
+  };
+
 
   const handleDragStart = (e: DragEvent<HTMLSpanElement>, index: number) => {
     e.dataTransfer.setData("chemicalIndex", index.toString());
@@ -679,14 +688,18 @@ const handleRevertHistory = (state: LabState) => {
             
             <div className="relative w-full flex-1 flex items-center justify-center min-h-[300px]">
               <VerticalSlider
-                label={`${concentration.toFixed(1)}M`}
+                value={concentration}
+                onValueChange={handleConcentrationChange}
+                unit="M"
                 icon={<FlaskConical className="h-5 w-5" />}
                 onIncrease={() => changeConcentration(0.1)}
                 onDecrease={() => changeConcentration(-0.1)}
                 ariaLabel="Concentration"
               />
               <VerticalSlider
-                label={`${temperature}°C`}
+                value={temperature}
+                onValueChange={handleTemperatureChange}
+                unit="°C"
                 icon={<Thermometer className="h-5 w-5" />}
                 onIncrease={() => changeTemperature(5)}
                 onDecrease={() => changeTemperature(-5)}

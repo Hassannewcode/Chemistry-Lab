@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { Plus, Minus } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
@@ -24,7 +24,6 @@ const usePressAndHold = (callback: () => void, speed: number = 50, initialDelay:
 
     const start = useCallback((event: React.MouseEvent | React.TouchEvent) => {
         event.preventDefault();
-        // Initial action on first press
         callback(); 
         
         timeoutRef.current = setTimeout(() => {
@@ -46,16 +45,69 @@ const usePressAndHold = (callback: () => void, speed: number = 50, initialDelay:
 
 interface VerticalSliderProps {
   className?: string;
-  label?: string;
+  value: number;
+  onValueChange: (newValue: number) => void;
+  unit: string;
   icon?: React.ReactNode;
   onIncrease: () => void;
   onDecrease: () => void;
   ariaLabel: string;
 }
 
-export const VerticalSlider: React.FC<VerticalSliderProps> = ({ className, label, icon, onIncrease, onDecrease, ariaLabel }) => {
+export const VerticalSlider: React.FC<VerticalSliderProps> = ({ 
+    className, 
+    value,
+    onValueChange,
+    unit,
+    icon, 
+    onIncrease, 
+    onDecrease, 
+    ariaLabel 
+}) => {
   const increaseProps = usePressAndHold(onIncrease);
   const decreaseProps = usePressAndHold(onDecrease);
+  const [inputValue, setInputValue] = useState(String(value));
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setInputValue(String(value));
+  }, [value]);
+
+  useEffect(() => {
+    if (inputRef.current) {
+        const baseFontSize = 1; // base font size in rem
+        const maxLength = 5; // characters before scaling
+        const scaleFactor = 0.1;
+
+        let newSize = baseFontSize;
+        if (inputValue.length > maxLength) {
+            newSize = baseFontSize - (inputValue.length - maxLength) * scaleFactor;
+        }
+        
+        inputRef.current.style.fontSize = `${Math.max(newSize, 0.6)}rem`;
+    }
+  }, [inputValue]);
+
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setInputValue(e.target.value);
+  };
+
+  const handleInputBlur = () => {
+    let numericValue = parseFloat(inputValue);
+    if (!isNaN(numericValue)) {
+        onValueChange(numericValue);
+    } else {
+        setInputValue(String(value)); // Revert if invalid
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+        handleInputBlur();
+        inputRef.current?.blur();
+    }
+  };
   
   return (
     <div className={cn("flex flex-col items-center space-y-3 mx-4", className)} role="group" aria-label={`${ariaLabel} control`}>
@@ -70,7 +122,21 @@ export const VerticalSlider: React.FC<VerticalSliderProps> = ({ className, label
       <div className="relative bg-gray-800 text-white rounded-full w-12 flex flex-col items-center justify-between py-2 text-center" style={{height: '140px'}}>
         <div className='absolute inset-0 flex flex-col items-center justify-center p-1' aria-hidden="true">
             {icon}
-            {label && <span className="text-sm font-semibold mt-1">{label}</span>}
+             <div className="relative w-full px-1">
+                <input
+                    ref={inputRef}
+                    type="text"
+                    value={inputValue}
+                    onChange={handleInputChange}
+                    onBlur={handleInputBlur}
+                    onKeyDown={handleKeyDown}
+                    className="w-full bg-transparent text-white text-center font-semibold outline-none border-none p-0"
+                    style={{ fontSize: '1rem' }}
+                />
+                <span className="absolute right-1 top-1/2 -translate-y-1/2 text-xs opacity-70" style={{pointerEvents: 'none'}}>
+                    {unit}
+                </span>
+            </div>
         </div>
       </div>
       <Button 
