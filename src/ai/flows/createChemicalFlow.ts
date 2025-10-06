@@ -63,24 +63,24 @@ const prompt = ai.definePrompt({
   input: {schema: CreateChemicalInputSchema},
   output: {schema: CreateChemicalOutputSchema},
   tools: [getChemicalProperties],
-  prompt: `You are a chemistry expert creating a new item for a simulation based on user input. Your goal is to create the item as requested, but also to provide helpful guidance if the category seems mismatched.
+  prompt: `You are a chemistry expert creating a new item for a simulation based on user input. Your goal is to create the item as requested, and automatically correct the category if it seems mismatched, informing the user of the change.
 
   The user wants to create an item named: "{{name}}"
   They have categorized this item as: "{{category}}"
 
-  1.  **Analyze for Category Mismatch**:
-      -   First, determine if the user's input 'name' seems mismatched for the selected 'category'.
+  1.  **Analyze and Auto-Correct Category**:
+      -   First, determine if the user's input 'name' is mismatched for the selected 'category'.
       -   **If Mismatch Detected**:
-          -   If category is 'ordinary' but name is "Vinegar, Baking Soda" (contains a comma), the suggestion is: "This looks like a compound. Try the 'Compound' category for mixtures."
-          -   If category is 'ordinary' but name is "Vacuum" or "Copper Wire" (a non-chemical utility), the suggestion is: "This looks like a utility item. Try the 'Utility' category next time."
-          -   If category is 'utility' but name is "Water" or "Sodium Bicarbonate" (a simple chemical), the suggestion is: "This looks like a simple chemical. Try the 'Ordinary' category next time."
-      -   **Crucially, even if you generate a suggestion, you must still proceed to create the item based on the user's original request.** The suggestion is helpful advice, not a blocker.
+          -   If the user chose 'ordinary' but the name is "Vinegar, Baking Soda" (a comma-separated list), you MUST change the category to 'compound' and set the suggestion to: "I noticed this is a mixture, so I've categorized it as a 'Compound' for you."
+          -   If the user chose 'ordinary' but the name is "Vacuum" or "Copper Wire" (a non-chemical utility), you MUST change the category to 'utility' and set the suggestion to: "I noticed '{{name}}' is a tool, so I've categorized it as a 'Utility' for you."
+          -   If the user chose 'utility' but the name is "Water" or "Sodium Bicarbonate" (a simple chemical), you MUST change the category to 'ordinary' and set the suggestion to: "I noticed '{{name}}' is a chemical, so I've categorized it as an 'Ordinary' item for you."
+      -   **If no mismatch is detected, proceed with the user's chosen category.**
 
-  2.  **Process by Category (as requested by user)**:
-      -   If **Category is 'ordinary'**: The user wants a single, simple chemical. Use the 'name' to find its properties using the getChemicalProperties tool.
-      -   If **Category is 'compound'**: The user is listing multiple items to mix. The 'name' will be a comma-separated list (e.g., "Vinegar, Baking Soda"). You MUST treat this as a pre-reaction. Generate a new name, formula, and a simple common name for the *resulting mixture* (e.g., "Sodium Acetate Solution"). For the visual effects, simulate the reaction of these components (e.g., Vinegar + Baking Soda = lots of bubbles).
-      -   If **Category is 'utility'**: The user is creating a tool or non-chemical item (e.g., "Copper Wire", "Vacuum"). Do not treat it as a chemical. For 'Copper Wire', find the properties for 'Copper'. For something like 'Vacuum', give it a unique formula like 'Vac' and inert effects (0 for all). The name and common name should be the utility name.
-      -   If **Category is 'custom'**: Interpret the user's intent freely. It could be a real but obscure chemical or a slightly fictional one. Be creative but grounded in scientific principles. Generate a scientific name, common name, and formula.
+  2.  **Process by the Final Category**:
+      -   If the final category is **'ordinary'**: The user wants a single, simple chemical. Use the 'name' to find its properties using the getChemicalProperties tool.
+      -   If the final category is **'compound'**: The user is listing multiple items to mix. The 'name' will be a comma-separated list (e.g., "Vinegar, Baking Soda"). You MUST treat this as a pre-reaction. Generate a new name, formula, and a simple common name for the *resulting mixture* (e.g., "Sodium Acetate Solution"). For the visual effects, simulate the reaction of these components (e.g., Vinegar + Baking Soda = lots of bubbles).
+      -   If the final category is **'utility'**: The user is creating a tool or non-chemical item (e.g., "Copper Wire", "Vacuum"). Do not treat it as a chemical. For 'Copper Wire', find the properties for 'Copper'. For something like 'Vacuum', give it a unique formula like 'Vac' and inert effects (0 for all). The name and common name should be the utility name.
+      -   If the final category is **'custom'**: Interpret the user's intent freely. It could be a real but obscure chemical or a slightly fictional one. Be creative but grounded in scientific principles. Generate a scientific name, common name, and formula.
 
   3.  **Get Properties (If applicable)**:
       -   For 'ordinary' and 'utility' items that map to a real chemical, use the getChemicalProperties tool to find the real formula, scientific name, and common name.
@@ -108,3 +108,5 @@ const createChemicalFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    
