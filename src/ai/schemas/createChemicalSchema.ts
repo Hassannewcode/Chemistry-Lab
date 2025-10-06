@@ -9,6 +9,7 @@ export const CreateChemicalInputSchema = z.object({
   name: z.string().describe('The common name or title of the chemical/item to create.'),
   category: z.enum(['ordinary', 'compound', 'utility', 'custom']).describe('The user-selected category for the creation request.'),
   description: z.string().optional().describe('A user-provided description for a custom item.'),
+  isEditing: z.boolean().optional().describe('A flag to indicate if the user is editing an existing item.'),
 });
 export type CreateChemicalInput = z.infer<typeof CreateChemicalInputSchema>;
 
@@ -60,5 +61,3 @@ export const CreateChemicalOutputSchema = z.object({
 });
 
 export type CreateChemicalOutput = z.infer<typeof CreateChemicalOutputSchema>;
-
-    

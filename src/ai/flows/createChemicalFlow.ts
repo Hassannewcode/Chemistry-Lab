@@ -105,6 +105,13 @@ const createChemicalFlow = ai.defineFlow(
     outputSchema: CreateChemicalOutputSchema,
   },
   async input => {
+    // If we are editing, we don't want to auto-correct the category.
+    // The main prompt doesn't know about editing, so we can just bypass the auto-correction logic here.
+    if (input.isEditing) {
+        const {output} = await prompt(input);
+        return output!;
+    }
+    
     const {output} = await prompt(input);
     return output!;
   }

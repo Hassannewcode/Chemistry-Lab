@@ -14,6 +14,7 @@ import { getChemicalInfo } from '@/ai/flows/chemicalInfoFlow';
 import { getElementUsage } from '@/ai/flows/elementUsageFlow';
 import { createChemical } from '@/ai/flows/createChemicalFlow';
 import { getCommonName } from '@/ai/flows/commonNameFlow';
+import { generateDescription } from '@/ai/flows/generateDescriptionFlow';
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { SoundManager } from '@/components/sound-manager';
@@ -75,6 +76,7 @@ export default function Home() {
   const [customChemicalName, setCustomChemicalName] = useState('');
   const [customChemicalDescription, setCustomChemicalDescription] = useState('');
   const [isCreatingCustom, setIsCreatingCustom] = useState(false);
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [customChemicals, setCustomChemicals] = useState<Chemical[]>([]);
   
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
@@ -358,6 +360,7 @@ export default function Home() {
     if (chemicalToEdit) {
         setEditingChemical(chemicalToEdit);
         setCustomChemicalName(chemicalToEdit.promptName || chemicalToEdit.name);
+        // When editing, always treat it as custom to show the description field.
         setCustomCreationCategory('custom');
         setCustomChemicalDescription(chemicalToEdit.description || '');
     } else {
@@ -377,6 +380,7 @@ const handleCreateOrUpdateCustomChemical = async () => {
             name: customChemicalName,
             category: customCreationCategory,
             description: customChemicalDescription,
+            isEditing: !!editingChemical,
         };
         const result = await createChemical(input);
 
@@ -388,7 +392,7 @@ const handleCreateOrUpdateCustomChemical = async () => {
                 isElement: result.isElement || false,
                 effects: result.effects || {},
                 promptName: customChemicalName,
-                description: customChemicalDescription,
+                description: customChemicalDescription || result.name, // Fallback to name if description is empty
             };
 
             if (editingChemical) {
@@ -430,6 +434,25 @@ const handleCreateOrUpdateCustomChemical = async () => {
         setIsCreatingCustom(false);
     }
 };
+
+const handleGenerateDescription = async () => {
+    if (!customChemicalName.trim()) return;
+    setIsGeneratingDescription(true);
+    try {
+        const result = await generateDescription({ name: customChemicalName });
+        setCustomChemicalDescription(result.description);
+    } catch (error) {
+        console.error("Error generating description:", error);
+        toast({
+            variant: "destructive",
+            title: "AI Error",
+            description: "Could not generate a description for this item.",
+        });
+    } finally {
+        setIsGeneratingDescription(false);
+    }
+};
+
 
 const handleDeleteCustomChemical = () => {
     if (!deletingChemical) return;
@@ -911,7 +934,7 @@ const handleRevertHistory = (state: LabState) => {
              <DialogTitle>{editingChemical ? 'Edit Custom Item' : 'Create a Custom Item'}</DialogTitle>
             <DialogDescription>
               {customCreationCategory === 'custom'
-                ? "Describe your invention. The AI will generate its properties."
+                ? "Invent a new material. Give it a name and describe it, or let the AI generate a description for you."
                 : "What kind of item do you want to create? The AI will generate its properties based on your choice."
               }
             </DialogDescription>
@@ -953,20 +976,39 @@ const handleRevertHistory = (state: LabState) => {
                     }
                     value={customChemicalName}
                     onChange={(e) => setCustomChemicalName(e.target.value)}
-                    disabled={isCreatingCustom}
+                    disabled={isCreatingCustom || isGeneratingDescription}
                 />
                 {(customCreationCategory === 'custom' || editingChemical) && (
-                  <Textarea
-                    placeholder="Describe it... (e.g., A crystal that hums with a faint blue light and feels cold to the touch)"
-                    value={customChemicalDescription}
-                    onChange={(e) => setCustomChemicalDescription(e.target.value)}
-                    disabled={isCreatingCustom}
-                    rows={3}
-                  />
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label htmlFor="custom-description" className="text-sm font-medium">Description</label>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleGenerateDescription}
+                        disabled={isGeneratingDescription || !customChemicalName.trim()}
+                      >
+                        {isGeneratingDescription ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            <Sparkles className="h-4 w-4" />
+                        )}
+                        <span className="ml-2">Generate</span>
+                      </Button>
+                    </div>
+                    <Textarea
+                      id="custom-description"
+                      placeholder="Describe it... or let the AI generate one for you."
+                      value={customChemicalDescription}
+                      onChange={(e) => setCustomChemicalDescription(e.target.value)}
+                      disabled={isCreatingCustom || isGeneratingDescription}
+                      rows={3}
+                    />
+                  </div>
                 )}
                 <div className="flex justify-end gap-2">
                     <Button variant="ghost" onClick={() => setIsCustomCreationOpen(false)} disabled={isCreatingCustom}>Cancel</Button>
-                    <Button onClick={handleCreateOrUpdateCustomChemical} disabled={isCreatingCustom || !customChemicalName.trim()}>
+                    <Button onClick={handleCreateOrUpdateCustomChemical} disabled={isCreatingCustom || !customChemicalName.trim() || isGeneratingDescription}>
                         {isCreatingCustom ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                         <span className="ml-2">{editingChemical ? 'Update' : 'Create'}</span>
                     </Button>
@@ -981,7 +1023,7 @@ const handleRevertHistory = (state: LabState) => {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete <strong>{deletingChemical?.commonName}</strong>.
+              This will permanently delete <strong>{deletingChemical?.commonName}</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1035,5 +1077,3 @@ const handleRevertHistory = (state: LabState) => {
     </div>
   );
 }
-
-    
