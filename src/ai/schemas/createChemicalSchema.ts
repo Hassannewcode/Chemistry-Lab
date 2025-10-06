@@ -13,6 +13,7 @@ export type CreateChemicalInput = z.infer<typeof CreateChemicalInputSchema>;
 
 export const CreateChemicalOutputSchema = z.object({
   found: z.boolean().describe('Whether a real chemical was found or an item was successfully created.'),
+  suggestion: z.string().optional().describe("A suggestion for the user if the category doesn't match the input name (e.g., 'Try the Utility category for that item')."),
   formula: z.string().optional().describe('The chemical formula of the created chemical.'),
   name: z.string().optional().describe('The scientific or common name of the created chemical.'),
   commonName: z.string().optional().describe('The simple, common name for the item (e.g., "Baking Soda").'),

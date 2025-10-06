@@ -72,7 +72,6 @@ export default function Home() {
   const [customChemicalName, setCustomChemicalName] = useState('');
   const [isCreatingCustom, setIsCreatingCustom] = useState(false);
   const [customChemicals, setCustomChemicals] = useState<Chemical[]>([]);
-  const [showCommonName, setShowCommonName] = useState(false);
   
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -80,6 +79,7 @@ export default function Home() {
 
   const [isFindingCommonName, setIsFindingCommonName] = useState(false);
   const [foundCommonName, setFoundCommonName] = useState<string | null>(null);
+  const [showCommonName, setShowCommonName] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -366,6 +366,16 @@ export default function Home() {
           category: customCreationCategory
         };
         const result = await createChemical(input);
+
+        if (result.suggestion) {
+          toast({
+              variant: "destructive",
+              title: 'Suggestion',
+              description: result.suggestion,
+          });
+          return;
+        }
+
         if (result.found && result.formula && result.name && result.commonName) {
             const newChemical: Chemical = {
                 formula: result.formula,
@@ -511,8 +521,8 @@ const handleRevertHistory = (state: LabState) => {
                         {customChemicals.length === 0 ? (
                         <p className="col-span-full text-center text-muted-foreground text-sm pt-4">No custom items created yet.</p>
                         ) : (
-                        filteredChemicals.map(chemical => (
-                            <Tooltip key={chemical.formula}>
+                        filteredChemicals.map((chemical, index) => (
+                            <Tooltip key={`${chemical.formula}-${index}`}>
                                 <TooltipTrigger asChild>
                                     <div className="relative group">
                                         <Button 
@@ -523,7 +533,7 @@ const handleRevertHistory = (state: LabState) => {
                                             className="w-full flex-col h-auto"
                                             aria-label={`Add ${chemical.name} to beaker`}
                                         >
-                                            <span className="font-bold text-lg truncate w-full">{showCommonName ? chemical.promptName : chemical.name}</span>
+                                            <span className="font-bold text-lg truncate w-full">{showCommonName ? chemical.commonName : chemical.name}</span>
                                             <span className="text-xs text-muted-foreground truncate w-full">{chemical.formula}</span>
                                         </Button>
                                         <Button 
