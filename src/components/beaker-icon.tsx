@@ -1,6 +1,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { MAX_BEAKER_CONTENTS } from '@/lib/constants';
 
 // Effect properties for each chemical
 export interface ChemicalEffect {
@@ -132,11 +133,14 @@ const Explosion: React.FC<{ intensity: number }> = ({ intensity }) => {
 
 export const BeakerIcon: React.FC<BeakerIconProps> = ({ contents = [], overrideEffects = null, ...props }) => {
   const [explosionKey, setExplosionKey] = useState(0);
-  const fillLevel = contents.length;
+  
+  const fillLevel = useMemo(() => {
+    return Math.floor((contents.length / MAX_BEAKER_CONTENTS) * 12);
+  }, [contents.length]);
 
   const combinedEffects = useMemo<ChemicalEffect>(() => {
     if (overrideEffects) return overrideEffects;
-    if (fillLevel === 0) return defaultEffects;
+    if (contents.length === 0) return defaultEffects;
 
     const effects = contents.reduce((acc, chemical) => {
         const chemEffects = { ...defaultEffects, ...chemical.effects };
@@ -221,7 +225,7 @@ export const BeakerIcon: React.FC<BeakerIconProps> = ({ contents = [], overrideE
       </defs>
       
       {/* Liquid */}
-      {fillLevel > 0 && (
+      {contents.length > 0 && (
         <g filter={combinedEffects.glow > 0 ? "url(#glow)" : undefined}>
           <path
             d={currentLiquidPath}
@@ -301,5 +305,3 @@ export const BeakerIcon: React.FC<BeakerIconProps> = ({ contents = [], overrideE
     </svg>
   );
 };
-
-    

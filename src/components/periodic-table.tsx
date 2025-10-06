@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import type { Chemical } from '@/lib/chemicals';
+import { MAX_BEAKER_CONTENTS } from '@/lib/constants';
 
 interface PeriodicTableProps {
   onElementClick: (elementName: string) => void;
@@ -150,7 +151,7 @@ export const PeriodicTable: React.FC<PeriodicTableProps> = ({ onElementClick, be
         <TooltipProvider>
             <div className="grid grid-cols-[repeat(18,minmax(0,1fr))] gap-1 text-xs">
                 {elements.map((el) => {
-                    const isDisabled = beakerContents.length >= 12 || beakerContents.some(c => c.formula === el.symbol);
+                    const isDisabled = beakerContents.length >= MAX_BEAKER_CONTENTS || beakerContents.some(c => c.formula === el.symbol);
                     return (
                     <Tooltip key={el.number}>
                         <TooltipTrigger asChild>

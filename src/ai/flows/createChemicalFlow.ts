@@ -39,6 +39,7 @@ const getChemicalProperties = ai.defineTool(
       'lemon': { name: 'Citric Acid', commonName: 'Lemon Juice', formula: 'C6H8O7' },
       'copper wire': { name: 'Copper', commonName: 'Copper Wire', formula: 'Cu' },
       'vacuum': { name: 'Vacuum', commonName: 'Vacuum', formula: 'Vac' },
+      'water': { name: 'Water', commonName: 'Water', formula: 'H2O' },
     };
     const lookupKey = input.name.toLowerCase();
     if (commonChemicals[lookupKey]) {
@@ -81,7 +82,7 @@ const prompt = ai.definePrompt({
       -   If the final category is **'ordinary'**: The user wants a single, simple chemical. Use the 'name' to find its properties using the getChemicalProperties tool.
       -   If the final category is **'compound'**: The user is listing multiple items to mix. The 'name' will be a comma-separated list (e.g., "Vinegar, Baking Soda"). You MUST treat this as a pre-reaction. Generate a new name, formula, and a simple common name for the *resulting mixture* (e.g., "Sodium Acetate Solution"). For the visual effects, simulate the reaction of these components (e.g., Vinegar + Baking Soda = lots of bubbles).
       -   If the final category is **'utility'**: The user is creating a tool or non-chemical item (e.g., "Copper Wire", "Vacuum"). Do not treat it as a chemical. For 'Copper Wire', find the properties for 'Copper'. For something like 'Vacuum', give it a unique formula like 'Vac' and inert effects (0 for all). The name and common name should be the utility name.
-      -   If the final category is **'custom'**: The user is inventing an item. Use the 'name' and 'description' to be creative. Generate a plausible but fictional scientific name, a cool common name, and a unique formula (e.g., 'Xy-7b'). The effects should match the description. For example, if the description says "a glowing, unstable rock," generate high glow and explosion values.
+      -   If the final category is **'custom'**: The user is inventing an item. Use the 'name' and 'description' to be creative. Generate a plausible but fictional scientific name, a cool common name, and a unique formula (e.g., 'Xy-7b'). The effects should match the description. For example, if the description says "a glowing, unstable rock," generate high glow and explosion values. **Do not simplify the user's concept.** For example, "Aerated Water" should not become "Water". It should be treated as a unique substance.
 
   3.  **Get Properties (If applicable)**:
       -   For 'ordinary' and 'utility' items that map to a real chemical, use the getChemicalProperties tool to find the real formula, scientific name, and common name.

@@ -32,6 +32,7 @@ import type { CreateChemicalInput } from '@/ai/schemas/createChemicalSchema';
 import { Whiteboard } from '@/components/whiteboard';
 import { PastExperiments, LabState } from '@/components/past-experiments';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { MAX_BEAKER_CONTENTS } from '@/lib/constants';
 
 type ChemicalCategory = keyof typeof CHEMICAL_CATEGORIES | 'CUSTOM';
 const NAME_LENGTH_THRESHOLD = 18; // Names longer than this will trigger confirmation
@@ -165,7 +166,7 @@ export default function Home() {
   }
 
   const handleAddChemical = (chemical: Chemical) => {
-    if (beakerContents.length < 12) {
+    if (beakerContents.length < MAX_BEAKER_CONTENTS) {
       resetSimulationState();
       setBeakerContents([...beakerContents, chemical]);
     }
@@ -191,7 +192,7 @@ export default function Home() {
   const handleAddElementFromTable = (elementName: string) => {
     const element = CHEMICAL_CATEGORIES.ELEMENTS.find(el => el.name === elementName);
     if (element) {
-        if (beakerContents.length < 12) {
+        if (beakerContents.length < MAX_BEAKER_CONTENTS) {
             handleAddChemical(element);
             toast({ title: `Added ${element.name} to beaker!` });
         } else {
@@ -524,7 +525,7 @@ const handleRevertHistory = (state: LabState) => {
             <CardHeader className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <CardTitle>Select Chemicals</CardTitle>
-                  <CardDescription>Choose up to 12 chemicals & sprays to mix.</CardDescription>
+                  <CardDescription>Choose up to {MAX_BEAKER_CONTENTS} chemicals & sprays to mix.</CardDescription>
                 </div>
                 <div className='flex items-center gap-2'>
                    <Button variant="outline" size="icon" onClick={() => setIsPastLabsOpen(true)} aria-label="Open past labs">
@@ -582,7 +583,7 @@ const handleRevertHistory = (state: LabState) => {
                                         <Button 
                                             variant="outline"
                                             onClick={() => handleChemicalClick(chemical)}
-                                            disabled={beakerContents.length >= 12 || beakerContents.some(c => c.formula === chemical.formula)}
+                                            disabled={beakerContents.length >= MAX_BEAKER_CONTENTS || beakerContents.some(c => c.formula === chemical.formula)}
                                             title={chemical.name}
                                             className="w-full flex-col h-auto"
                                             aria-label={`Add ${chemical.commonName} to beaker`}
@@ -620,7 +621,7 @@ const handleRevertHistory = (state: LabState) => {
                       <Button 
                         variant="outline"
                         onClick={() => handleChemicalClick(chemical)}
-                        disabled={beakerContents.length >= 12 || beakerContents.some(c => c.formula === chemical.formula)}
+                        disabled={beakerContents.length >= MAX_BEAKER_CONTENTS || beakerContents.some(c => c.formula === chemical.formula)}
                         title={chemical.name}
                         className="w-full flex-col h-auto"
                         aria-label={`Add ${chemical.name} to beaker`}
@@ -1090,3 +1091,4 @@ const handleRevertHistory = (state: LabState) => {
     </div>
   );
 }
+
