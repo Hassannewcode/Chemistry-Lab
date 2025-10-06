@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, DragEvent, useMemo, useEffect } from 'react';
@@ -524,7 +523,7 @@ const handleRevertHistory = (state: LabState) => {
                                             className="w-full flex-col h-auto"
                                             aria-label={`Add ${chemical.name} to beaker`}
                                         >
-                                            <span className="font-bold text-lg truncate w-full">{showCommonName ? chemical.promptName : chemical.name}</span>
+                                            <span className="font-bold text-lg truncate w-full">{showCommonName ? chemical.commonName : chemical.name}</span>
                                             <span className="text-xs text-muted-foreground truncate w-full">{chemical.formula}</span>
                                         </Button>
                                         <Button 
@@ -556,7 +555,7 @@ const handleRevertHistory = (state: LabState) => {
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-60 overflow-y-auto pr-2">
                   {filteredChemicals.map(chemical => (
-                    <div key={chemical.formula} className="relative group">
+                    <div key={`${activeCategory}-${chemical.formula}`} className="relative group">
                       <Button 
                         variant="outline"
                         onClick={() => handleChemicalClick(chemical)}
