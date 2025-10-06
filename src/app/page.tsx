@@ -554,8 +554,8 @@ const handleRevertHistory = (state: LabState) => {
                  </TooltipProvider>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-60 overflow-y-auto pr-2">
-                  {filteredChemicals.map(chemical => (
-                    <div key={`${activeCategory}-${chemical.formula}`} className="relative group">
+                  {filteredChemicals.map((chemical, index) => (
+                    <div key={`${activeCategory}-${chemical.formula}-${index}`} className="relative group">
                       <Button 
                         variant="outline"
                         onClick={() => handleChemicalClick(chemical)}
