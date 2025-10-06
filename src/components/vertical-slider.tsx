@@ -68,23 +68,16 @@ export const VerticalSlider: React.FC<VerticalSliderProps> = ({
   const decreaseProps = usePressAndHold(onDecrease);
   const [inputValue, setInputValue] = useState(String(value));
   const inputRef = useRef<HTMLInputElement>(null);
+  const sizeRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     setInputValue(String(value));
   }, [value]);
 
   useEffect(() => {
-    if (inputRef.current) {
-        const baseFontSize = 1; // base font size in rem
-        const maxLength = 5; // characters before scaling
-        const scaleFactor = 0.1;
-
-        let newSize = baseFontSize;
-        if (inputValue.length > maxLength) {
-            newSize = baseFontSize - (inputValue.length - maxLength) * scaleFactor;
-        }
-        
-        inputRef.current.style.fontSize = `${Math.max(newSize, 0.6)}rem`;
+    if (inputRef.current && sizeRef.current) {
+        // Set the input width based on the hidden span's width
+        inputRef.current.style.width = `${sizeRef.current.offsetWidth + 2}px`;
     }
   }, [inputValue]);
 
@@ -122,7 +115,9 @@ export const VerticalSlider: React.FC<VerticalSliderProps> = ({
       <div className="relative bg-gray-800 text-white rounded-full w-12 flex flex-col items-center justify-between py-2 text-center" style={{height: '140px'}}>
         <div className='absolute inset-0 flex flex-col items-center justify-center p-1' aria-hidden="true">
             {icon}
-             <div className="relative w-full px-1">
+             <div className="relative w-full flex items-center justify-center gap-1">
+                 {/* Hidden span to calculate the required width */}
+                <span ref={sizeRef} className="absolute invisible whitespace-pre text-base font-semibold">{inputValue}</span>
                 <input
                     ref={inputRef}
                     type="text"
@@ -130,10 +125,10 @@ export const VerticalSlider: React.FC<VerticalSliderProps> = ({
                     onChange={handleInputChange}
                     onBlur={handleInputBlur}
                     onKeyDown={handleKeyDown}
-                    className="w-full bg-transparent text-white text-center font-semibold outline-none border-none p-0"
-                    style={{ fontSize: '1rem' }}
+                    className="bg-transparent text-white text-right font-semibold outline-none border-none p-0 text-base"
+                    style={{ minWidth: '1ch' }}
                 />
-                <span className="absolute right-1 top-1/2 -translate-y-1/2 text-xs opacity-70" style={{pointerEvents: 'none'}}>
+                <span className="text-xs opacity-70">
                     {unit}
                 </span>
             </div>
