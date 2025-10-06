@@ -174,14 +174,14 @@ export default function Home() {
       setConfirmingChemical(chemical);
     } else {
       handleAddChemical(chemical);
-      toast({ title: `Added ${chemical.name} to beaker!` });
+      toast({ title: `Added ${chemical.commonName || chemical.name} to beaker!` });
     }
   }
 
   const handleConfirmAddChemical = () => {
     if (confirmingChemical) {
       handleAddChemical(confirmingChemical);
-      toast({ title: `Added ${confirmingChemical.name} to beaker!` });
+      toast({ title: `Added ${confirmingChemical.commonName || confirmingChemical.name} to beaker!` });
       setConfirmingChemical(null);
     }
   };
@@ -358,10 +358,8 @@ export default function Home() {
     if (chemicalToEdit) {
         setEditingChemical(chemicalToEdit);
         setCustomChemicalName(chemicalToEdit.promptName || chemicalToEdit.name);
-        // This is a simplification. We assume custom items have a category stored.
-        // A more robust solution might store the original category on the chemical object.
-        setCustomCreationCategory('custom'); // Forcing a category for simplicity
-        setCustomChemicalDescription(''); // Description editing can be complex.
+        setCustomCreationCategory('custom');
+        setCustomChemicalDescription(chemicalToEdit.description || '');
     } else {
         setEditingChemical(null);
         setCustomChemicalName('');
@@ -390,17 +388,18 @@ const handleCreateOrUpdateCustomChemical = async () => {
                 isElement: result.isElement || false,
                 effects: result.effects || {},
                 promptName: customChemicalName,
+                description: customChemicalDescription,
             };
 
             if (editingChemical) {
-                // Update existing chemical
                 setCustomChemicals(prev => prev.map(c => c.formula === editingChemical.formula ? newChemical : c));
                 toast({
                     title: 'Item Updated!',
-                    description: `Renamed to ${newChemical.commonName}.`,
+                    description: result.suggestion 
+                        ? `${newChemical.commonName} has been updated. ${result.suggestion}`
+                        : `${newChemical.commonName} has been updated.`,
                 });
             } else {
-                // Add new chemical
                 setCustomChemicals(prev => [...prev, newChemical]);
                  toast({
                     title: 'Item Created!',
@@ -435,7 +434,6 @@ const handleCreateOrUpdateCustomChemical = async () => {
 const handleDeleteCustomChemical = () => {
     if (!deletingChemical) return;
     setCustomChemicals(prev => prev.filter(c => c.formula !== deletingChemical.formula));
-    // Also remove from beaker if present
     setBeakerContents(prev => prev.filter(c => c.formula !== deletingChemical.formula));
     toast({ title: 'Item Deleted', description: `${deletingChemical.commonName} has been removed.` });
     setDeletingChemical(null);
@@ -458,7 +456,6 @@ const handleRevertHistory = (state: LabState) => {
     setConcentration(prev => Math.max(0.1, Math.round((prev + amount) * 10)/10 ));
   }
 
-  // Drag and drop handlers for beaker contents
   const handleDragStart = (e: DragEvent<HTMLSpanElement>, index: number) => {
     e.dataTransfer.setData("chemicalIndex", index.toString());
   };
@@ -472,11 +469,11 @@ const handleRevertHistory = (state: LabState) => {
   };
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault(); // Necessary to allow dropping
+    e.preventDefault();
   };
 
   if (!isMounted) {
-    return null; // Or a loading spinner
+    return null;
   }
 
   return (
@@ -484,7 +481,6 @@ const handleRevertHistory = (state: LabState) => {
       <SoundManager effects={reactionEffects} />
       <div className="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
         
-        {/* Left Column: Information & Controls */}
         <div className="flex flex-col justify-center space-y-8">
           <div className="text-left">
             <h1 className="text-6xl md:text-8xl font-bold text-[#E91E63]">Simulate</h1>
@@ -643,7 +639,7 @@ const handleRevertHistory = (state: LabState) => {
                         onDrop={(e) => handleDrop(e, index)}
                         className="flex items-center bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded-full cursor-grab active:cursor-grabbing"
                       >
-                        {c.formula}
+                        {c.commonName || c.name}
                         <button onClick={() => handleRemoveChemical(c.formula)} className="ml-2 text-blue-600 hover:text-blue-800" aria-label={`Remove ${c.name}`}>
                           <X size={14}/>
                         </button>
@@ -959,7 +955,7 @@ const handleRevertHistory = (state: LabState) => {
                     onChange={(e) => setCustomChemicalName(e.target.value)}
                     disabled={isCreatingCustom}
                 />
-                {customCreationCategory === 'custom' && (
+                {(customCreationCategory === 'custom' || editingChemical) && (
                   <Textarea
                     placeholder="Describe it... (e.g., A crystal that hums with a faint blue light and feels cold to the touch)"
                     value={customChemicalDescription}
@@ -1013,7 +1009,7 @@ const handleRevertHistory = (state: LabState) => {
                     <CardContent>
                       <p className="text-sm">
                         <span className="font-semibold">Reactants: </span>
-                        {entry.state.beakerContents.map(p => p.formula).join(', ') || 'None'}
+                        {entry.state.beakerContents.map(p => p.commonName || p.name).join(', ') || 'None'}
                       </p>
                       <p className="text-sm">
                         <span className="font-semibold">Products: </span>
@@ -1039,3 +1035,5 @@ const handleRevertHistory = (state: LabState) => {
     </div>
   );
 }
+
+    

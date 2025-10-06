@@ -4,10 +4,11 @@ import type { ChemicalEffect } from '@/components/beaker-icon';
 export interface Chemical {
   formula: string;
   name: string;
-  commonName?: string; // The simple, common name (e.g., "Baking Soda")
+  commonName?: string;
   isElement?: boolean;
   effects?: Partial<ChemicalEffect>;
-  promptName?: string; // The original user input for a custom chemical
+  promptName?: string;
+  description?: string;
 }
 
 // We are adding CUSTOM as a placeholder key.
@@ -153,3 +154,5 @@ export const CHEMICAL_CATEGORIES: Record<string, Chemical[]> = {
     ],
     CUSTOM: [],
 };
+
+    

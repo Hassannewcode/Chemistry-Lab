@@ -60,3 +60,5 @@ export const CreateChemicalOutputSchema = z.object({
 });
 
 export type CreateChemicalOutput = z.infer<typeof CreateChemicalOutputSchema>;
+
+    
