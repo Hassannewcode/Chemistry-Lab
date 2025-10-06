@@ -523,7 +523,7 @@ const handleRevertHistory = (state: LabState) => {
                                             className="w-full flex-col h-auto"
                                             aria-label={`Add ${chemical.name} to beaker`}
                                         >
-                                            <span className="font-bold text-lg truncate w-full">{showCommonName ? chemical.commonName : chemical.name}</span>
+                                            <span className="font-bold text-lg truncate w-full">{showCommonName ? chemical.promptName : chemical.name}</span>
                                             <span className="text-xs text-muted-foreground truncate w-full">{chemical.formula}</span>
                                         </Button>
                                         <Button 
