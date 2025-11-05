@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, DragEvent, useMemo, useEffect } from 'react';
-import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles, Menu, History, RotateCcw, Beaker, Atom, Wrench, HelpCircle, Replace, Trash2 } from 'lucide-react';
+import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles, Menu, History, RotateCcw, Beaker, Atom, Wrench, HelpCircle, Replace, Trash2, Flame, Snowflake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
 import { VerticalSlider } from '@/components/vertical-slider';
@@ -15,6 +15,7 @@ import { getElementUsage } from '@/ai/flows/elementUsageFlow';
 import { createChemical } from '@/ai/flows/createChemicalFlow';
 import { getCommonName } from '@/ai/flows/commonNameFlow';
 import { generateDescription } from '@/ai/flows/generateDescriptionFlow';
+import { simulateWhiteboard } from '@/ai/flows/simulateWhiteboardFlow';
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { SoundManager } from '@/components/sound-manager';
@@ -29,7 +30,7 @@ import type { ConductReactionInput, ConductReactionOutput } from '@/ai/schemas/r
 import type { ChemicalInfoOutput } from '@/ai/schemas/chemicalInfoSchema';
 import type { ElementUsageOutput } from '@/ai/schemas/elementUsageSchema';
 import type { CreateChemicalInput } from '@/ai/schemas/createChemicalSchema';
-import { Whiteboard } from '@/components/whiteboard';
+import { Whiteboard, WhiteboardCallbacks } from '@/components/whiteboard';
 import { PastExperiments, LabState } from '@/components/past-experiments';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MAX_BEAKER_CONTENTS } from '@/lib/constants';
@@ -62,6 +63,7 @@ export default function Home() {
   const [isUsageChartLoading, setIsUsageChartLoading] = useState(false);
   const [isPeriodicTableOpen, setIsPeriodicTableOpen] = useState(false);
   const [isUsageChartOpen, setIsUsageChartOpen] = useState(false);
+  const [whiteboardCallbacks, setWhiteboardCallbacks] = useState<WhiteboardCallbacks | null>(null);
   const [isWhiteboardOpen, setIsWhiteboardOpen] = useState(false);
   const [isPastLabsOpen, setIsPastLabsOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -295,13 +297,13 @@ export default function Home() {
     toast({ title: "Lab Loaded", description: "The experiment state has been restored." });
   };
 
-  const handleStartReaction = async () => {
-    if (beakerContents.length < 2) return;
+  const handleStartReaction = async (chemicals: string[] = beakerContents.map(c => c.promptName || c.formula)) => {
+    if (chemicals.length < 2) return;
     setIsLoading(true);
     resetSimulationState();
     try {
       const input: ConductReactionInput = {
-        chemicals: beakerContents.map(c => c.promptName || c.formula),
+        chemicals,
         temperature,
         concentration
       };
@@ -328,6 +330,53 @@ export default function Home() {
       setIsLoading(false);
     }
   };
+
+  const handleSimulateWhiteboard = async (textShapes: string[]) => {
+      setIsLoading(true);
+      resetSimulationState();
+      try {
+          const result = await simulateWhiteboard({ shapes: textShapes });
+          if (result.chemicals && result.chemicals.length > 0) {
+              const foundChemicals: Chemical[] = [];
+              const allChemicals = Object.values(CHEMICAL_CATEGORIES).flat().concat(customChemicals);
+              
+              result.chemicals.forEach(formula => {
+                  const found = allChemicals.find(c => c.formula === formula || c.name === formula || c.commonName === formula || c.promptName === formula);
+                  if (found) {
+                      foundChemicals.push(found);
+                  }
+              });
+
+              setBeakerContents(foundChemicals);
+              
+              const input: ConductReactionInput = {
+                  chemicals: foundChemicals.map(c => c.promptName || c.formula),
+                  temperature,
+                  concentration
+              };
+              const reactionResult = await conductReaction(input);
+              setReactionResult(reactionResult);
+              setReactionEffects(reactionResult.effects);
+          } else {
+              toast({ variant: 'destructive', title: 'No Chemicals Found', description: 'The AI could not identify any chemicals from the whiteboard.' });
+          }
+      } catch (error) {
+          console.error("Error simulating from whiteboard:", error);
+          toast({
+              variant: "destructive",
+              title: "Simulation Error",
+              description: "An error occurred while simulating from the whiteboard.",
+          });
+      } finally {
+          setIsLoading(false);
+          setIsWhiteboardOpen(false);
+      }
+  };
+  
+  useEffect(() => {
+    setWhiteboardCallbacks({ onSimulate: handleSimulateWhiteboard });
+  }, [temperature, concentration, customChemicals]);
+
 
   const handleSendChatMessage = async (message: string) => {
     if (!reactionResult) return;
@@ -759,6 +808,22 @@ const handleRevertHistory = (state: LabState) => {
                           </div>
                         </div>
                       </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex items-start gap-3 rounded-lg border p-3">
+                            <Flame className="h-5 w-5 text-orange-500 mt-1" />
+                            <div>
+                                <h4 className="font-semibold">Flame Test</h4>
+                                <p className="text-muted-foreground">{reactionResult.flameTest}</p>
+                            </div>
+                        </div>
+                         <div className="flex items-start gap-3 rounded-lg border p-3">
+                            <Snowflake className="h-5 w-5 text-blue-400 mt-1" />
+                            <div>
+                                <h4 className="font-semibold">Freeze Test</h4>
+                                <p className="text-muted-foreground">{reactionResult.freezeTest}</p>
+                            </div>
+                        </div>
+                    </div>
                     <p className="text-sm text-yellow-800 bg-yellow-100 p-2 rounded-md"><b>Safety:</b> {reactionResult.safetyNotes}</p>
                   </CardContent>
                 </Card>
@@ -771,7 +836,7 @@ const handleRevertHistory = (state: LabState) => {
             )}
             <Button 
               className="w-full mt-4 h-14 text-xl" 
-              onClick={handleStartReaction} 
+              onClick={() => handleStartReaction()} 
               disabled={beakerContents.length < 2 || isLoading}
               aria-label={isLoading ? "Simulating reaction, please wait" : "Start chemical reaction"}
             >
@@ -933,7 +998,7 @@ const handleRevertHistory = (state: LabState) => {
               </DialogDescription>
             </DialogHeader>
             <div className="relative flex-1">
-              <Whiteboard chemicals={beakerContents} />
+              <Whiteboard chemicals={beakerContents} callbacks={whiteboardCallbacks} />
             </div>
             <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground z-10 bg-white">
                 <X className="h-4 w-4" />
@@ -1091,4 +1156,3 @@ const handleRevertHistory = (state: LabState) => {
     </div>
   );
 }
-

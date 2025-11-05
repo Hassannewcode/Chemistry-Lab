@@ -96,6 +96,16 @@ export const ConductReactionOutputSchema = z.object({
     .describe(
         "An array of 2-3 simple, real-world analogies to help visualize the reaction's scale or effects. For instance, if there's an explosion, compare its energy to 'a small firecracker.' If it glows, compare the brightness to 'a camera flash.' If it's a certain color, compare it to a common object like 'the color of a sapphire.'"
     ),
+   flameTest: z
+    .string()
+    .describe(
+      "A description of what happens when the products are exposed to a flame, including color, smoke, and reactivity."
+    ),
+  freezeTest: z
+    .string()
+    .describe(
+      "A description of what happens when the products are frozen, including crystal formation, color changes, and texture."
+    ),
   effects: z
     .object({
       color: z

@@ -7,4 +7,5 @@ import './flows/chatFlow';
 import './flows/createChemicalFlow';
 import './flows/commonNameFlow';
 import './flows/generateDescriptionFlow';
+import './flows/simulateWhiteboardFlow';
     

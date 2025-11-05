@@ -1,15 +1,23 @@
+
 'use client'
 
-import { Tldraw, useEditor, TLComponents, TLUiComponents, track } from 'tldraw'
+import { Tldraw, useEditor, TLComponents, track, TLTextShape, isShapeOfType } from 'tldraw'
 import 'tldraw/tldraw.css'
 import { useEffect } from 'react';
 import type { Chemical } from '@/lib/chemicals';
+import { Button } from './ui/button';
+import { Sparkles } from 'lucide-react';
 
+
+export interface WhiteboardCallbacks {
+    onSimulate: (textShapes: string[]) => void;
+}
 interface WhiteboardProps {
     chemicals: Chemical[];
+    callbacks: WhiteboardCallbacks | null;
 }
 
-const CustomUi = track(() => {
+const CustomUi = track(({ onSimulate }: { onSimulate: () => void; }) => {
 	const editor = useEditor()
 	
 	useEffect(() => {
@@ -44,15 +52,12 @@ const CustomUi = track(() => {
 		>
 			<button className="tldraw__button" onClick={() => editor.undo()}>Undo</button>
 			<button className="tldraw__button" onClick={() => editor.redo()}>Redo</button>
+            <Button size="sm" onClick={onSimulate}><Sparkles className='mr-2 h-4 w-4'/>Simulate from Whiteboard</Button>
 		</div>
 	)
 })
 
-const components: TLComponents = {
-	UI: CustomUi,
-}
-
-function Content({ chemicals }: WhiteboardProps) {
+function Content({ chemicals }: Pick<WhiteboardProps, 'chemicals'>) {
 	const editor = useEditor()
 
 	useEffect(() => {
@@ -60,7 +65,7 @@ function Content({ chemicals }: WhiteboardProps) {
 
 		// A small delay to ensure the editor is ready
 		setTimeout(() => {
-			const existingShapes = Array.from(editor.getShapeIds());
+			const existingShapes = Array.from(editor.getCurrentPageShapeIds());
 			const shapesToCreate: any[] = [];
 			const shapeIdsToSelect: string[] = [];
 
@@ -75,7 +80,6 @@ function Content({ chemicals }: WhiteboardProps) {
 					props: {
 						text: "Let's plan an experiment!",
 						size: 'xl',
-						align: 'middle',
 					},
 				});
 			}
@@ -105,19 +109,18 @@ function Content({ chemicals }: WhiteboardProps) {
 
 			if (shapesToCreate.length > 0) {
 				editor.createShapes(shapesToCreate);
+                setTimeout(() => {
+                    if (shapeIdsToSelect.length > 0) {
+                        editor.select(...shapeIdsToSelect);
+                        editor.zoomToSelection({
+                            padding: 2,
+                            animation: { duration: 500 },
+                        });
+                    } else {
+                        editor.zoomToFit({ animation: { duration: 250 } });
+                    }
+                }, 100);
 			}
-
-			setTimeout(() => {
-				if (shapeIdsToSelect.length > 0) {
-					editor.select(...shapeIdsToSelect);
-					editor.zoomToSelection({
-						padding: 2,
-						animation: { duration: 500 },
-					});
-				} else {
-					editor.zoomToFit({ animation: { duration: 250 } });
-				}
-			}, 100);
 
 		}, 100)
 
@@ -127,10 +130,27 @@ function Content({ chemicals }: WhiteboardProps) {
 }
 
 
-export function Whiteboard({ chemicals }: WhiteboardProps) {
+export function Whiteboard({ chemicals, callbacks }: WhiteboardProps) {
+    const editorRef = React.useRef<any>(null);
+
+    const handleSimulate = () => {
+        if (editorRef.current && callbacks) {
+            const editor = editorRef.current;
+            const allShapes = editor.getCurrentPageShapes();
+            const textShapes = allShapes
+                .filter((shape: any): shape is TLTextShape => shape.type === 'text')
+                .map((shape: TLTextShape) => shape.props.text);
+            callbacks.onSimulate(textShapes);
+        }
+    };
+    
+    const components: TLComponents = {
+        UI: (props) => <CustomUi {...props} onSimulate={handleSimulate} />,
+    }
+
 	return (
 		<div style={{ position: 'absolute', inset: 0 }}>
-			<Tldraw>
+			<Tldraw onMount={(editor) => { editorRef.current = editor; }} components={components}>
 				<Content chemicals={chemicals} />
 			</Tldraw>
 		</div>
