@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, DragEvent, useMemo, useEffect } from 'react';
@@ -62,6 +63,7 @@ export default function Home() {
   const [isInfoLoading, setIsInfoLoading] = useState(false);
   const [isUsageChartLoading, setIsUsageChartLoading] = useState(false);
   const [isPeriodicTableOpen, setIsPeriodicTableOpen] = useState(false);
+  const [isModifiersOpen, setIsModifiersOpen] = useState(false);
   const [isUsageChartOpen, setIsUsageChartOpen] = useState(false);
   const [whiteboardCallbacks, setWhiteboardCallbacks] = useState<WhiteboardCallbacks | null>(null);
   const [isWhiteboardOpen, setIsWhiteboardOpen] = useState(false);
@@ -140,6 +142,9 @@ export default function Home() {
     }
     return categories;
   }, [customChemicals]);
+  
+  const visibleCategories = Object.keys(allChemicalCategories).filter(cat => cat !== 'MODIFIERS') as ChemicalCategory[];
+
 
   const filteredChemicals = useMemo(() => {
     if (activeCategory === 'CUSTOM') {
@@ -182,6 +187,11 @@ export default function Home() {
       toast({ title: `Added ${chemical.commonName || chemical.name} to beaker!` });
     }
   }
+  
+  const handleModifierClick = (modifier: Chemical) => {
+      handleAddChemical(modifier);
+      toast({ title: `Added ${modifier.commonName || modifier.name} modifier!` });
+  };
 
   const handleConfirmAddChemical = () => {
     if (confirmingChemical) {
@@ -335,28 +345,32 @@ export default function Home() {
       setIsLoading(true);
       resetSimulationState();
       try {
-          const result = await simulateWhiteboard({ shapes: textShapes });
-          if (result.chemicals && result.chemicals.length > 0) {
+          const { chemicals } = await simulateWhiteboard({ shapes: textShapes });
+          if (chemicals && chemicals.length > 0) {
               const foundChemicals: Chemical[] = [];
               const allChemicals = Object.values(CHEMICAL_CATEGORIES).flat().concat(customChemicals);
               
-              result.chemicals.forEach(formula => {
-                  const found = allChemicals.find(c => c.formula === formula || c.name === formula || c.commonName === formula || c.promptName === formula);
+              chemicals.forEach(nameOrFormula => {
+                  const found = allChemicals.find(c => c.formula === nameOrFormula || c.name === nameOrFormula || c.commonName === nameOrFormula || c.promptName === nameOrFormula);
                   if (found) {
                       foundChemicals.push(found);
                   }
               });
 
-              setBeakerContents(foundChemicals);
-              
-              const input: ConductReactionInput = {
-                  chemicals: foundChemicals.map(c => c.promptName || c.formula),
-                  temperature,
-                  concentration
-              };
-              const reactionResult = await conductReaction(input);
-              setReactionResult(reactionResult);
-              setReactionEffects(reactionResult.effects);
+              if (foundChemicals.length > 0) {
+                setBeakerContents(foundChemicals.slice(0, MAX_BEAKER_CONTENTS));
+                
+                const input: ConductReactionInput = {
+                    chemicals: foundChemicals.slice(0, MAX_BEAKER_CONTENTS).map(c => c.promptName || c.formula),
+                    temperature,
+                    concentration
+                };
+                const reactionResult = await conductReaction(input);
+                setReactionResult(reactionResult);
+                setReactionEffects(reactionResult.effects);
+              } else {
+                 toast({ variant: 'destructive', title: 'No Chemicals Found', description: 'The AI could not match the text to any available chemicals.' });
+              }
           } else {
               toast({ variant: 'destructive', title: 'No Chemicals Found', description: 'The AI could not identify any chemicals from the whiteboard.' });
           }
@@ -406,7 +420,7 @@ export default function Home() {
     }
   }
   
-  const handleOpenCustomCreation = (chemicalToEdit: Chemical | null = null) => {
+  const handleOpenCustomCreation = (chemicalToEdit: Chemical | null = null, defaultCategory: CustomCreationCategory | null = null) => {
     if (chemicalToEdit) {
         setEditingChemical(chemicalToEdit);
         setCustomChemicalName(chemicalToEdit.promptName || chemicalToEdit.name);
@@ -417,7 +431,7 @@ export default function Home() {
         setEditingChemical(null);
         setCustomChemicalName('');
         setCustomChemicalDescription('');
-        setCustomCreationCategory(null);
+        setCustomCreationCategory(defaultCategory);
     }
     setIsCustomCreationOpen(true);
   };
@@ -596,11 +610,14 @@ const handleRevertHistory = (state: LabState) => {
                    <Button variant="outline" size="icon" onClick={() => setIsWhiteboardOpen(true)} aria-label="Open whiteboard">
                     <PenSquare className="h-4 w-4" />
                   </Button>
+                  <Button variant="outline" size="icon" onClick={() => setIsModifiersOpen(true)} aria-label="Open modifiers">
+                    <Wrench className="h-4 w-4" />
+                  </Button>
                 </div>
             </CardHeader>
             <CardContent>
                <div className="w-full bg-gray-200 p-1 rounded-full mb-6 flex flex-wrap justify-center gap-1">
-                {(Object.keys(allChemicalCategories) as ChemicalCategory[]).map(category => (
+                {visibleCategories.map(category => (
                   <Button 
                     key={category}
                     variant={activeCategory === category ? 'default' : 'ghost'}
@@ -988,6 +1005,39 @@ const handleRevertHistory = (state: LabState) => {
             <PeriodicTable onElementClick={handleAddElementFromTable} beakerContents={beakerContents} />
         </DialogContent>
       </Dialog>
+      
+      <Dialog open={isModifiersOpen} onOpenChange={setIsModifiersOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Simulation Modifiers</DialogTitle>
+            <DialogDescription>
+              Select a modifier to influence the reaction's outcome, or create a new one.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                 {CHEMICAL_CATEGORIES.MODIFIERS.map((modifier) => (
+                    <Button 
+                        key={modifier.formula}
+                        variant="outline"
+                        onClick={() => handleModifierClick(modifier)}
+                        disabled={beakerContents.length >= MAX_BEAKER_CONTENTS || beakerContents.some(c => c.formula === modifier.formula)}
+                        title={modifier.name}
+                        className="w-full flex-col h-auto"
+                        aria-label={`Add ${modifier.name} to beaker`}
+                    >
+                        <span className="font-bold text-lg truncate w-full">{modifier.commonName}</span>
+                        <span className="text-xs text-muted-foreground truncate w-full">{modifier.name}</span>
+                    </Button>
+                ))}
+             </div>
+             <Button onClick={() => handleOpenCustomCreation(null, 'modifier')} className="w-full">
+                <Sparkles className="h-4 w-4 mr-2" />
+                Create a Custom Modifier
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isWhiteboardOpen} onOpenChange={setIsWhiteboardOpen}>
         <DialogContent className="max-w-none w-full h-[90vh] flex flex-col p-0">
@@ -1007,7 +1057,7 @@ const handleRevertHistory = (state: LabState) => {
         </DialogContent>
       </Dialog>
       
-       <Dialog open={isCustomCreationOpen} onOpenChange={setIsCustomCreationOpen}>
+       <Dialog open={isCustomCreationOpen} onOpenChange={(isOpen) => { if (!isOpen) setCustomCreationCategory(null); setIsCustomCreationOpen(isOpen);}}>
         <DialogContent>
           <DialogHeader>
              <DialogTitle>{editingChemical ? 'Edit Custom Item' : 'Create a Custom Item'}</DialogTitle>
@@ -1048,9 +1098,14 @@ const handleRevertHistory = (state: LabState) => {
             </div>
           ) : (
             <div className="pt-4 space-y-4">
-                <p className="font-semibold text-center">
-                    {editingChemical ? 'Editing' : 'Creating a/an'} <span className="text-primary">{customCreationCategory}</span> item.
-                </p>
+                <div className="flex items-center justify-between">
+                    <p className="font-semibold">
+                        {editingChemical ? 'Editing' : 'Creating a/an'} <span className="text-primary">{customCreationCategory}</span> item.
+                    </p>
+                    {!editingChemical && (
+                        <Button variant="link" onClick={() => setCustomCreationCategory(null)}>Change</Button>
+                    )}
+                </div>
                 <Input
                     placeholder={
                         customCreationCategory === 'compound' ? "e.g., Vinegar, Baking Soda, Lemon" :
@@ -1162,5 +1217,3 @@ const handleRevertHistory = (state: LabState) => {
     </div>
   );
 }
-
-    
