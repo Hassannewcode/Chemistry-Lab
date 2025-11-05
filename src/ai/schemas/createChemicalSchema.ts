@@ -7,7 +7,7 @@ import {z} from 'genkit';
 
 export const CreateChemicalInputSchema = z.object({
   name: z.string().describe('The common name or title of the chemical/item to create.'),
-  category: z.enum(['ordinary', 'compound', 'utility', 'custom']).describe('The user-selected category for the creation request.'),
+  category: z.enum(['ordinary', 'compound', 'utility', 'custom', 'modifier']).describe('The user-selected category for the creation request.'),
   description: z.string().optional().describe('A user-provided description for a custom item.'),
   isEditing: z.boolean().optional().describe('A flag to indicate if the user is editing an existing item.'),
 });
@@ -61,3 +61,5 @@ export const CreateChemicalOutputSchema = z.object({
 });
 
 export type CreateChemicalOutput = z.infer<typeof CreateChemicalOutputSchema>;
+
+    

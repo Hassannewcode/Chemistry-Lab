@@ -147,13 +147,6 @@ export const CHEMICAL_CATEGORIES: Record<string, Chemical[]> = {
         { formula: 'C6H5OH', name: 'Phenol', effects: { color: '#f5f5f5' } }, { formula: 'CH2O', name: 'Formaldehyde', effects: { color: '#f0f8ff' } },
         { formula: 'C2H4O2', name: 'Acetic Acid', effects: { color: '#f5f5f5' } }, { formula: 'C12H22O11', name: 'Sucrose', effects: { color: '#fffafa' } },
     ],
-    DISPLACEMENT: [
-        { formula: 'Zn + CuSO4', name: 'Zinc + Copper Sulfate', effects: { color: '#d3d3d3', bubbles: 2 } },
-        { formula: 'Fe + CuSO4', name: 'Iron + Copper Sulfate', effects: { color: '#a0522d', bubbles: 1 } },
-        { formula: 'Mg + HCl', name: 'Magnesium + Hydrochloric Acid', effects: { color: '#dcdcdc', bubbles: 8, smoke: 0.1 } },
-        { formula: 'Cl2 + KBr', name: 'Chlorine + Potassium Bromide', effects: { color: '#90ee90', bubbles: 1 } },
-        { formula: 'Na + H2O', name: 'Sodium + Water', effects: { color: '#fafad2', explosion: 6, smoke: 0.2 } },
-    ],
     SPRAYS: [
         { formula: 'Fine Metal Dust', name: 'Fine Metal Dust', effects: { sparkles: 20 } },
         { formula: 'Smoke Powder', name: 'Smoke Powder', effects: { smoke: 1 } },
@@ -171,5 +164,15 @@ export const CHEMICAL_CATEGORIES: Record<string, Chemical[]> = {
         { formula: 'Bioluminescent Algae', name: 'Bioluminescent Algae', effects: { glow: 1.5, color: '#00ff7f' } },
         { formula: 'Ferrofluid', name: 'Ferrofluid', effects: { color: '#2F4F4F', smoke: 0.2 } },
     ],
+    MODIFIERS: [
+        { formula: 'Solidify', name: 'Solidify', commonName: 'Solidify', promptName: 'Solidify Modifier' },
+        { formula: 'Liquefy', name: 'Liquefy', commonName: 'Liquefy', promptName: 'Liquefy Modifier' },
+        { formula: 'Vaporize', name: 'Vaporize', commonName: 'Vaporize', promptName: 'Vaporize Modifier' },
+        { formula: 'Ionize', name: 'Ionize', commonName: 'Ionize', promptName: 'Ionize Modifier', effects: { glow: 0.5, sparkles: 5 } },
+        { formula: 'Stabilize', name: 'Stabilize', commonName: 'Stabilize', promptName: 'Stabilize Modifier', effects: { explosion: -5 } },
+        { formula: 'Destabilize', name: 'Destabilize', commonName: 'Destabilize', promptName: 'Destabilize Modifier', effects: { explosion: 5 } },
+    ],
     CUSTOM: [],
 };
+
+    

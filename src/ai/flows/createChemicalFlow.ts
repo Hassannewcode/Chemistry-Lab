@@ -83,10 +83,11 @@ const prompt = ai.definePrompt({
       -   If the final category is **'compound'**: The user is listing multiple items to mix. The 'name' will be a comma-separated list (e.g., "Vinegar, Baking Soda"). You MUST treat this as a pre-reaction. Generate a new name, formula, and a simple common name for the *resulting mixture* (e.g., "Sodium Acetate Solution"). For the visual effects, simulate the reaction of these components (e.g., Vinegar + Baking Soda = lots of bubbles).
       -   If the final category is **'utility'**: The user is creating a tool or non-chemical item (e.g., "Copper Wire", "Vacuum"). Do not treat it as a chemical. For 'Copper Wire', find the properties for 'Copper'. For something like 'Vacuum', give it a unique formula like 'Vac' and inert effects (0 for all). The name and common name should be the utility name.
       -   If the final category is **'custom'**: The user is inventing an item. Use the 'name' and 'description' to be creative. Generate a plausible but fictional scientific name, a cool common name, and a unique formula (e.g., 'Xy-7b'). The effects should match the description. For example, if the description says "a glowing, unstable rock," generate high glow and explosion values. **Do not simplify the user's concept.** For example, "Aerated Water" should not become "Water". It should be treated as a unique substance.
+      -   If the final category is **'modifier'**: The user is creating a simulation modifier (e.g., "Solidify", "Accelerate"). Treat it as a conceptual tool. The formula should be the name in brackets (e.g., "[Solidify]"). The common name should be the input name. Effects should be minimal unless described otherwise. For example, "Stabilize" might have a negative explosion value to signal its effect to the simulation.
 
   3.  **Get Properties (If applicable)**:
       -   For 'ordinary' and 'utility' items that map to a real chemical, use the getChemicalProperties tool to find the real formula, scientific name, and common name.
-      -   For 'compound' or 'custom' items, you will determine the name, common name, and formula yourself based on the components or description.
+      -   For 'compound', 'custom', or 'modifier' items, you will determine the name, common name, and formula yourself based on the components or description.
 
   4.  **Handle Not Found**: If the tool is used and returns 'found: false' for an 'ordinary' item, you MUST respond with 'found: false' and do not fill out any other fields, except for a suggestion if applicable.
 
@@ -117,5 +118,7 @@ const createChemicalFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    
 
     

@@ -38,7 +38,7 @@ import { MAX_BEAKER_CONTENTS } from '@/lib/constants';
 type ChemicalCategory = keyof typeof CHEMICAL_CATEGORIES | 'CUSTOM';
 const NAME_LENGTH_THRESHOLD = 18; // Names longer than this will trigger confirmation
 
-type CustomCreationCategory = 'ordinary' | 'compound' | 'utility' | 'custom';
+type CustomCreationCategory = 'ordinary' | 'compound' | 'utility' | 'custom' | 'modifier';
 
 interface SimulationHistoryEntry {
   timestamp: string;
@@ -675,7 +675,7 @@ const handleRevertHistory = (state: LabState) => {
                         className="w-full flex-col h-auto"
                         aria-label={`Add ${chemical.name} to beaker`}
                       >
-                        <span className="font-bold text-lg truncate w-full">{chemical.formula}</span>
+                        <span className="font-bold text-lg truncate w-full">{chemical.commonName || chemical.formula}</span>
                         <span className="text-xs text-muted-foreground truncate w-full">{chemical.name}</span>
                       </Button>
                       <Button 
@@ -1035,10 +1035,15 @@ const handleRevertHistory = (state: LabState) => {
                 <span className="text-center">Utility</span>
                  <p className="text-xs text-muted-foreground">e.g., "Copper Wire", "Vacuum"</p>
               </Button>
-              <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => setCustomCreationCategory('custom')}>
+              <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => setCustomCreationCategory('modifier')}>
+                <Wrench className="h-6 w-6" />
+                <span className="text-center">Modifier</span>
+                 <p className="text-xs text-muted-foreground">e.g., "Solidify", "Stabilize"</p>
+              </Button>
+              <Button variant="outline" className="h-24 flex-col gap-2 col-span-2" onClick={() => setCustomCreationCategory('custom')}>
                 <HelpCircle className="h-6 w-6" />
-                <span className="text-center">Other</span>
-                 <p className="text-xs text-muted-foreground">Invent a fictional material</p>
+                <span className="text-center">Other (Invent)</span>
+                 <p className="text-xs text-muted-foreground">Invent a fictional material from scratch</p>
               </Button>
             </div>
           ) : (
@@ -1050,6 +1055,7 @@ const handleRevertHistory = (state: LabState) => {
                     placeholder={
                         customCreationCategory === 'compound' ? "e.g., Vinegar, Baking Soda, Lemon" :
                         customCreationCategory === 'utility' ? "e.g., Copper Wire, Vacuum" :
+                        customCreationCategory === 'modifier' ? "e.g., Solidify, Accelerate" :
                         customCreationCategory === 'custom' ? "Item Name (e.g., Glowing Shard)" :
                         "e.g., Baking Soda"
                     }
@@ -1156,3 +1162,5 @@ const handleRevertHistory = (state: LabState) => {
     </div>
   );
 }
+
+    
