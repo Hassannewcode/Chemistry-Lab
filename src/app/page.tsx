@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, DragEvent, useMemo, useEffect } from 'react';
@@ -45,6 +46,7 @@ interface SimulationHistoryEntry {
 }
 
 export default function Home() {
+  const [isMounted, setIsMounted] = useState(false);
   const [activeCategory, setActiveCategory] = useState<ChemicalCategory>('ELEMENTS');
   const [beakerContents, setBeakerContents] = useState<Chemical[]>([]);
   const [temperature, setTemperature] = useState(25); // in Celsius
@@ -85,16 +87,16 @@ export default function Home() {
   
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
 
   const [isFindingCommonName, setIsFindingCommonName] = useState(false);
   const [foundCommonName, setFoundCommonName] = useState<string | null>(null);
   
+  // This effect runs once on the client to prevent hydration errors.
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // Load state from localStorage on mount, only after client has mounted
+  // Load state from localStorage on mount, only after the client has mounted.
   useEffect(() => {
     if (isMounted) {
       try {
@@ -115,7 +117,7 @@ export default function Home() {
     }
   }, [isMounted]);
 
-  // Save state to localStorage on change
+  // Save state to localStorage on change, only after the client has mounted.
   useEffect(() => {
     if (isMounted) {
       try {
@@ -1216,3 +1218,5 @@ const handleRevertHistory = (state: LabState) => {
     </>
   );
 }
+
+    
