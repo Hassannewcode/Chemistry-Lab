@@ -1,9 +1,7 @@
-
-
 'use client';
 
 import { useState, DragEvent, useMemo, useEffect } from 'react';
-import { ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles, Menu, History, RotateCcw, Beaker, Atom, Wrench, HelpCircle, Replace, Trash2, Flame, Snowflake } from 'lucide-react';
+import { Sun, ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles, Menu, History, RotateCcw, Beaker, Atom, Wrench, HelpCircle, Trash2, Flame, Snowflake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
 import { VerticalSlider } from '@/components/vertical-slider';
@@ -18,7 +16,6 @@ import { getCommonName } from '@/ai/flows/commonNameFlow';
 import { generateDescription } from '@/ai/flows/generateDescriptionFlow';
 import { simulateWhiteboard } from '@/ai/flows/simulateWhiteboardFlow';
 import { useToast } from "@/hooks/use-toast";
-import { Toaster } from "@/components/ui/toaster";
 import { SoundManager } from '@/components/sound-manager';
 import { Progress } from '@/components/ui/progress';
 import { PeriodicTable } from '@/components/periodic-table';
@@ -35,6 +32,7 @@ import { Whiteboard, WhiteboardCallbacks } from '@/components/whiteboard';
 import { PastExperiments, LabState } from '@/components/past-experiments';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MAX_BEAKER_CONTENTS } from '@/lib/constants';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 type ChemicalCategory = keyof typeof CHEMICAL_CATEGORIES | 'CUSTOM';
 const NAME_LENGTH_THRESHOLD = 18; // Names longer than this will trigger confirmation
@@ -51,6 +49,7 @@ export default function Home() {
   const [beakerContents, setBeakerContents] = useState<Chemical[]>([]);
   const [temperature, setTemperature] = useState(25); // in Celsius
   const [concentration, setConcentration] = useState(1); // in Molarity (M)
+  const [freezeSpeed, setFreezeSpeed] = useState<'normal' | 'rapid'>('normal');
   
   const [reactionResult, setReactionResult] = useState<ConductReactionOutput | null>(null);
   const [reactionEffects, setReactionEffects] = useState<ChemicalEffect | null>(null);
@@ -100,21 +99,16 @@ export default function Home() {
     if (typeof window !== 'undefined') {
       try {
         const savedBeakerContents = localStorage.getItem('beakerContents');
-        if (savedBeakerContents) {
-          setBeakerContents(JSON.parse(savedBeakerContents));
-        }
+        if (savedBeakerContents) setBeakerContents(JSON.parse(savedBeakerContents));
+        
         const savedCustomChemicals = localStorage.getItem('customChemicals');
-        if (savedCustomChemicals) {
-          setCustomChemicals(JSON.parse(savedCustomChemicals));
-        }
+        if (savedCustomChemicals) setCustomChemicals(JSON.parse(savedCustomChemicals));
+        
         const savedTemperature = localStorage.getItem('temperature');
-        if (savedTemperature) {
-          setTemperature(JSON.parse(savedTemperature));
-        }
+        if (savedTemperature) setTemperature(JSON.parse(savedTemperature));
+        
         const savedConcentration = localStorage.getItem('concentration');
-        if (savedConcentration) {
-          setConcentration(JSON.parse(savedConcentration));
-        }
+        if (savedConcentration) setConcentration(JSON.parse(savedConcentration));
       } catch (error) {
         console.error("Failed to load state from localStorage", error);
       }
@@ -147,24 +141,17 @@ export default function Home() {
 
 
   const filteredChemicals = useMemo(() => {
-    if (activeCategory === 'CUSTOM') {
-        return customChemicals.filter(
-            (chemical) =>
-                (chemical.promptName && chemical.promptName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                (chemical.commonName && chemical.commonName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                (chemical.name && chemical.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                (chemical.formula && chemical.formula.toLowerCase().includes(searchQuery.toLowerCase()))
-        );
-    }
+    const currentCategoryChemicals = allChemicalCategories[activeCategory] || [];
     if (!searchQuery) {
-      return allChemicalCategories[activeCategory] || [];
+      return currentCategoryChemicals;
     }
-    return (allChemicalCategories[activeCategory] || []).filter(
-      (chemical) =>
+    return currentCategoryChemicals.filter(chemical =>
+        (chemical.promptName && chemical.promptName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (chemical.commonName && chemical.commonName.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (chemical.name && chemical.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (chemical.formula && chemical.formula.toLowerCase().includes(searchQuery.toLowerCase()))
     );
-  }, [activeCategory, searchQuery, allChemicalCategories, customChemicals]);
+  }, [activeCategory, searchQuery, allChemicalCategories]);
 
   const resetSimulationState = () => {
     setReactionResult(null);
@@ -315,7 +302,8 @@ export default function Home() {
       const input: ConductReactionInput = {
         chemicals,
         temperature,
-        concentration
+        concentration,
+        freezeSpeed
       };
       const result = await conductReaction(input);
       setReactionResult(result);
@@ -363,7 +351,8 @@ export default function Home() {
                 const input: ConductReactionInput = {
                     chemicals: foundChemicals.slice(0, MAX_BEAKER_CONTENTS).map(c => c.promptName || c.formula),
                     temperature,
-                    concentration
+                    concentration,
+                    freezeSpeed
                 };
                 const reactionResult = await conductReaction(input);
                 setReactionResult(reactionResult);
@@ -389,7 +378,7 @@ export default function Home() {
   
   useEffect(() => {
     setWhiteboardCallbacks({ onSimulate: handleSimulateWhiteboard });
-  }, [temperature, concentration, customChemicals]);
+  }, [temperature, concentration, customChemicals, freezeSpeed]);
 
 
   const handleSendChatMessage = async (message: string) => {
@@ -436,7 +425,7 @@ export default function Home() {
     setIsCustomCreationOpen(true);
   };
   
-const handleCreateOrUpdateCustomChemical = async () => {
+  const handleCreateOrUpdateCustomChemical = async () => {
     if (!customChemicalName.trim() || !customCreationCategory) return;
     setIsCreatingCustom(true);
     try {
@@ -517,7 +506,6 @@ const handleGenerateDescription = async () => {
     }
 };
 
-
 const handleDeleteCustomChemical = () => {
     if (!deletingChemical) return;
     setCustomChemicals(prev => prev.filter(c => c.formula !== deletingChemical.formula));
@@ -535,14 +523,6 @@ const handleRevertHistory = (state: LabState) => {
     });
   };
 
-  const changeTemperature = (amount: number) => {
-    setTemperature(prev => Math.max(-273, prev + amount));
-  }
-
-  const changeConcentration = (amount: number) => {
-    setConcentration(prev => Math.max(0.1, Math.round((prev + amount) * 10)/10 ));
-  }
-  
   const handleTemperatureChange = (newTemp: number) => {
     setTemperature(Math.max(-273, newTemp));
   };
@@ -551,13 +531,13 @@ const handleRevertHistory = (state: LabState) => {
     setConcentration(Math.max(0.1, newConc));
   };
 
-
-  const handleDragStart = (e: DragEvent<HTMLSpanElement>, index: number) => {
+  const handleDragStart = (e: DragEvent<HTMLDivElement>, index: number) => {
     e.dataTransfer.setData("chemicalIndex", index.toString());
   };
 
   const handleDrop = (e: DragEvent<HTMLDivElement>, dropIndex: number) => {
     const dragIndex = parseInt(e.dataTransfer.getData("chemicalIndex"), 10);
+    if (isNaN(dragIndex)) return;
     const newContents = [...beakerContents];
     const [draggedItem] = newContents.splice(dragIndex, 1);
     newContents.splice(dropIndex, 0, draggedItem);
@@ -569,310 +549,327 @@ const handleRevertHistory = (state: LabState) => {
   };
 
   if (!isMounted) {
-    return null;
+    return <div className="fixed inset-0 flex items-center justify-center bg-background"><Loader2 className="h-16 w-16 animate-spin" /></div>;
   }
 
   return (
-    <div className="bg-[#f0f2f5] min-h-screen flex items-center justify-center p-4 md:p-8 font-sans text-[#3D3D3D]">
+    <>
       <SoundManager effects={reactionEffects} />
-      <div className="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
-        <div className="flex flex-col justify-center space-y-8">
-          <div className="text-left">
-            <h1 className="text-6xl md:text-8xl font-bold text-[#E91E63]">Simulate</h1>
-            <p className="text-3xl md:text-5xl font-semibold text-gray-600">
-              Chemical Reactions
-            </p>
-          </div>
-          <Card className="shadow-lg">
-            <CardHeader className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <CardTitle>Select Chemicals</CardTitle>
-                  <CardDescription>Choose up to {MAX_BEAKER_CONTENTS} chemicals & sprays to mix.</CardDescription>
-                </div>
-                <div className='flex items-center gap-2'>
-                   <Button variant="outline" size="icon" onClick={() => setIsPastLabsOpen(true)} aria-label="Open past labs">
-                      <Menu className="h-4 w-4" />
-                    </Button>
-                  <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                          placeholder="Search..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="pl-10 w-32"
-                      />
+      <main className="container py-4 md:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          <div className="flex flex-col justify-center space-y-8">
+            <div className="text-center lg:text-left">
+              <h1 className="text-5xl sm:text-6xl md:text-8xl font-bold text-primary">Simulate</h1>
+              <p className="text-3xl sm:text-4xl md:text-5xl font-semibold text-muted-foreground">
+                Chemical Reactions
+              </p>
+            </div>
+            <Card className="shadow-lg">
+              <CardHeader>
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                    <div>
+                        <CardTitle>Select Chemicals</CardTitle>
+                        <CardDescription>Choose up to {MAX_BEAKER_CONTENTS} items to mix.</CardDescription>
+                    </div>
+                    <div className='flex items-center gap-2 flex-wrap justify-start sm:justify-end'>
+                       <Button variant="outline" size="icon" onClick={() => setIsPastLabsOpen(true)} aria-label="Open past labs">
+                          <Menu className="h-4 w-4" />
+                        </Button>
+                      <div className="relative w-full sm:w-auto">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input 
+                              placeholder="Search..."
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              className="pl-10 w-full sm:w-32"
+                              aria-label="Search for chemicals"
+                          />
+                      </div>
+                      <Button variant="outline" onClick={() => setIsPeriodicTableOpen(true)}>
+                        <Grid3x3 className="mr-2 h-4 w-4" />
+                        Periodic Table
+                      </Button>
+                       <Button variant="outline" size="icon" onClick={() => setIsWhiteboardOpen(true)} aria-label="Open whiteboard">
+                        <PenSquare className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="icon" onClick={() => setIsModifiersOpen(true)} aria-label="Open modifiers">
+                        <Wrench className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <Button variant="outline" onClick={() => setIsPeriodicTableOpen(true)}>
-                    <Grid3x3 className="mr-2 h-4 w-4" />
-                    Periodic Table
-                  </Button>
-                   <Button variant="outline" size="icon" onClick={() => setIsWhiteboardOpen(true)} aria-label="Open whiteboard">
-                    <PenSquare className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="icon" onClick={() => setIsModifiersOpen(true)} aria-label="Open modifiers">
-                    <Wrench className="h-4 w-4" />
-                  </Button>
-                </div>
-            </CardHeader>
-            <CardContent>
-               <div className="w-full bg-gray-200 p-1 rounded-full mb-6 flex flex-wrap justify-center gap-1">
-                {visibleCategories.map(category => (
-                  <Button 
-                    key={category}
-                    variant={activeCategory === category ? 'default' : 'ghost'}
-                    onClick={() => setActiveCategory(category)}
-                    className={`rounded-full flex-1 text-xs md:text-sm ${activeCategory === category ? 'bg-primary text-primary-foreground shadow' : 'text-gray-600'}`}
-                  >
-                    {category}
-                  </Button>
-                ))}
-              </div>
-              
-              {activeCategory === 'CUSTOM' ? (
-                 <TooltipProvider>
-                    <div className="space-y-4">
-                        <div className="flex gap-2">
-                            <Button onClick={() => handleOpenCustomCreation()} className="flex-1">
-                                <Sparkles className="h-4 w-4 mr-2" />
-                                Create a Custom Item
-                            </Button>
-                        </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-52 overflow-y-auto pr-2">
-                        {customChemicals.length === 0 ? (
-                        <p className="col-span-full text-center text-muted-foreground text-sm pt-4">No custom items created yet.</p>
-                        ) : (
-                        filteredChemicals.map((chemical, index) => (
-                            <Tooltip key={`${chemical.formula}-${index}`}>
-                                <TooltipTrigger asChild>
-                                    <div className="relative group">
-                                        <Button 
-                                            variant="outline"
-                                            onClick={() => handleChemicalClick(chemical)}
-                                            disabled={beakerContents.length >= MAX_BEAKER_CONTENTS || beakerContents.some(c => c.formula === chemical.formula)}
-                                            title={chemical.name}
-                                            className="w-full flex-col h-auto"
-                                            aria-label={`Add ${chemical.commonName} to beaker`}
-                                        >
-                                            <span className="font-bold text-lg truncate w-full">{chemical.commonName}</span>
-                                            <span className="text-xs text-muted-foreground truncate w-full">{chemical.formula}</span>
-                                        </Button>
-                                        <div className="absolute top-0 right-0 flex opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); handleShowInfo(chemical); }} title={`Info on ${chemical.name}`} aria-label={`Show info for ${chemical.name}`}>
-                                                <Info size={14} />
-                                            </Button>
-                                            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); handleOpenCustomCreation(chemical); }} title={`Edit ${chemical.name}`} aria-label={`Edit ${chemical.name}`}>
-                                                <PenSquare size={14} />
-                                            </Button>
-                                            <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); setDeletingChemical(chemical); }} title={`Delete ${chemical.name}`} aria-label={`Delete ${chemical.name}`}>
-                                                <Trash2 size={14} />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>Scientific: {chemical.name}</p>
-                                    <p>Original: {chemical.promptName}</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        ))
-                        )}
-                    </div>
-                    </div>
-                 </TooltipProvider>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-60 overflow-y-auto pr-2">
-                  {filteredChemicals.map((chemical, index) => (
-                    <div key={`${activeCategory}-${chemical.formula}-${index}`} className="relative group">
-                      <Button 
-                        variant="outline"
-                        onClick={() => handleChemicalClick(chemical)}
-                        disabled={beakerContents.length >= MAX_BEAKER_CONTENTS || beakerContents.some(c => c.formula === chemical.formula)}
-                        title={chemical.name}
-                        className="w-full flex-col h-auto"
-                        aria-label={`Add ${chemical.name} to beaker`}
-                      >
-                        <span className="font-bold text-lg truncate w-full">{chemical.commonName || chemical.formula}</span>
-                        <span className="text-xs text-muted-foreground truncate w-full">{chemical.name}</span>
-                      </Button>
-                      <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          className="absolute top-0 right-0 h-6 w-6 opacity-50 group-hover:opacity-100"
-                          onClick={(e) => {
-                              e.stopPropagation();
-                              handleShowInfo(chemical);
-                          }}
-                          title={`Info on ${chemical.name}`}
-                          aria-label={`Show info for ${chemical.name}`}
-                      >
-                          <Info size={14} />
-                      </Button>
-                    </div>
+              </CardHeader>
+              <CardContent>
+                 <div className="w-full bg-gray-200 p-1 rounded-full mb-6 flex flex-wrap justify-center gap-1">
+                  {visibleCategories.map(category => (
+                    <Button 
+                      key={category}
+                      variant={activeCategory === category ? 'default' : 'ghost'}
+                      onClick={() => setActiveCategory(category)}
+                      className={`rounded-full flex-1 text-xs md:text-sm ${activeCategory === category ? 'bg-primary text-primary-foreground shadow' : 'text-gray-600'}`}
+                      aria-pressed={activeCategory === category}
+                    >
+                      {category}
+                    </Button>
                   ))}
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                
+                {activeCategory === 'CUSTOM' ? (
+                   <TooltipProvider>
+                      <div className="space-y-4">
+                          <div className="flex gap-2">
+                              <Button onClick={() => handleOpenCustomCreation()} className="flex-1">
+                                  <Sparkles className="h-4 w-4 mr-2" />
+                                  Create a Custom Item
+                              </Button>
+                          </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-52 overflow-y-auto pr-2">
+                          {filteredChemicals.length === 0 ? (
+                          <p className="col-span-full text-center text-muted-foreground text-sm pt-4">
+                            {searchQuery ? 'No custom items match your search.' : 'No custom items created yet.'}
+                          </p>
+                          ) : (
+                          filteredChemicals.map((chemical, index) => (
+                              <Tooltip key={`${chemical.formula}-${index}`}>
+                                  <TooltipTrigger asChild>
+                                      <div className="relative group">
+                                          <Button 
+                                              variant="outline"
+                                              onClick={() => handleChemicalClick(chemical)}
+                                              disabled={beakerContents.length >= MAX_BEAKER_CONTENTS || beakerContents.some(c => c.formula === chemical.formula)}
+                                              title={chemical.name}
+                                              className="w-full flex-col h-auto text-left p-2"
+                                              aria-label={`Add ${chemical.commonName} to beaker`}
+                                          >
+                                              <span className="font-bold text-base truncate w-full">{chemical.commonName}</span>
+                                              <span className="text-xs text-muted-foreground truncate w-full">{chemical.formula}</span>
+                                          </Button>
+                                          <div className="absolute top-0 right-0 flex opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm rounded-tr-md rounded-bl-md">
+                                              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); handleShowInfo(chemical); }} title={`Info on ${chemical.name}`} aria-label={`Show info for ${chemical.name}`}>
+                                                  <Info size={14} />
+                                              </Button>
+                                              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); handleOpenCustomCreation(chemical); }} title={`Edit ${chemical.name}`} aria-label={`Edit ${chemical.name}`}>
+                                                  <PenSquare size={14} />
+                                              </Button>
+                                              <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); setDeletingChemical(chemical); }} title={`Delete ${chemical.name}`} aria-label={`Delete ${chemical.name}`}>
+                                                  <Trash2 size={14} />
+                                              </Button>
+                                          </div>
+                                      </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                      <p>Scientific: {chemical.name}</p>
+                                      <p>Original: {chemical.promptName}</p>
+                                  </TooltipContent>
+                              </Tooltip>
+                          ))
+                          )}
+                      </div>
+                      </div>
+                   </TooltipProvider>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-60 overflow-y-auto pr-2">
+                    {filteredChemicals.map((chemical, index) => (
+                      <div key={`${activeCategory}-${chemical.formula}-${index}`} className="relative group">
+                        <Button 
+                          variant="outline"
+                          onClick={() => handleChemicalClick(chemical)}
+                          disabled={beakerContents.length >= MAX_BEAKER_CONTENTS || beakerContents.some(c => c.formula === chemical.formula)}
+                          title={chemical.name}
+                          className="w-full flex-col h-auto text-left p-2"
+                          aria-label={`Add ${chemical.name} to beaker`}
+                        >
+                          <span className="font-bold text-base truncate w-full">{chemical.commonName || chemical.formula}</span>
+                          <span className="text-xs text-muted-foreground truncate w-full">{chemical.name}</span>
+                        </Button>
+                        <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="absolute top-0 right-0 h-6 w-6 opacity-50 group-hover:opacity-100"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleShowInfo(chemical);
+                            }}
+                            title={`Info on ${chemical.name}`}
+                            aria-label={`Show info for ${chemical.name}`}
+                        >
+                            <Info size={14} />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
 
-        {/* Right Column: Simulation */}
-        <div className="bg-white rounded-2xl shadow-2xl p-6 flex flex-col items-center justify-between border-2 border-gray-200 min-h-[600px]">
-          
-          <div className="w-full">
-            <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-                <div className="flex items-center gap-2">
-                    <h2 className="text-2xl font-bold">Beaker</h2>
-                    <Button variant="ghost" size="icon" onClick={() => setIsHistoryOpen(true)} disabled={simulationHistory.length === 0}>
-                        <History className="h-5 w-5" />
-                    </Button>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap justify-end" onDragOver={handleDragOver}>
-                  <p className="font-semibold">Contents:</p>
-                  {beakerContents.length > 0 ? (
-                    beakerContents.map((c, index) => (
-                      <span 
-                        key={`${c.formula}-${index}`}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, index)}
-                        onDrop={(e) => handleDrop(e, index)}
-                        className="flex items-center bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded-full cursor-grab active:cursor-grabbing"
-                      >
-                        {c.commonName || c.name}
-                        <button onClick={() => handleRemoveChemical(c.formula)} className="ml-2 text-blue-600 hover:text-blue-800" aria-label={`Remove ${c.name}`}>
-                          <X size={14}/>
-                        </button>
-                      </span>
-                    ))
-                  ) : (
-                    <p className="text-gray-500">Empty</p>
-                  )}
-                  {beakerContents.length > 0 && 
-                    <Button variant="destructive" size="sm" onClick={handleClearBeaker}>Clear</Button>
-                  }
-                </div>
+          <div className="bg-white rounded-2xl shadow-2xl p-4 md:p-6 flex flex-col items-center justify-between border-2 border-gray-200 min-h-[500px] lg:min-h-[600px]">
+            
+            <div className="w-full">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                  <div className="flex items-center gap-2">
+                      <h2 className="text-2xl font-bold">Beaker</h2>
+                      <Button variant="ghost" size="icon" onClick={() => setIsHistoryOpen(true)} disabled={simulationHistory.length === 0} aria-label="Show simulation history">
+                          <History className="h-5 w-5" />
+                      </Button>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap justify-end max-w-full" onDragOver={handleDragOver}>
+                    <p className="font-semibold text-sm">Contents:</p>
+                    {beakerContents.length > 0 ? (
+                      beakerContents.map((c, index) => (
+                        <div
+                          key={`${c.formula}-${index}`}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, index)}
+                          onDrop={(e) => handleDrop(e, index)}
+                          onDragOver={handleDragOver}
+                          className="flex items-center bg-blue-100 text-blue-800 text-sm font-medium pl-2.5 pr-1 py-0.5 rounded-full cursor-grab active:cursor-grabbing"
+                          aria-label={`Chemical: ${c.commonName || c.name}. Drag to reorder.`}
+                        >
+                          {c.commonName || c.name}
+                          <button onClick={() => handleRemoveChemical(c.formula)} className="ml-2 text-blue-600 hover:text-blue-800 rounded-full p-0.5" aria-label={`Remove ${c.name}`}>
+                            <X size={14}/>
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 text-sm">Empty</p>
+                    )}
+                    {beakerContents.length > 0 && 
+                      <Button variant="destructive" size="sm" onClick={handleClearBeaker}>Clear</Button>
+                    }
+                  </div>
+              </div>
+              
+              <div className="relative w-full flex-1 flex items-center justify-center my-4 min-h-[250px] sm:min-h-[300px]">
+                <VerticalSlider
+                  value={concentration}
+                  onValueChange={handleConcentrationChange}
+                  unit="M"
+                  icon={<FlaskConical className="h-5 w-5" />}
+                  ariaLabel="Concentration"
+                />
+                <BeakerIcon contents={beakerContents} overrideEffects={reactionEffects} className="h-64 w-64 sm:h-72 sm:w-72" />
+                <VerticalSlider
+                  value={temperature}
+                  onValueChange={handleTemperatureChange}
+                  unit="°C"
+                  icon={<Thermometer className="h-5 w-5" />}
+                  ariaLabel="Temperature"
+                />
+              </div>
             </div>
             
-            <div className="relative w-full flex-1 flex items-center justify-center min-h-[300px]">
-              <VerticalSlider
-                value={concentration}
-                onValueChange={handleConcentrationChange}
-                unit="M"
-                icon={<FlaskConical className="h-5 w-5" />}
-                onIncrease={() => changeConcentration(0.1)}
-                onDecrease={() => changeConcentration(-0.1)}
-                ariaLabel="Concentration"
-              />
-              <VerticalSlider
-                value={temperature}
-                onValueChange={handleTemperatureChange}
-                unit="°C"
-                icon={<Thermometer className="h-5 w-5" />}
-                onIncrease={() => changeTemperature(5)}
-                onDecrease={() => changeTemperature(-5)}
-                ariaLabel="Temperature"
-              />
-
-              <BeakerIcon contents={beakerContents} overrideEffects={reactionEffects} className="h-72 w-72" />
-            </div>
-          </div>
-          
-          <div className='w-full mt-4'>
-            {reactionResult && !isLoading && (
-              <div className='max-h-[40vh] overflow-y-auto pr-2 space-y-4'>
-                <Card className="bg-gray-50">
-                  <CardHeader>
-                    <CardTitle>{reactionResult.reactionName}</CardTitle>
-                    <CardDescription className="!mt-2 text-base italic text-gray-600">
-                        "{reactionResult.visualPreview}"
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4 text-sm">
-                     <div>
-                      <h3 className="font-semibold mb-1">Description</h3>
-                      <p>{reactionResult.description}</p>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold mb-1">Products</h3>
-                      <p>
-                        {reactionResult.products.length > 0 ? reactionResult.products.map(p => `${p.formula} (${p.state})`).join(', ') : 'No new products formed.'}
-                      </p>
-                    </div>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <h3 className="font-semibold mb-1">Real-World Analogies</h3>
-                            <div className="space-y-2">
-                                {reactionResult.analogies.map((analogy, index) => (
-                                    <div key={index} className="flex items-center gap-2 text-xs p-2 bg-gray-100 rounded-md">
-                                        <Lightbulb className="h-4 w-4 text-yellow-500" />
-                                        <span className="font-semibold">{analogy.aspect}:</span>
-                                        <span>~ {analogy.comparison}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="space-y-4">
-                           <div>
-                              <h3 className="font-semibold mb-1">Destruction Scale</h3>
-                              <div className="flex items-center gap-2">
-                                  <Progress value={reactionResult.destructionScale * 10} className="w-[80%]" aria-label={`Destruction scale: ${reactionResult.destructionScale} out of 10`} />
-                                  <span>{reactionResult.destructionScale}/10</span>
+            <div className='w-full mt-4'>
+              {reactionResult && !isLoading && (
+                <div className='max-h-[40vh] overflow-y-auto pr-2 space-y-4'>
+                  <Card className="bg-gray-50">
+                    <CardHeader>
+                      <CardTitle>{reactionResult.reactionName}</CardTitle>
+                      <CardDescription className="!mt-2 text-base italic text-gray-600">
+                          "{reactionResult.visualPreview}"
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4 text-sm">
+                       <div>
+                        <h3 className="font-semibold mb-1">Description</h3>
+                        <p>{reactionResult.description}</p>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-1">Products</h3>
+                        <p>
+                          {reactionResult.products.length > 0 ? reactionResult.products.map(p => `${p.formula} (${p.state})`).join(', ') : 'No new products formed.'}
+                        </p>
+                      </div>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                              <h3 className="font-semibold mb-1">Real-World Analogies</h3>
+                              <div className="space-y-2">
+                                  {reactionResult.analogies.map((analogy, index) => (
+                                      <div key={index} className="flex items-start gap-2 text-xs p-2 bg-gray-100 rounded-md">
+                                          <Lightbulb className="h-4 w-4 text-yellow-500 flex-shrink-0 mt-0.5" />
+                                          <p><span className="font-semibold">{analogy.aspect}:</span> ~{analogy.comparison}</p>
+                                      </div>
+                                  ))}
                               </div>
                           </div>
-                          <div>
-                              <h3 className="font-semibold mb-1">Real-World Success</h3>
-                              <p>{reactionResult.realWorldProbability.success}%</p>
+                          <div className="space-y-4">
+                             <div>
+                                <h3 className="font-semibold mb-1">Destruction Scale</h3>
+                                <div className="flex items-center gap-2">
+                                    <Progress value={reactionResult.destructionScale * 10} className="w-[80%]" aria-label={`Destruction scale: ${reactionResult.destructionScale} out of 10`} />
+                                    <span>{reactionResult.destructionScale}/10</span>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold mb-1">Real-World Success</h3>
+                                <p>{reactionResult.realWorldProbability.success}%</p>
+                            </div>
                           </div>
                         </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="flex items-start gap-3 rounded-lg border p-3">
+                              <Sun className="h-5 w-5 text-amber-500 mt-1 flex-shrink-0" />
+                              <div>
+                                  <h4 className="font-semibold">Light Test</h4>
+                                  <p className="text-muted-foreground">{reactionResult.lightTest}</p>
+                              </div>
+                          </div>
+                          <div className="flex items-start gap-3 rounded-lg border p-3">
+                              <Flame className="h-5 w-5 text-orange-500 mt-1 flex-shrink-0" />
+                              <div>
+                                  <h4 className="font-semibold">Flame Test</h4>
+                                  <p className="text-muted-foreground">{reactionResult.flameTest}</p>
+                              </div>
+                          </div>
                       </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="flex items-start gap-3 rounded-lg border p-3">
-                            <Flame className="h-5 w-5 text-orange-500 mt-1" />
-                            <div>
-                                <h4 className="font-semibold">Flame Test</h4>
-                                <p className="text-muted-foreground">{reactionResult.flameTest}</p>
-                            </div>
-                        </div>
-                         <div className="flex items-start gap-3 rounded-lg border p-3">
-                            <Snowflake className="h-5 w-5 text-blue-400 mt-1" />
+                      <div className="rounded-lg border p-3">
+                          <div className="flex items-start gap-3">
+                            <Snowflake className="h-5 w-5 text-blue-400 mt-1 flex-shrink-0" />
                             <div>
                                 <h4 className="font-semibold">Freeze Test</h4>
                                 <p className="text-muted-foreground">{reactionResult.freezeTest}</p>
                             </div>
-                        </div>
-                    </div>
-                    <p className="text-sm text-yellow-800 bg-yellow-100 p-2 rounded-md"><b>Safety:</b> {reactionResult.safetyNotes}</p>
-                  </CardContent>
-                </Card>
-                <ChatInterface
-                    messages={chatHistory}
-                    onSendMessage={handleSendChatMessage}
-                    isLoading={isChatLoading}
-                />
-              </div>
-            )}
-            <Button 
-              className="w-full mt-4 h-14 text-xl" 
-              onClick={() => handleStartReaction()} 
-              disabled={beakerContents.length < 2 || isLoading}
-              aria-label={isLoading ? "Simulating reaction, please wait" : "Start chemical reaction"}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                  Simulating...
-                </>
-              ) : (
-                <>
-                  <ChevronsRight className="mr-2 h-6 w-6" />
-                  Start Reaction
-                </>
+                          </div>
+                          <div className="mt-2 flex items-center justify-end">
+                            <ToggleGroup type="single" value={freezeSpeed} onValueChange={(value: 'normal' | 'rapid') => value && setFreezeSpeed(value)} aria-label="Freeze Test Speed">
+                              <ToggleGroupItem value="normal" aria-label="Normal speed">Normal</ToggleGroupItem>
+                              <ToggleGroupItem value="rapid" aria-label="Rapid speed">Rapid</ToggleGroupItem>
+                            </ToggleGroup>
+                          </div>
+                      </div>
+                      <p className="text-sm text-yellow-800 bg-yellow-100 p-2 rounded-md"><b>Safety:</b> {reactionResult.safetyNotes}</p>
+                    </CardContent>
+                  </Card>
+                  <ChatInterface
+                      messages={chatHistory}
+                      onSendMessage={handleSendChatMessage}
+                      isLoading={isChatLoading}
+                  />
+                </div>
               )}
-            </Button>
+              <Button 
+                className="w-full mt-4 h-14 text-xl" 
+                onClick={() => handleStartReaction()} 
+                disabled={beakerContents.length < 2 || isLoading}
+                aria-label={isLoading ? "Simulating reaction, please wait" : "Start chemical reaction"}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                    Simulating...
+                  </>
+                ) : (
+                  <>
+                    <ChevronsRight className="mr-2 h-6 w-6" />
+                    Start Reaction
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
-      <Toaster />
+      </main>
 
       <PastExperiments
         isOpen={isPastLabsOpen}
@@ -899,9 +896,9 @@ const handleRevertHistory = (state: LabState) => {
       <Dialog open={!!infoChemical} onOpenChange={(isOpen) => !isOpen && setInfoChemical(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
               <DialogTitle>About {infoChemical?.name} ({infoChemical?.formula})</DialogTitle>
-                <div className='flex items-center gap-2'>
+                <div className='flex items-center gap-2 flex-wrap'>
                   {infoChemical?.isElement && (
                       <Button variant="outline" size="sm" onClick={handleShowUsageChart} disabled={isInfoLoading || isUsageChartLoading}>
                           <BarChart className="mr-2 h-4 w-4"/>
@@ -949,28 +946,28 @@ const handleRevertHistory = (state: LabState) => {
                   <div className="space-y-2">
                     <h3 className="font-semibold">Ratings</h3>
                     <div className="flex items-center gap-2">
-                      <span className="w-28">Reactivity</span>
-                      <Progress value={infoContent.ratings.reactivity * 10} className="w-[60%]" aria-label={`Reactivity: ${infoContent.ratings.reactivity} out of 10`} />
+                      <span className="w-28 shrink-0">Reactivity</span>
+                      <Progress value={infoContent.ratings.reactivity * 10} className="w-full" aria-label={`Reactivity: ${infoContent.ratings.reactivity} out of 10`} />
                     </div>
                      <div className="flex items-center gap-2">
-                      <span className="w-28">Flammability</span>
-                      <Progress value={infoContent.ratings.flammability * 10} className="w-[60%]" aria-label={`Flammability: ${infoContent.ratings.flammability} out of 10`} />
+                      <span className="w-28 shrink-0">Flammability</span>
+                      <Progress value={infoContent.ratings.flammability * 10} className="w-full" aria-label={`Flammability: ${infoContent.ratings.flammability} out of 10`} />
                     </div>
                      <div className="flex items-center gap-2">
-                      <span className="w-28">Explosiveness</span>
-                      <Progress value={infoContent.ratings.explosiveness * 10} className="w-[60%]" aria-label={`Explosiveness: ${infoContent.ratings.explosiveness} out of 10`} />
+                      <span className="w-28 shrink-0">Explosiveness</span>
+                      <Progress value={infoContent.ratings.explosiveness * 10} className="w-full" aria-label={`Explosiveness: ${infoContent.ratings.explosiveness} out of 10`} />
                     </div>
                      <div className="flex items-center gap-2">
-                      <span className="w-28">Radioactivity</span>
-                      <Progress value={infoContent.ratings.radioactivity * 10} className="w-[60%]" aria-label={`Radioactivity: ${infoContent.ratings.radioactivity} out of 10`} />
+                      <span className="w-28 shrink-0">Radioactivity</span>
+                      <Progress value={infoContent.ratings.radioactivity * 10} className="w-full" aria-label={`Radioactivity: ${infoContent.ratings.radioactivity} out of 10`} />
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="w-28">Toxicity</span>
-                      <Progress value={infoContent.ratings.toxicity * 10} className="w-[60%]" aria-label={`Toxicity: ${infoContent.ratings.toxicity} out of 10`} />
+                      <span className="w-28 shrink-0">Toxicity</span>
+                      <Progress value={infoContent.ratings.toxicity * 10} className="w-full" aria-label={`Toxicity: ${infoContent.ratings.toxicity} out of 10`} />
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="w-28">Corrosiveness</span>
-                      <Progress value={infoContent.ratings.corrosiveness * 10} className="w-[60%]" aria-label={`Corrosiveness: ${infoContent.ratings.corrosiveness} out of 10`} />
+                      <span className="w-28 shrink-0">Corrosiveness</span>
+                      <Progress value={infoContent.ratings.corrosiveness * 10} className="w-full" aria-label={`Corrosiveness: ${infoContent.ratings.corrosiveness} out of 10`} />
                     </div>
                   </div>
                   <div>
@@ -1023,10 +1020,10 @@ const handleRevertHistory = (state: LabState) => {
                         onClick={() => handleModifierClick(modifier)}
                         disabled={beakerContents.length >= MAX_BEAKER_CONTENTS || beakerContents.some(c => c.formula === modifier.formula)}
                         title={modifier.name}
-                        className="w-full flex-col h-auto"
+                        className="w-full flex-col h-auto p-2"
                         aria-label={`Add ${modifier.name} to beaker`}
                     >
-                        <span className="font-bold text-lg truncate w-full">{modifier.commonName}</span>
+                        <span className="font-bold text-base truncate w-full">{modifier.commonName}</span>
                         <span className="text-xs text-muted-foreground truncate w-full">{modifier.name}</span>
                     </Button>
                 ))}
@@ -1073,34 +1070,34 @@ const handleRevertHistory = (state: LabState) => {
               <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => setCustomCreationCategory('ordinary')}>
                 <Beaker className="h-6 w-6" />
                 <span className="text-center">Ordinary Item</span>
-                <p className="text-xs text-muted-foreground">e.g., "Vinegar", "Baking Soda"</p>
+                <p className="text-xs text-muted-foreground text-center">e.g., "Vinegar", "Baking Soda"</p>
               </Button>
               <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => setCustomCreationCategory('compound')}>
                 <Atom className="h-6 w-6" />
                 <span className="text-center">Compound</span>
-                <p className="text-xs text-muted-foreground">e.g., "Vinegar, Baking Soda"</p>
+                <p className="text-xs text-muted-foreground text-center">e.g., "Vinegar, Baking Soda"</p>
               </Button>
               <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => setCustomCreationCategory('utility')}>
                 <Wrench className="h-6 w-6" />
                 <span className="text-center">Utility</span>
-                 <p className="text-xs text-muted-foreground">e.g., "Copper Wire", "Vacuum"</p>
+                 <p className="text-xs text-muted-foreground text-center">e.g., "Copper Wire", "Vacuum"</p>
               </Button>
               <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => setCustomCreationCategory('modifier')}>
                 <Wrench className="h-6 w-6" />
                 <span className="text-center">Modifier</span>
-                 <p className="text-xs text-muted-foreground">e.g., "Solidify", "Stabilize"</p>
+                 <p className="text-xs text-muted-foreground text-center">e.g., "Solidify", "Stabilize"</p>
               </Button>
               <Button variant="outline" className="h-24 flex-col gap-2 col-span-2" onClick={() => setCustomCreationCategory('custom')}>
                 <HelpCircle className="h-6 w-6" />
                 <span className="text-center">Other (Invent)</span>
-                 <p className="text-xs text-muted-foreground">Invent a fictional material from scratch</p>
+                 <p className="text-xs text-muted-foreground text-center">Invent a fictional material from scratch</p>
               </Button>
             </div>
           ) : (
             <div className="pt-4 space-y-4">
                 <div className="flex items-center justify-between">
                     <p className="font-semibold">
-                        {editingChemical ? 'Editing' : 'Creating a/an'} <span className="text-primary">{customCreationCategory}</span> item.
+                        {editingChemical ? 'Editing' : 'Creating a/an'} <span className="text-primary capitalize">{customCreationCategory}</span> item.
                     </p>
                     {!editingChemical && (
                         <Button variant="link" onClick={() => setCustomCreationCategory(null)}>Change</Button>
@@ -1117,6 +1114,7 @@ const handleRevertHistory = (state: LabState) => {
                     value={customChemicalName}
                     onChange={(e) => setCustomChemicalName(e.target.value)}
                     disabled={isCreatingCustom || isGeneratingDescription}
+                    aria-label="Custom item name"
                 />
                 {(customCreationCategory === 'custom' || editingChemical) && (
                   <div className="space-y-2">
@@ -1127,6 +1125,7 @@ const handleRevertHistory = (state: LabState) => {
                         variant="ghost"
                         onClick={handleGenerateDescription}
                         disabled={isGeneratingDescription || !customChemicalName.trim()}
+                        aria-label="Generate description with AI"
                       >
                         {isGeneratingDescription ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -1143,6 +1142,7 @@ const handleRevertHistory = (state: LabState) => {
                       onChange={(e) => setCustomChemicalDescription(e.target.value)}
                       disabled={isCreatingCustom || isGeneratingDescription}
                       rows={3}
+                      aria-label="Custom item description"
                     />
                   </div>
                 )}
@@ -1208,12 +1208,11 @@ const handleRevertHistory = (state: LabState) => {
                 ))}
               </div>
             ) : (
-              <p>No simulations run in this session yet.</p>
+              <p className="text-center py-8 text-muted-foreground">No simulations run in this session yet.</p>
             )}
           </div>
         </DialogContent>
       </Dialog>
-
-    </div>
+    </>
   );
 }

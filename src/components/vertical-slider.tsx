@@ -34,6 +34,13 @@ const usePressAndHold = (callback: () => void, speed: number = 50, initialDelay:
 
     }, [callback, speed, initialDelay]);
 
+    const increaseValue = () => {
+        callback();
+    }
+    const decreaseValue = () => {
+        callback();
+    }
+
     return {
         onMouseDown: (e: React.MouseEvent) => start(e),
         onTouchStart: (e: React.TouchEvent) => start(e),
@@ -49,8 +56,6 @@ interface VerticalSliderProps {
   onValueChange: (newValue: number) => void;
   unit: string;
   icon?: React.ReactNode;
-  onIncrease: () => void;
-  onDecrease: () => void;
   ariaLabel: string;
 }
 
@@ -60,23 +65,29 @@ export const VerticalSlider: React.FC<VerticalSliderProps> = ({
     onValueChange,
     unit,
     icon, 
-    onIncrease, 
-    onDecrease, 
     ariaLabel 
 }) => {
+  
+  const onIncrease = () => onValueChange(value + (ariaLabel === 'Temperature' ? 5 : 0.1));
+  const onDecrease = () => onValueChange(value - (ariaLabel === 'Temperature' ? 5 : 0.1));
+
   const increaseProps = usePressAndHold(onIncrease);
   const decreaseProps = usePressAndHold(onDecrease);
+
   const [inputValue, setInputValue] = useState(String(value));
   const inputRef = useRef<HTMLInputElement>(null);
   const sizeRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    setInputValue(String(value));
-  }, [value]);
+    if (ariaLabel === 'Concentration') {
+        setInputValue(String(value.toFixed(1)));
+    } else {
+        setInputValue(String(value));
+    }
+  }, [value, ariaLabel]);
 
   useEffect(() => {
     if (inputRef.current && sizeRef.current) {
-        // Set the input width based on the hidden span's width
         inputRef.current.style.width = `${sizeRef.current.offsetWidth + 2}px`;
     }
   }, [inputValue]);
@@ -103,20 +114,19 @@ export const VerticalSlider: React.FC<VerticalSliderProps> = ({
   };
   
   return (
-    <div className={cn("flex flex-col items-center space-y-3 mx-4", className)} role="group" aria-label={`${ariaLabel} control`}>
+    <div className={cn("flex flex-col items-center space-y-3 mx-2 sm:mx-4", className)} role="group" aria-label={`${ariaLabel} control`}>
       <Button 
         size="icon" 
         {...increaseProps}
-        className="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 shadow-md select-none" 
+        className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-800 hover:bg-gray-700 shadow-md select-none" 
         aria-label={`Increase ${ariaLabel}`}
       >
-        <Plus className="h-5 w-5" />
+        <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
       </Button>
-      <div className="relative bg-gray-800 text-white rounded-full w-12 flex flex-col items-center justify-between py-2 text-center" style={{height: '140px'}}>
+      <div className="relative bg-gray-800 text-white rounded-full w-10 sm:w-12 flex flex-col items-center justify-between py-2 text-center" style={{height: '140px'}}>
         <div className='absolute inset-0 flex flex-col items-center justify-center p-1' aria-hidden="true">
             {icon}
              <div className="relative w-full flex items-center justify-center gap-1">
-                 {/* Hidden span to calculate the required width */}
                 <span ref={sizeRef} className="absolute invisible whitespace-pre text-base font-semibold">{inputValue}</span>
                 <input
                     ref={inputRef}
@@ -127,6 +137,11 @@ export const VerticalSlider: React.FC<VerticalSliderProps> = ({
                     onKeyDown={handleKeyDown}
                     className="bg-transparent text-white text-right font-semibold outline-none border-none p-0 text-base"
                     style={{ minWidth: '1ch' }}
+                    aria-label={`${ariaLabel} value`}
+                    aria-live="polite"
+                    aria-valuemin={ariaLabel === 'Temperature' ? -273 : 0.1}
+                    aria-valuemax={1000}
+                    aria-valuenow={value}
                 />
                 <span className="text-xs opacity-70">
                     {unit}
@@ -137,10 +152,10 @@ export const VerticalSlider: React.FC<VerticalSliderProps> = ({
       <Button 
         size="icon" 
         {...decreaseProps}
-        className="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 shadow-md select-none" 
+        className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-800 hover:bg-gray-700 shadow-md select-none" 
         aria-label={`Decrease ${ariaLabel}`}
       >
-        <Minus className="h-5 w-5" />
+        <Minus className="h-4 w-4 sm:h-5 sm:w-5" />
       </Button>
     </div>
   );

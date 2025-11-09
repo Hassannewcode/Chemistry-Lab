@@ -50,8 +50,8 @@ const CustomUi = track(({ onSimulate }: { onSimulate: () => void; }) => {
 				gap: 8,
 			}}
 		>
-			<button className="tldraw__button" onClick={() => editor.undo()}>Undo</button>
-			<button className="tldraw__button" onClick={() => editor.redo()}>Redo</button>
+			<button type="button" className="tldraw__button" onClick={() => editor.undo()}>Undo</button>
+			<button type="button" className="tldraw__button" onClick={() => editor.redo()}>Redo</button>
             <Button size="sm" onClick={onSimulate}><Sparkles className='mr-2 h-4 w-4'/>Simulate from Whiteboard</Button>
 		</div>
 	)
@@ -138,8 +138,8 @@ export function Whiteboard({ chemicals, callbacks }: WhiteboardProps) {
             const editor = editorRef.current;
             const allShapes = editor.getCurrentPageShapes();
             const textShapes = allShapes
-                .filter((shape: any): shape is TLTextShape => shape.type === 'text')
-                .map((shape: TLTextShape) => shape.props.text);
+                .filter((shape: any): shape is TLTextShape => shape.type === 'text' || (shape.type === 'geo' && shape.props.label))
+                .map((shape: TLTextShape) => shape.props.text || shape.props.label);
             callbacks.onSimulate(textShapes);
         }
     };
