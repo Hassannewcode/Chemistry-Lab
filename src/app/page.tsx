@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, DragEvent, useMemo, useEffect } from 'react';
+import { useState, DragEvent, useMemo, useEffect, useRef } from 'react';
 import { Sun, ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles, Menu, History, RotateCcw, Beaker, Atom, Wrench, HelpCircle, Trash2, Flame, Snowflake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
@@ -93,29 +93,25 @@ export default function Home() {
   
   // This effect runs once on the client to prevent hydration errors.
   useEffect(() => {
+    // Load state from localStorage on mount, only after the client has mounted.
+    try {
+      const savedBeakerContents = localStorage.getItem('beakerContents');
+      if (savedBeakerContents) setBeakerContents(JSON.parse(savedBeakerContents));
+      
+      const savedCustomChemicals = localStorage.getItem('customChemicals');
+      if (savedCustomChemicals) setCustomChemicals(JSON.parse(savedCustomChemicals));
+      
+      const savedTemperature = localStorage.getItem('temperature');
+      if (savedTemperature) setTemperature(JSON.parse(savedTemperature));
+      
+      const savedConcentration = localStorage.getItem('concentration');
+      if (savedConcentration) setConcentration(JSON.parse(savedConcentration));
+    } catch (error) {
+      console.error("Failed to load state from localStorage", error);
+    }
+    
     setIsMounted(true);
   }, []);
-
-  // Load state from localStorage on mount, only after the client has mounted.
-  useEffect(() => {
-    if (isMounted) {
-      try {
-        const savedBeakerContents = localStorage.getItem('beakerContents');
-        if (savedBeakerContents) setBeakerContents(JSON.parse(savedBeakerContents));
-        
-        const savedCustomChemicals = localStorage.getItem('customChemicals');
-        if (savedCustomChemicals) setCustomChemicals(JSON.parse(savedCustomChemicals));
-        
-        const savedTemperature = localStorage.getItem('temperature');
-        if (savedTemperature) setTemperature(JSON.parse(savedTemperature));
-        
-        const savedConcentration = localStorage.getItem('concentration');
-        if (savedConcentration) setConcentration(JSON.parse(savedConcentration));
-      } catch (error) {
-        console.error("Failed to load state from localStorage", error);
-      }
-    }
-  }, [isMounted]);
 
   // Save state to localStorage on change, only after the client has mounted.
   useEffect(() => {
@@ -379,8 +375,10 @@ export default function Home() {
   };
   
   useEffect(() => {
-    setWhiteboardCallbacks({ onSimulate: handleSimulateWhiteboard });
-  }, [temperature, concentration, customChemicals, freezeSpeed]);
+    if (isMounted) {
+      setWhiteboardCallbacks({ onSimulate: handleSimulateWhiteboard });
+    }
+  }, [temperature, concentration, customChemicals, freezeSpeed, isMounted]);
 
 
   const handleSendChatMessage = async (message: string) => {
@@ -1218,5 +1216,3 @@ const handleRevertHistory = (state: LabState) => {
     </>
   );
 }
-
-    

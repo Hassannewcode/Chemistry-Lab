@@ -133,6 +133,11 @@ const Explosion: React.FC<{ intensity: number }> = ({ intensity }) => {
 
 export const BeakerIcon: React.FC<BeakerIconProps> = ({ contents = [], overrideEffects = null, ...props }) => {
   const [explosionKey, setExplosionKey] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   
   const fillLevel = useMemo(() => {
     return Math.floor((contents.length / MAX_BEAKER_CONTENTS) * 12);
@@ -257,35 +262,39 @@ export const BeakerIcon: React.FC<BeakerIconProps> = ({ contents = [], overrideE
       />
       
       {/* Effects */}
-      <g opacity={combinedEffects.smoke}>
-        <SmokeParticle delay="0s" duration="5s" />
-        <SmokeParticle delay="-1s" duration="6s" />
-        <SmokeParticle delay="-2.5s" duration="4s" />
-      </g>
-      
-      {Array.from({ length: combinedEffects.sparkles }).map((_, i) => (
-        <Sparkle
-          key={i}
-          cx={60 + Math.random() * 80}
-          cy={100 + Math.random() * 70}
-          size={1 + Math.random() * 2}
-          delay={`${Math.random() * 2}s`}
-          duration={`${0.5 + Math.random() * 0.5}s`}
-        />
-      ))}
-
-      {Array.from({ length: Math.floor(combinedEffects.bubbles) }).map((_, i) => (
-         <circle key={i} cx={60 + Math.random() * 80} cy="170" r={1 + Math.random() * 3} fill="white" opacity="0.7">
-              <animate attributeName="cy" values="170;100" dur={`${2 + Math.random() * 2}s`} begin={`${i * 0.3}s`} repeatCount="indefinite" />
-              <animate attributeName="opacity" values="0.7;0" dur={`${2 + Math.random() * 2}s`} begin={`${i * 0.3}s`} repeatCount="indefinite" />
-          </circle>
-      ))}
-
-      {/* Explosion Effect - keyed to re-trigger */}
-      {combinedEffects.explosion > 0 && (
-          <g key={explosionKey}>
-            <Explosion intensity={combinedEffects.explosion} />
+      {isMounted && (
+        <>
+          <g opacity={combinedEffects.smoke}>
+            <SmokeParticle delay="0s" duration="5s" />
+            <SmokeParticle delay="-1s" duration="6s" />
+            <SmokeParticle delay="-2.5s" duration="4s" />
           </g>
+          
+          {Array.from({ length: combinedEffects.sparkles }).map((_, i) => (
+            <Sparkle
+              key={i}
+              cx={60 + Math.random() * 80}
+              cy={100 + Math.random() * 70}
+              size={1 + Math.random() * 2}
+              delay={`${Math.random() * 2}s`}
+              duration={`${0.5 + Math.random() * 0.5}s`}
+            />
+          ))}
+
+          {Array.from({ length: Math.floor(combinedEffects.bubbles) }).map((_, i) => (
+            <circle key={i} cx={60 + Math.random() * 80} cy="170" r={1 + Math.random() * 3} fill="white" opacity="0.7">
+                  <animate attributeName="cy" values="170;100" dur={`${2 + Math.random() * 2}s`} begin={`${i * 0.3}s`} repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.7;0" dur={`${2 + Math.random() * 2}s`} begin={`${i * 0.3}s`} repeatCount="indefinite" />
+              </circle>
+          ))}
+
+          {/* Explosion Effect - keyed to re-trigger */}
+          {combinedEffects.explosion > 0 && (
+              <g key={explosionKey}>
+                <Explosion intensity={combinedEffects.explosion} />
+              </g>
+          )}
+        </>
       )}
       
       {/* Markings */}

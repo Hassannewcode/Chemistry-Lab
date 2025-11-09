@@ -44,13 +44,18 @@ export const PastExperiments: React.FC<PastExperimentsProps> = ({
   currentLabState,
   onLoadLab,
 }) => {
+  const [isMounted, setIsMounted] = useState(false);
   const [savedLabs, setSavedLabs] = useState<SavedLab[]>([]);
   const [editingLab, setEditingLab] = useState<SavedLab | null>(null);
   const [newLabName, setNewLabName] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
-    if (isOpen) {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && isMounted) {
       try {
         const storedLabs = localStorage.getItem('pastLabExperiments');
         if (storedLabs) {
@@ -65,7 +70,7 @@ export const PastExperiments: React.FC<PastExperimentsProps> = ({
         });
       }
     }
-  }, [isOpen, toast]);
+  }, [isOpen, isMounted, toast]);
 
   const saveCurrentLab = () => {
     try {
@@ -159,7 +164,7 @@ export const PastExperiments: React.FC<PastExperimentsProps> = ({
           <div className="flex-1 overflow-hidden">
               <ScrollArea className="h-full">
               <div className="p-6 space-y-4">
-                  {savedLabs.length > 0 ? (
+                  {isMounted && savedLabs.length > 0 ? (
                   savedLabs.map(lab => (
                       <Card key={lab.id} className="relative group">
                       <CardHeader>
@@ -221,7 +226,7 @@ export const PastExperiments: React.FC<PastExperimentsProps> = ({
               </ScrollArea>
           </div>
           <SheetFooter className="p-6 bg-background border-t">
-            <Button className="w-full" onClick={saveCurrentLab}>
+            <Button className="w-full" onClick={saveCurrentLab} disabled={!isMounted}>
               <Save className="mr-2 h-4 w-4" />
               Save Current Lab
             </Button>
