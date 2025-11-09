@@ -24,6 +24,7 @@ const prompt = ai.definePrompt({
   Reactants: {{chemicals}}
   Temperature: {{temperature}}°C
   Concentration: {{concentration}}M
+  Freeze Speed: {{freezeSpeed}}
 
   Based on these inputs, provide the following:
   1. The name of the reaction. If sprays, modifiers, or unusual items are used, you MUST give it a fun, descriptive, creative name (e.g. "Sparkling Volcano", "Graphene Mist", "Stabilized Ignition").
@@ -35,8 +36,9 @@ const prompt = ai.definePrompt({
   7. "Real-World Probability": Estimate the percentage chance of success vs. failure for this reaction in a real lab. Consider purity, conditions, etc. The two probabilities must sum to 100.
   8. "Destruction Scale": A 0-10 rating of the potential destructive power. 0 is inert, 10 is a catastrophic explosion.
   9. "Analogies": Provide 2-3 simple, real-world analogies for the reaction's effects. For instance, if there's an explosion, compare its energy to 'a small firecracker.' If it glows, compare the brightness to 'a camera flash.' If it's a certain color, compare it to a common object like 'the color of a sapphire.'
-  10. "Flame Test": Describe what happens if the final products are exposed to a high-temperature flame. Include details on flame color, any smoke produced, or if it's non-reactive.
-  11. "Freeze Test": Describe what happens if the final products are rapidly frozen. Include details on crystal formation, color changes, texture, or if it remains liquid.
+  10. "Light Test": Describe what happens if the final products are exposed to a strong light source (like UV light), noting any fluorescence, color changes, degradation, or lack of reaction.
+  11. "Flame Test": Describe what happens if the final products are exposed to a high-temperature flame. Include details on flame color, any smoke produced, or if it's non-reactive.
+  12. "Freeze Test": Describe what happens if the final products are rapidly frozen. Your description MUST be influenced by the 'freezeSpeed' input. For 'rapid' freezing, describe the formation of smaller, less-defined crystals or an amorphous solid. For 'normal' freezing, describe the formation of larger, more well-defined crystals. Include details on crystal formation, color changes, and texture.
 
   If the combination of chemicals does not react under the given conditions, state that clearly, but still describe the visual mixing and provide analogies for the mixture itself.`,
 });

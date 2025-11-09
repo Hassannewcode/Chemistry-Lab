@@ -16,6 +16,10 @@ export const ConductReactionInputSchema = z.object({
   concentration: z
     .number()
     .describe('The concentration of the reactants in Molarity (M).'),
+  freezeSpeed: z
+    .enum(['normal', 'rapid'])
+    .optional()
+    .describe('The speed at which the freeze test is conducted.'),
 });
 export type ConductReactionInput = z.infer<typeof ConductReactionInputSchema>;
 
@@ -96,6 +100,9 @@ export const ConductReactionOutputSchema = z.object({
     .describe(
         "An array of 2-3 simple, real-world analogies to help visualize the reaction's scale or effects. For instance, if there's an explosion, compare its energy to 'a small firecracker.' If it glows, compare the brightness to 'a camera flash.' If it's a certain color, compare it to a common object like 'the color of a sapphire.'"
     ),
+   lightTest: z.string().describe(
+        "A description of what happens when the products are exposed to a strong light source (like UV), noting any fluorescence, color change, or degradation."
+   ),
    flameTest: z
     .string()
     .describe(
@@ -104,7 +111,7 @@ export const ConductReactionOutputSchema = z.object({
   freezeTest: z
     .string()
     .describe(
-      "A description of what happens when the products are frozen, including crystal formation, color changes, and texture."
+      "A description of what happens when the products are frozen, including crystal formation, color changes, and texture. This should be influenced by the 'freezeSpeed' input."
     ),
   effects: z
     .object({
