@@ -94,9 +94,9 @@ export default function Home() {
     setIsMounted(true);
   }, []);
 
-  // Load state from localStorage on mount
+  // Load state from localStorage on mount, only after client has mounted
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (isMounted) {
       try {
         const savedBeakerContents = localStorage.getItem('beakerContents');
         if (savedBeakerContents) setBeakerContents(JSON.parse(savedBeakerContents));
@@ -113,11 +113,11 @@ export default function Home() {
         console.error("Failed to load state from localStorage", error);
       }
     }
-  }, []);
+  }, [isMounted]);
 
   // Save state to localStorage on change
   useEffect(() => {
-    if (typeof window !== 'undefined' && isMounted) {
+    if (isMounted) {
       try {
         localStorage.setItem('beakerContents', JSON.stringify(beakerContents));
         localStorage.setItem('customChemicals', JSON.stringify(customChemicals));
