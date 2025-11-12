@@ -1,11 +1,12 @@
 
+
 'use client';
 
 import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { Plus, Minus } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from './ui/tooltip';
 
 // Custom hook for press-and-hold functionality
 const usePressAndHold = (callback: () => void, speed: number = 50, initialDelay: number = 400) => {
@@ -69,8 +70,8 @@ export const VerticalSlider: React.FC<VerticalSliderProps> = ({
     label
 }) => {
   
-  const onIncrease = () => onValueChange(value + (label === 'Temperature' ? 5 : 0.1));
-  const onDecrease = () => onValueChange(value - (label === 'Temperature' ? 5 : 0.1));
+  const onIncrease = () => onValueChange(value + (label === 'Celsius' ? 5 : 0.1));
+  const onDecrease = () => onValueChange(value - (label === 'Celsius' ? 5 : 0.1));
 
   const increaseProps = usePressAndHold(onIncrease);
   const decreaseProps = usePressAndHold(onDecrease);
@@ -80,7 +81,7 @@ export const VerticalSlider: React.FC<VerticalSliderProps> = ({
   const sizeRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    if (label === 'Concentration') {
+    if (label === 'Molarity') {
         setInputValue(String(value.toFixed(1)));
     } else {
         setInputValue(String(value));
@@ -140,18 +141,20 @@ export const VerticalSlider: React.FC<VerticalSliderProps> = ({
                     style={{ minWidth: '1ch' }}
                     aria-label={`${label} value`}
                     aria-live="polite"
-                    aria-valuemin={label === 'Temperature' ? -273 : 0.1}
+                    aria-valuemin={label === 'Celsius' ? -273 : 0.1}
                     aria-valuemax={1000}
                     aria-valuenow={value}
                 />
-                 <Tooltip>
-                    <TooltipTrigger asChild>
-                        <span className="text-xs opacity-70 cursor-help">{unit}</span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>{label}</p>
-                    </TooltipContent>
-                </Tooltip>
+                 <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <span className="text-xs opacity-70 cursor-help">{unit}</span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>{label}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                 </TooltipProvider>
             </div>
         </div>
       </div>
@@ -166,3 +169,5 @@ export const VerticalSlider: React.FC<VerticalSliderProps> = ({
     </div>
   );
 };
+
+    

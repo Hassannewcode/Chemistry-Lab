@@ -803,7 +803,7 @@ const handleRevertHistory = (state: LabState) => {
                     onValueChange={handleConcentrationChange}
                     unit="M"
                     icon={<FlaskConical className="h-5 w-5" />}
-                    label="Concentration"
+                    label="Molarity"
                   />
                   <BeakerIcon contents={beakerContents} overrideEffects={reactionEffects} className="h-64 w-64 sm:h-72 sm:w-72" />
                   <VerticalSlider
@@ -811,7 +811,7 @@ const handleRevertHistory = (state: LabState) => {
                     onValueChange={handleTemperatureChange}
                     unit="°C"
                     icon={<Thermometer className="h-5 w-5" />}
-                    label="Temperature"
+                    label="Celsius"
                   />
                 </div>
               </TooltipProvider>
@@ -1306,3 +1306,5 @@ const handleRevertHistory = (state: LabState) => {
     </>
   );
 }
+
+    
