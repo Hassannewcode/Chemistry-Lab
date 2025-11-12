@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, DragEvent, useMemo, useEffect, useRef } from 'react';
-import { Sun, ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles, Menu, History, RotateCcw, Beaker, Atom, Wrench, HelpCircle, Trash2, Flame, Snowflake } from 'lucide-react';
+import { Sun, ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles, Menu, History, RotateCcw, Beaker, Atom, Wrench, HelpCircle, Trash2, Flame, Snowflake, Sigma, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
 import { VerticalSlider } from '@/components/vertical-slider';
@@ -25,7 +25,7 @@ import { CHEMICAL_CATEGORIES, Chemical } from '@/lib/chemicals';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ChatInterface, ChatMessage } from '@/components/chat-interface';
-import type { ConductReactionInput, ConductReactionOutput } from '@/ai/schemas/reactionSchema';
+import type { ConductReactionInput, ConductReactionOutput, ElementIO } from '@/ai/schemas/reactionSchema';
 import type { ChemicalInfoOutput } from '@/ai/schemas/chemicalInfoSchema';
 import type { ElementUsageOutput } from '@/ai/schemas/elementUsageSchema';
 import type { CreateChemicalInput } from '@/ai/schemas/createChemicalSchema';
@@ -34,6 +34,8 @@ import { PastExperiments, LabState } from '@/components/past-experiments';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MAX_BEAKER_CONTENTS } from '@/lib/constants';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+
 
 type ChemicalCategory = keyof typeof CHEMICAL_CATEGORIES | 'CUSTOM';
 const NAME_LENGTH_THRESHOLD = 18; // Names longer than this will trigger confirmation
@@ -93,25 +95,29 @@ export default function Home() {
   
   // This effect runs once on the client to prevent hydration errors.
   useEffect(() => {
-    // Load state from localStorage on mount, only after the client has mounted.
-    try {
-      const savedBeakerContents = localStorage.getItem('beakerContents');
-      if (savedBeakerContents) setBeakerContents(JSON.parse(savedBeakerContents));
-      
-      const savedCustomChemicals = localStorage.getItem('customChemicals');
-      if (savedCustomChemicals) setCustomChemicals(JSON.parse(savedCustomChemicals));
-      
-      const savedTemperature = localStorage.getItem('temperature');
-      if (savedTemperature) setTemperature(JSON.parse(savedTemperature));
-      
-      const savedConcentration = localStorage.getItem('concentration');
-      if (savedConcentration) setConcentration(JSON.parse(savedConcentration));
-    } catch (error) {
-      console.error("Failed to load state from localStorage", error);
-    }
-    
     setIsMounted(true);
   }, []);
+
+  // Load state from localStorage on mount, only after the client has mounted.
+  useEffect(() => {
+    if (isMounted) {
+      try {
+        const savedBeakerContents = localStorage.getItem('beakerContents');
+        if (savedBeakerContents) setBeakerContents(JSON.parse(savedBeakerContents));
+        
+        const savedCustomChemicals = localStorage.getItem('customChemicals');
+        if (savedCustomChemicals) setCustomChemicals(JSON.parse(savedCustomChemicals));
+        
+        const savedTemperature = localStorage.getItem('temperature');
+        if (savedTemperature) setTemperature(JSON.parse(savedTemperature));
+        
+        const savedConcentration = localStorage.getItem('concentration');
+        if (savedConcentration) setConcentration(JSON.parse(savedConcentration));
+      } catch (error) {
+        console.error("Failed to load state from localStorage", error);
+      }
+    }
+  }, [isMounted]);
 
   // Save state to localStorage on change, only after the client has mounted.
   useEffect(() => {
@@ -292,7 +298,7 @@ export default function Home() {
     toast({ title: "Lab Loaded", description: "The experiment state has been restored." });
   };
 
-  const handleStartReaction = async (chemicals: string[] = beakerContents.map(c => c.promptName || c.formula)) => {
+  const handleStartReaction = async (chemicals: string[] = beakerContents.map(c => c.promptName || c.formula), speed: 'normal' | 'rapid' = freezeSpeed) => {
     if (chemicals.length < 2) return;
     setIsLoading(true);
     resetSimulationState();
@@ -301,7 +307,7 @@ export default function Home() {
         chemicals,
         temperature,
         concentration,
-        freezeSpeed
+        freezeSpeed: speed
       };
       const result = await conductReaction(input);
       setReactionResult(result);
@@ -326,6 +332,17 @@ export default function Home() {
       setIsLoading(false);
     }
   };
+  
+  const handleFreezeSpeedChange = (newSpeed: 'normal' | 'rapid') => {
+    if (newSpeed) {
+      setFreezeSpeed(newSpeed);
+      if (reactionResult) {
+        // Re-run simulation with the new freeze speed
+        handleStartReaction(beakerContents.map(c => c.promptName || c.formula), newSpeed);
+      }
+    }
+  };
+
 
   const handleSimulateWhiteboard = async (textShapes: string[]) => {
       setIsLoading(true);
@@ -547,6 +564,33 @@ const handleRevertHistory = (state: LabState) => {
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
   };
+  
+  const renderElementIOTable = (elements: ElementIO[], title: string) => (
+    <Card>
+      <CardHeader>
+        <CardTitle className='text-base'>{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Element</TableHead>
+              <TableHead className="text-right">Amount</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {elements.map((el) => (
+              <TableRow key={el.element}>
+                <TableCell>{el.element}</TableCell>
+                <TableCell className="text-right">{el.amount}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+
 
   if (!isMounted) {
     return <div className="fixed inset-0 flex items-center justify-center bg-background"><Loader2 className="h-16 w-16 animate-spin" /></div>;
@@ -831,8 +875,8 @@ const handleRevertHistory = (state: LabState) => {
                                 <p className="text-muted-foreground">{reactionResult.freezeTest}</p>
                             </div>
                           </div>
-                          <div className="mt-2 flex items-center justify-end">
-                            <ToggleGroup type="single" value={freezeSpeed} onValueChange={(value: 'normal' | 'rapid') => value && setFreezeSpeed(value)} aria-label="Freeze Test Speed">
+                           <div className="mt-2 flex items-center justify-end">
+                            <ToggleGroup type="single" value={freezeSpeed} onValueChange={(value: 'normal' | 'rapid') => handleFreezeSpeedChange(value)} aria-label="Freeze Test Speed">
                               <ToggleGroupItem value="normal" aria-label="Normal speed">Normal</ToggleGroupItem>
                               <ToggleGroupItem value="rapid" aria-label="Rapid speed">Rapid</ToggleGroupItem>
                             </ToggleGroup>
@@ -841,6 +885,32 @@ const handleRevertHistory = (state: LabState) => {
                       <p className="text-sm text-yellow-800 bg-yellow-100 p-2 rounded-md"><b>Safety:</b> {reactionResult.safetyNotes}</p>
                     </CardContent>
                   </Card>
+                   {reactionResult.totalCost && (
+                      <Card>
+                        <CardHeader className='flex-row items-center gap-4 space-y-0'>
+                          <DollarSign className="h-6 w-6 text-green-600" />
+                          <div>
+                            <CardTitle className='text-base'>Total Reactant Cost</CardTitle>
+                             <CardDescription>{reactionResult.totalCost.total} ({reactionResult.totalCost.currency})</CardDescription>
+                          </div>
+                        </CardHeader>
+                      </Card>
+                    )}
+                    {reactionResult.elementIO && (
+                      <Card>
+                        <CardHeader>
+                          <div className='flex items-center gap-3'>
+                            <Sigma className="h-5 w-5 text-indigo-500"/>
+                            <CardTitle className='text-base'>Element I/O</CardTitle>
+                          </div>
+                           <CardDescription>Element transformation from reactants to products.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           {renderElementIOTable(reactionResult.elementIO.input, 'Input')}
+                           {renderElementIOTable(reactionResult.elementIO.output, 'Output')}
+                        </CardContent>
+                      </Card>
+                    )}
                   <ChatInterface
                       messages={chatHistory}
                       onSendMessage={handleSendChatMessage}

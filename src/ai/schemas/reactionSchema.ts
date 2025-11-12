@@ -41,6 +41,12 @@ const AnalogySchema = z.object({
     .describe("The real-world object or phenomenon it's being compared to (e.g., 'a small firecracker', 'the color of a sapphire', 'a gentle fizz')."),
 });
 
+export const ElementIOSchema = z.object({
+    element: z.string().describe('The chemical symbol of the element (e.g., "H", "C", "O").'),
+    amount: z.number().describe('The relative number of atoms of this element.'),
+});
+export type ElementIO = z.infer<typeof ElementIOSchema>;
+
 
 export const ConductReactionOutputSchema = z.object({
   reactionName: z
@@ -113,6 +119,14 @@ export const ConductReactionOutputSchema = z.object({
     .describe(
       "A description of what happens when the products are frozen, including crystal formation, color changes, and texture. This should be influenced by the 'freezeSpeed' input."
     ),
+   totalCost: z.object({
+        total: z.string().describe("The estimated total cost of all reactants, formatted as a price range (e.g., '$2.50 - $3.75')."),
+        currency: z.string().describe("The currency used for the cost calculation (e.g., 'USD').")
+    }).optional().describe("An estimation of the total market cost of the reactants used."),
+    elementIO: z.object({
+        input: z.array(ElementIOSchema).describe("A breakdown of all elements and their relative amounts that went into the reaction."),
+        output: z.array(ElementIOSchema).describe("A breakdown of all elements and their relative amounts that were present in the products.")
+    }).optional().describe("An analysis of the elemental input vs. output of the reaction."),
   effects: z
     .object({
       color: z
