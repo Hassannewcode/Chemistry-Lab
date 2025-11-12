@@ -10,6 +10,7 @@ import {
   ConductReactionInputSchema,
   ConductReactionOutputSchema,
 } from '../schemas/reactionSchema';
+import { getChemicalPrice } from '../tools/pricingTool';
 
 export async function conductReaction(input: ConductReactionInput) {
   return reactionFlow(input);
@@ -19,6 +20,7 @@ const prompt = ai.definePrompt({
   name: 'reactionPrompt',
   input: {schema: ConductReactionInputSchema},
   output: {schema: ConductReactionOutputSchema},
+  tools: [getChemicalPrice],
   prompt: `You are a chemistry expert simulating a chemical reaction for a student. Some items might be non-chemical 'sprays' that add visual effects, 'modifiers' that affect the reaction's outcome, or user-defined items. Your analysis must be as realistic as possible.
 
   Reactants: {{chemicals}}
@@ -39,7 +41,7 @@ const prompt = ai.definePrompt({
   10. "Light Test": Describe what happens if the final products are exposed to a strong light source (like UV light), noting any fluorescence, color changes, degradation, or lack of reaction.
   11. "Flame Test": Describe what happens if the final products are exposed to a high-temperature flame. Include details on flame color, any smoke produced, or if it's non-reactive.
   12. "Freeze Test": Describe what happens if the final products are rapidly frozen. Your description MUST be influenced by the 'freezeSpeed' input. For 'rapid' freezing, describe the formation of smaller, less-defined crystals or an amorphous solid. For 'normal' freezing, describe the formation of larger, more well-defined crystals. Include details on crystal formation, color changes, and texture.
-  13. "Total Cost": Research the average market price of each reactant. Provide an estimated total cost for the experiment as a price range in a major currency (e.g., USD). For example, "Total: $5.20 - $8.50 (USD)". If a reactant is a common household item, estimate its consumer value.
+  13. "Total Cost": You MUST use the 'getChemicalPrice' tool for each reactant to get its official price. Sum the prices to get the total cost. Format the output as a precise number (e.g., "$15.50"). Do not provide a range. State the currency.
   14. "Element I/O": Analyze the elemental composition of all reactants and all products. Provide two arrays: one for the input elements and their total relative amounts, and one for the output elements and their total relative amounts. For example, for 2H2 + O2 -> 2H2O, the input would be H: 4, O: 2, and the output would be H: 4, O: 2. This must be an accurate accounting of the atoms.
 
   If the combination of chemicals does not react under the given conditions, state that clearly, but still describe the visual mixing and provide analogies for the mixture itself.`,
