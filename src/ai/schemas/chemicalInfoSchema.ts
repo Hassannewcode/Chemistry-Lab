@@ -75,3 +75,5 @@ export const ChemicalInfoOutputSchema = z.object({
   })).describe('Average pricing information from major producing countries.'),
 });
 export type ChemicalInfoOutput = z.infer<typeof ChemicalInfoOutputSchema>;
+
+    
