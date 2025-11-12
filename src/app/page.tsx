@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, DragEvent, useMemo, useEffect, useRef } from 'react';
@@ -48,6 +49,7 @@ interface SimulationHistoryEntry {
 }
 
 const formatFormulaWithSubscripts = (formula: string) => {
+    if (!formula) return formula;
     return formula.split(/(\d+)/).map((part, index) => {
         if (/\d+/.test(part)) {
             return <sub key={index}>{part}</sub>;
@@ -1302,5 +1304,3 @@ const handleRevertHistory = (state: LabState) => {
     </>
   );
 }
-
-    
