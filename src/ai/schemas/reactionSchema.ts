@@ -67,7 +67,7 @@ export const ConductReactionOutputSchema = z.object({
   safetyNotes: z
     .string()
     .describe(
-      'Important safety warnings or interesting facts about the reaction. Be concise. Mention any spectacular visual results from sprays.'
+      'Important safety warnings or interesting facts about the reaction. Be concise. Mention any spectacular visual results from sprays. MUST include a disclaimer.'
     ),
   visualPreview: z
     .string()
