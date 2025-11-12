@@ -21,30 +21,32 @@ const prompt = ai.definePrompt({
   input: {schema: ConductReactionInputSchema},
   output: {schema: ConductReactionOutputSchema},
   tools: [getChemicalPrice],
-  prompt: `You are a chemistry expert simulating a chemical reaction for a student. Some items might be non-chemical 'sprays' that add visual effects, 'modifiers' that affect the reaction's outcome, or user-defined items. Your analysis must be as realistic as possible.
+  prompt: `You are a chemistry expert simulating a chemical reaction for a student. Your analysis must be as realistic and factual as possible, strictly adhering to chemical principles. Every detail of your output must be directly influenced by the provided inputs.
 
-  Reactants: {{chemicals}}
-  Temperature: {{temperature}}°C
-  Concentration: {{concentration}}M
-  Freeze Speed: {{freezeSpeed}}
+  **Reactants**: {{chemicals}}
+  **Temperature**: {{temperature}}°C
+  **Concentration**: {{concentration}}M
+  **Freeze Speed**: {{freezeSpeed}}
 
-  Based on these inputs, provide the following:
-  1. The name of the reaction. If sprays, modifiers, or unusual items are used, you MUST give it a fun, descriptive, creative name (e.g. "Sparkling Volcano", "Graphene Mist", "Stabilized Ignition").
-  2. A clear, step-by-step description of the chemical process. Explain what is happening at a molecular level in simple, realistic terms. If a user-provided name (like 'Baking Soda') is given, use that name in the description. If a 'modifier' is present, explain its effect (e.g., "The 'Solidify' modifier then rapidly cools the mixture, causing the Sodium Acetate to precipitate out as a white solid.").
-  3. The chemical formulas of the main products and their physical state (solid, liquid, gas, or aqueous). If no reaction occurs, state that and list the original chemicals. Sprays don't create products but affect the visual description. Modifiers like 'Solidify', 'Liquefy', or 'Vaporize' MUST influence the final state of the products. For example, if 'Solidify' is used, the primary product should be in the '(s)' state.
-  4. A brief, important safety note or a fun fact.
-  5. The visual effects of the final products (color, bubbles, smoke, sparkles, glow, explosion). Be creative but scientifically plausible. An explosion must be for a highly exothermic or volatile reaction (e.g., alkali metals in water).
-  6. A "Visual Preview": A short, vivid, and imaginative text description of the final result, as if giving a demo.
-  7. "Real-World Probability": Estimate the percentage chance of success vs. failure for this reaction in a real lab. Consider purity, conditions, etc. The two probabilities must sum to 100.
-  8. "Destruction Scale": A 0-10 rating of the potential destructive power. 0 is inert, 10 is a catastrophic explosion.
-  9. "Analogies": Provide 2-3 simple, real-world analogies for the reaction's effects. For instance, if there's an explosion, compare its energy to 'a small firecracker.' If it glows, compare the brightness to 'a camera flash.' If it's a certain color, compare it to a common object like 'the color of a sapphire.'
-  10. "Light Test": Describe what happens if the final products are exposed to a strong light source (like UV light), noting any fluorescence, color changes, degradation, or lack of reaction.
-  11. "Flame Test": Describe what happens if the final products are exposed to a high-temperature flame. Include details on flame color, any smoke produced, or if it's non-reactive.
-  12. "Freeze Test": Describe what happens if the final products are rapidly frozen. Your description MUST be influenced by the 'freezeSpeed' input. For 'rapid' freezing, describe the formation of smaller, less-defined crystals or an amorphous solid. For 'normal' freezing, describe the formation of larger, more well-defined crystals. Include details on crystal formation, color changes, and texture.
-  13. "Total Cost": You MUST use the 'getChemicalPrice' tool for each reactant to get its official price. Sum the prices to get the total cost. Format the output as a precise number (e.g., "$15.50"). Do not provide a range. State the currency.
-  14. "Element I/O": Analyze the elemental composition of all reactants and all products. Provide two arrays: one for the input elements and their total relative amounts, and one for the output elements and their total relative amounts. For example, for 2H2 + O2 -> 2H2O, the input would be H: 4, O: 2, and the output would be H: 4, O: 2. This must be an accurate accounting of the atoms.
+  **Your Task:**
+  Based *only* on the inputs above and established chemical principles, provide the following:
 
-  If the combination of chemicals does not react under the given conditions, state that clearly, but still describe the visual mixing and provide analogies for the mixture itself.`,
+  1.  **Reaction Name**: The correct scientific name for the reaction. If non-chemical sprays or modifiers are used, give it a creative but descriptive name (e.g., "Catalyzed Graphene Mist").
+  2.  **Description**: A clear, step-by-step description of the chemical process. **You MUST explain how the specified 'temperature' and 'concentration' affect the reaction's rate, equilibrium, and outcome.** For example, state "At {{temperature}}°C, the reaction rate increases, favoring the formation of..." or "The high {{concentration}}M concentration drives the reaction forward, resulting in...". If a 'modifier' is present, explain its precise effect (e.g., "The 'Solidify' modifier then rapidly cools the mixture, causing precipitation.").
+  3.  **Products**: The chemical formulas of the main products and their physical state (solid, liquid, gas, or aqueous). This must be chemically accurate. Modifiers like 'Solidify', 'Liquefy', or 'Vaporize' MUST influence the final state of the products. Sprays do not create products but affect the visual description.
+  4.  **Safety Notes**: A brief, important safety note or a fun, factual observation.
+  5.  **Visual Effects**: Generate plausible visual effects (color, bubbles, smoke, etc.) that are a direct result of the products and the reaction conditions. An explosion MUST only be for a valid exothermic or volatile reaction.
+  6.  **Visual Preview**: A short, vivid, and scientifically-grounded text description of the final result.
+  7.  **Real-World Probability**: Estimate the success vs. failure percentage in a real lab, considering the given conditions. The two probabilities must sum to 100.
+  8.  **Destruction Scale**: A 0-10 rating of the potential destructive power. 0 is inert, 10 is a catastrophic explosion. This must be based on the reaction's energy release.
+  9.  **Analogies**: Provide 2-3 simple, real-world analogies for the reaction's effects, grounded in the scale of the reaction.
+  10. **Light Test**: Describe what happens if the products are exposed to a strong light source (e.g., UV), noting any fluorescence, degradation, or lack of reaction.
+  11. **Flame Test**: Describe what happens if the products are exposed to a high-temperature flame, including flame color and reactivity.
+  12. **Freeze Test**: Describe what happens if the products are rapidly frozen. Your description MUST be influenced by the 'freezeSpeed' input (e.g., 'rapid' freezing leads to smaller crystals).
+  13. **Total Cost**: You MUST use the 'getChemicalPrice' tool for each reactant to get its official price. Sum the prices to get the total cost. Format as a precise number (e.g., "$15.50").
+  14. **Element I/O**: Analyze the elemental composition of all reactants and products. Provide two arrays for input and output elements and their total relative amounts. This MUST be an accurate accounting of all atoms.
+
+  If the combination of chemicals does not react under the given conditions, state that clearly, explaining why (e.g., "At this low temperature, the activation energy is not met."). Still describe the visual mixing and provide analogies for the mixture itself. Do not invent a reaction where none would occur.`,
 });
 
 const reactionFlow = ai.defineFlow(
