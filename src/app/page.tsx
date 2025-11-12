@@ -47,6 +47,15 @@ interface SimulationHistoryEntry {
   state: LabState;
 }
 
+const formatFormulaWithSubscripts = (formula: string) => {
+    return formula.split(/(\d+)/).map((part, index) => {
+        if (/\d+/.test(part)) {
+            return <sub key={index}>{part}</sub>;
+        }
+        return part;
+    });
+};
+
 export default function Home() {
   const [isMounted, setIsMounted] = useState(false);
   const [activeCategory, setActiveCategory] = useState<ChemicalCategory>('ELEMENTS');
@@ -334,7 +343,7 @@ export default function Home() {
   };
   
   const handleFreezeSpeedChange = (newSpeed: 'normal' | 'rapid') => {
-    if (newSpeed) {
+    if (newSpeed && newSpeed !== freezeSpeed) {
       setFreezeSpeed(newSpeed);
       if (reactionResult) {
         // Re-run simulation with the new freeze speed
@@ -579,9 +588,9 @@ const handleRevertHistory = (state: LabState) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {elements.map((el) => (
-              <TableRow key={el.element}>
-                <TableCell>{el.element}</TableCell>
+            {elements.map((el, index) => (
+              <TableRow key={`${el.element}-${index}`}>
+                <TableCell>{formatFormulaWithSubscripts(el.element)}</TableCell>
                 <TableCell className="text-right">{el.amount}</TableCell>
               </TableRow>
             ))}
@@ -686,7 +695,7 @@ const handleRevertHistory = (state: LabState) => {
                                               aria-label={`Add ${chemical.commonName} to beaker`}
                                           >
                                               <span className="font-bold text-base truncate w-full">{chemical.commonName}</span>
-                                              <span className="text-xs text-muted-foreground truncate w-full">{chemical.formula}</span>
+                                              <span className="text-xs text-muted-foreground truncate w-full">{formatFormulaWithSubscripts(chemical.formula)}</span>
                                           </Button>
                                           <div className="absolute top-0 right-0 flex opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm rounded-tr-md rounded-bl-md">
                                               <Button size="icon" variant="ghost" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); handleShowInfo(chemical); }} title={`Info on ${chemical.name}`} aria-label={`Show info for ${chemical.name}`}>
@@ -822,7 +831,14 @@ const handleRevertHistory = (state: LabState) => {
                       <div>
                         <h3 className="font-semibold mb-1">Products</h3>
                         <p>
-                          {reactionResult.products.length > 0 ? reactionResult.products.map(p => `${p.formula} (${p.state})`).join(', ') : 'No new products formed.'}
+                          {reactionResult.products.length > 0 ? 
+                            reactionResult.products.map((p, i) => (
+                                <span key={i}>
+                                    {formatFormulaWithSubscripts(p.formula)} ({p.state})
+                                    {i < reactionResult.products.length - 1 ? ', ' : ''}
+                                </span>
+                            ))
+                           : 'No new products formed.'}
                         </p>
                       </div>
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -967,7 +983,7 @@ const handleRevertHistory = (state: LabState) => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-              <DialogTitle>About {infoChemical?.name} ({infoChemical?.formula})</DialogTitle>
+              <DialogTitle>About {infoChemical?.name} ({formatFormulaWithSubscripts(infoChemical?.formula || '')})</DialogTitle>
                 <div className='flex items-center gap-2 flex-wrap'>
                   {infoChemical?.isElement && (
                       <Button variant="outline" size="sm" onClick={handleShowUsageChart} disabled={isInfoLoading || isUsageChartLoading}>
@@ -1265,7 +1281,7 @@ const handleRevertHistory = (state: LabState) => {
                       </p>
                       <p className="text-sm">
                         <span className="font-semibold">Products: </span>
-                        {entry.state.reactionResult?.products.map(p => p.formula).join(', ') || 'None'}
+                        {entry.state.reactionResult?.products.map(p => formatFormulaWithSubscripts(p.formula)).join(', ') || 'None'}
                       </p>
                     </CardContent>
                     <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1286,3 +1302,5 @@ const handleRevertHistory = (state: LabState) => {
     </>
   );
 }
+
+    
