@@ -796,23 +796,25 @@ const handleRevertHistory = (state: LabState) => {
                   </div>
               </div>
               
-              <div className="relative w-full flex-1 flex items-center justify-center my-4 min-h-[250px] sm:min-h-[300px]">
-                <VerticalSlider
-                  value={concentration}
-                  onValueChange={handleConcentrationChange}
-                  unit="M"
-                  icon={<FlaskConical className="h-5 w-5" />}
-                  label="Concentration"
-                />
-                <BeakerIcon contents={beakerContents} overrideEffects={reactionEffects} className="h-64 w-64 sm:h-72 sm:w-72" />
-                <VerticalSlider
-                  value={temperature}
-                  onValueChange={handleTemperatureChange}
-                  unit="°C"
-                  icon={<Thermometer className="h-5 w-5" />}
-                  label="Temperature"
-                />
-              </div>
+              <TooltipProvider>
+                <div className="relative w-full flex-1 flex items-center justify-center my-4 min-h-[250px] sm:min-h-[300px]">
+                  <VerticalSlider
+                    value={concentration}
+                    onValueChange={handleConcentrationChange}
+                    unit="M"
+                    icon={<FlaskConical className="h-5 w-5" />}
+                    label="Concentration"
+                  />
+                  <BeakerIcon contents={beakerContents} overrideEffects={reactionEffects} className="h-64 w-64 sm:h-72 sm:w-72" />
+                  <VerticalSlider
+                    value={temperature}
+                    onValueChange={handleTemperatureChange}
+                    unit="°C"
+                    icon={<Thermometer className="h-5 w-5" />}
+                    label="Temperature"
+                  />
+                </div>
+              </TooltipProvider>
             </div>
             
             <div className='w-full mt-4'>

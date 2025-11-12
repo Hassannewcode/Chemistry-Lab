@@ -5,6 +5,7 @@ import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { Plus, Minus } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 // Custom hook for press-and-hold functionality
 const usePressAndHold = (callback: () => void, speed: number = 50, initialDelay: number = 400) => {
@@ -123,11 +124,10 @@ export const VerticalSlider: React.FC<VerticalSliderProps> = ({
       >
         <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
       </Button>
-      <div className="relative bg-gray-800 text-white rounded-full w-10 sm:w-12 flex flex-col items-center justify-between py-2 text-center" style={{height: '140px'}}>
-        <div className='absolute inset-0 flex flex-col items-center justify-center p-1' aria-hidden="true">
-            <span className='text-xs opacity-70 font-semibold'>{label}</span>
+      <div className="relative bg-gray-800 text-white rounded-full w-10 sm:w-12 flex flex-col items-center justify-center p-1 text-center" style={{height: '140px'}}>
+        <div className="flex flex-col items-center gap-1" aria-hidden="true">
             {icon}
-             <div className="relative w-full flex items-center justify-center gap-1">
+            <div className="relative w-full flex items-center justify-center gap-1">
                 <span ref={sizeRef} className="absolute invisible whitespace-pre text-base font-semibold">{inputValue}</span>
                 <input
                     ref={inputRef}
@@ -144,9 +144,14 @@ export const VerticalSlider: React.FC<VerticalSliderProps> = ({
                     aria-valuemax={1000}
                     aria-valuenow={value}
                 />
-                <span className="text-xs opacity-70">
-                    {unit}
-                </span>
+                 <Tooltip>
+                    <TooltipTrigger asChild>
+                        <span className="text-xs opacity-70 cursor-help">{unit}</span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>{label}</p>
+                    </TooltipContent>
+                </Tooltip>
             </div>
         </div>
       </div>
