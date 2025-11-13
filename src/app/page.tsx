@@ -953,13 +953,13 @@ setIsHistoryOpen(false);
                         <CardHeader className='flex-row items-center gap-4 space-y-0'>
                           <DollarSign className="h-6 w-6 text-green-600" />
                           <div>
-                            <CardTitle className='text-base'>Total Reactant Cost</CardTitle>
+                            <CardTitle className='text-base'>Estimated Total Reactant Cost</CardTitle>
                              <CardDescription>{reactionResult.totalCost.total} ({reactionResult.totalCost.currency})</CardDescription>
                           </div>
                         </CardHeader>
                       </Card>
                     )}
-                    {reactionResult.elementIO && (
+                    {reactionResult.elementIO && (reactionResult.elementIO.input.length > 0 || reactionResult.elementIO.output.length > 0) && (
                       <Card>
                         <CardHeader>
                           <div className='flex items-center gap-3'>
