@@ -36,6 +36,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { MAX_BEAKER_CONTENTS } from '@/lib/constants';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 
 
 type ChemicalCategory = keyof typeof CHEMICAL_CATEGORIES | 'CUSTOM';
@@ -962,7 +963,7 @@ setIsHistoryOpen(false);
                           >
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <ToggleGroupItem value="consumer" aria-label="Consumer/DIY Grade" className="h-auto flex-col items-start p-3 gap-1">
+                                    <ToggleGroupItem value="consumer" aria-label="Consumer/DIY Grade" className={cn("h-auto flex-col items-start p-3 gap-1", chemicalGrade === 'consumer' && 'border-2 border-primary ring-2 ring-primary/50')}>
                                         <div className="font-bold">Consumer/DIY</div>
                                         <div className="text-xs text-muted-foreground text-left">Lower-purity, everyday chemicals. Cheaper, but may have impurities or lower yield.</div>
                                     </ToggleGroupItem>
@@ -971,7 +972,7 @@ setIsHistoryOpen(false);
                               </Tooltip>
                                <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <ToggleGroupItem value="lab" aria-label="Standard Lab Grade" className="h-auto flex-col items-start p-3 gap-1">
+                                    <ToggleGroupItem value="lab" aria-label="Standard Lab Grade" className={cn("h-auto flex-col items-start p-3 gap-1", chemicalGrade === 'lab' && 'border-2 border-primary ring-2 ring-primary/50')}>
                                         <div className="font-bold">Standard Lab</div>
                                         <div className="text-xs text-muted-foreground text-left">Standard purity for reliable experiments. The baseline for most reactions.</div>
                                     </ToggleGroupItem>
@@ -980,7 +981,7 @@ setIsHistoryOpen(false);
                               </Tooltip>
                                <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <ToggleGroupItem value="reagent" aria-label="Reagent Grade" className="h-auto flex-col items-start p-3 gap-1">
+                                    <ToggleGroupItem value="reagent" aria-label="Reagent Grade" className={cn("h-auto flex-col items-start p-3 gap-1", chemicalGrade === 'reagent' && 'border-2 border-primary ring-2 ring-primary/50')}>
                                         <div className="font-bold">Reagent</div>
                                         <div className="text-xs text-muted-foreground text-left">Ultra-pure for precision work. Highest purity and yield, but more expensive.</div>
                                     </ToggleGroupItem>
@@ -989,7 +990,7 @@ setIsHistoryOpen(false);
                               </Tooltip>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <ToggleGroupItem value="synthetic" aria-label="Synthetic Grade" className="h-auto flex-col items-start p-3 gap-1">
+                                    <ToggleGroupItem value="synthetic" aria-label="Synthetic Grade" className={cn("h-auto flex-col items-start p-3 gap-1", chemicalGrade === 'synthetic' && 'border-2 border-primary ring-2 ring-primary/50')}>
                                         <div className="font-bold">Synthetic</div>
                                         <div className="text-xs text-muted-foreground text-left">Lab-created chemicals. May have unique impurities. Some are only available this way.</div>
                                     </ToggleGroupItem>
