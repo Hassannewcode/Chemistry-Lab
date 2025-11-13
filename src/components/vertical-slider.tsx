@@ -145,7 +145,7 @@ export const VerticalSlider: React.FC<VerticalSliderProps> = ({
                     aria-valuemax={1000}
                     aria-valuenow={value}
                 />
-                 <TooltipProvider>
+                 
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <span className="text-xs opacity-70 cursor-help">{unit}</span>
@@ -154,7 +154,7 @@ export const VerticalSlider: React.FC<VerticalSliderProps> = ({
                             <p>{label}</p>
                         </TooltipContent>
                     </Tooltip>
-                 </TooltipProvider>
+                 
             </div>
         </div>
       </div>
@@ -169,5 +169,3 @@ export const VerticalSlider: React.FC<VerticalSliderProps> = ({
     </div>
   );
 };
-
-    
