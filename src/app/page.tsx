@@ -233,7 +233,11 @@ export default function Home() {
     setIsUsageChartOpen(false);
     setFoundCommonName(null);
     try {
-      const result = await getChemicalInfo({ name: chemical.name, formula: chemical.formula });
+      const result = await getChemicalInfo({ 
+        name: chemical.name, 
+        formula: chemical.formula,
+        isElement: chemical.isElement,
+      });
       setInfoContent(result);
     } catch (error) {
       console.error("Error fetching chemical info:", error);
@@ -1019,6 +1023,35 @@ const handleRevertHistory = (state: LabState) => {
                     <h3 className="font-semibold mb-1">Description</h3>
                     <p>{infoContent.description}</p>
                   </div>
+                  {infoContent.atomicData && (
+                    <div>
+                      <h3 className="font-semibold mb-2">Atomic Data</h3>
+                      <Table>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell className="font-medium">Atomic Number</TableCell>
+                            <TableCell className="text-right">{infoContent.atomicData.atomicNumber}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell className="font-medium">Atomic Mass</TableCell>
+                            <TableCell className="text-right">{infoContent.atomicData.atomicMass} amu</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell className="font-medium">Protons</TableCell>
+                            <TableCell className="text-right">{infoContent.atomicData.protons}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell className="font-medium">Neutrons</TableCell>
+                            <TableCell className="text-right">{infoContent.atomicData.neutrons}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell className="font-medium">Electrons</TableCell>
+                            <TableCell className="text-right">{infoContent.atomicData.electrons}</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
                    <div>
                     <h3 className="font-semibold mb-1">Traits</h3>
                     <p>{infoContent.traits}</p>

@@ -8,6 +8,7 @@ import {z} from 'genkit';
 export const ChemicalInfoInputSchema = z.object({
   name: z.string().describe('The common name of the chemical.'),
   formula: z.string().describe('The chemical formula.'),
+  isElement: z.boolean().optional().describe('Whether the chemical is a single element.'),
 });
 export type ChemicalInfoInput = z.infer<typeof ChemicalInfoInputSchema>;
 
@@ -17,6 +18,13 @@ export const ChemicalInfoOutputSchema = z.object({
     .describe(
       'A brief, easy-to-understand description of the chemical, its properties, and common uses.'
     ),
+  atomicData: z.object({
+    atomicNumber: z.number().describe('The atomic number of the element.'),
+    atomicMass: z.number().describe('The atomic mass of the element (in amu).'),
+    protons: z.number().describe('The number of protons in the nucleus.'),
+    neutrons: z.number().describe('The number of neutrons in the most common isotope.'),
+    electrons: z.number().describe('The number of electrons in a neutral atom.'),
+  }).nullable().describe('Detailed atomic data, only for elements. Null for compounds.'),
   traits: z
     .string()
     .describe(

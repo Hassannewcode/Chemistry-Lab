@@ -25,14 +25,16 @@ const prompt = ai.definePrompt({
 
   Chemical Name: {{name}}
   Formula: {{formula}}
+  Is Element: {{isElement}}
 
   Please provide the following in a concise and engaging way:
   1.  **Description**: Briefly describe what this chemical is, its key properties, and common uses.
-  2.  **Traits**: Summarize its most important traits (e.g., 'Corrosive, volatile, strong odor').
-  3.  **Possible Reactions**: Suggest some specific reaction partners from the simulation and what to look for (e.g., 'Mix with NaOH to see a neutralization reaction.').
-  4.  **Ratings**: Provide a 0-10 rating for its reactivity, flammability, explosiveness, radioactivity, toxicity, and corrosiveness.
-  5.  **Experiment Tips**: Give some fun, creative ideas for the simulator. For example, 'Try mixing it with a strong acid like HCl and see the bubbles!' or 'Add some Sodium (Na) to see a colorful reaction!'. Keep it exciting and focused on the simulation.
-  6.  **Price Data**: You MUST use the 'getChemicalPrice' tool to get the official, non-negotiable price for this chemical. Display it exactly as returned by the tool. Do not invent or estimate a price. If the tool does not find a price, state that the price is unavailable.`,
+  2.  **Atomic Data (if isElement is true)**: If the chemical is a single element, you MUST provide its atomic number, atomic mass (to 3 decimal places), and the number of protons, neutrons, and electrons for its most common stable isotope. If it is not an element, you MUST return null for the atomicData field.
+  3.  **Traits**: Summarize its most important traits (e.g., 'Corrosive, volatile, strong odor').
+  4.  **Possible Reactions**: Suggest some specific reaction partners from the simulation and what to look for (e.g., 'Mix with NaOH to see a neutralization reaction.').
+  5.  **Ratings**: Provide a 0-10 rating for its reactivity, flammability, explosiveness, radioactivity, toxicity, and corrosiveness.
+  6.  **Experiment Tips**: Give some fun, creative ideas for the simulator. For example, 'Try mixing it with a strong acid like HCl and see the bubbles!' or 'Add some Sodium (Na) to see a colorful reaction!'. Keep it exciting and focused on the simulation.
+  7.  **Price Data**: You MUST use the 'getChemicalPrice' tool to get the official, non-negotiable price for this chemical. Display it exactly as returned by the tool. Do not invent or estimate a price. If the tool does not find a price, state that the price is unavailable.`,
 });
 
 const chemicalInfoFlow = ai.defineFlow(
