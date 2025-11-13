@@ -46,7 +46,7 @@ const prompt = ai.definePrompt({
   10. **Light Test**: Describe what happens if the products are exposed to a strong light source (e.g., UV), noting any fluorescence, degradation, or lack of reaction.
   11. **Flame Test**: Describe what happens if the products are exposed to a high-temperature flame, including flame color and reactivity.
   12. **Freeze Test**: Describe what happens if the products are rapidly frozen. Your description MUST be influenced by the 'freezeSpeed' input (e.g., 'rapid' freezing leads to smaller crystals).
-  13. **Total Cost**: You MUST use the 'getChemicalPrice' tool for each reactant, passing the current 'grade'. Sum the prices to get the total cost. Format as a precise number (e.g., "$15.50").
+  13. **Total Cost**: You MUST use the 'getChemicalPrice' tool for each reactant, passing the current 'grade'. Sum the prices to get the total cost. Format the final number with commas as thousand separators (e.g., "$1,234,567.89"). If the number is extremely large (e.g., over a billion), you may use suffixes (e.g., "$1.2 Billion").
   14. **Element I/O**: Analyze the elemental composition of all reactants and products. Provide two arrays for input and output elements and their total relative amounts. This MUST be an accurate accounting of all atoms.
 
   If the combination of chemicals does not react, state that clearly, explaining why. Still describe the visual mixing and provide analogies for the mixture itself.`,

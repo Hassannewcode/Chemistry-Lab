@@ -123,7 +123,7 @@ export const ConductReactionOutputSchema = z.object({
       "A description of what happens when the products are frozen, including crystal formation, color changes, and texture. This should be influenced by the 'freezeSpeed' input."
     ),
    totalCost: z.object({
-        total: z.string().describe("The estimated total cost of all reactants, formatted as a price range (e.g., '$2.50 - $3.75')."),
+        total: z.string().describe("The estimated total cost of all reactants, formatted with commas and currency symbols (e.g., '$1,250.75', '$2.1 Million')."),
         currency: z.string().describe("The currency used for the cost calculation (e.g., 'USD').")
     }).optional().describe("An estimation of the total market cost of the reactants used."),
     elementIO: z.object({
