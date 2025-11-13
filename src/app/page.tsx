@@ -1343,14 +1343,25 @@ setIsHistoryOpen(false);
                         disabled={isCreatingCustom || isGeneratingDescription}
                         aria-label="Custom item name"
                     />
-                    <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">Use these helpers to format your formula:</p>
-                        <div className="flex flex-wrap gap-1">
-                            {'₀₁₂₃₄₅₆₇₈₉'.split('').map(char => (
-                                <Button key={char} size="icon" variant="outline" className="h-6 w-6 text-xs" onClick={() => handleInsertChar(char)}>{char}</Button>
-                            ))}
-                             <Button size="icon" variant="outline" className="h-6 w-6 text-xs" onClick={() => handleInsertChar('⁺')}>+</Button>
-                             <Button size="icon" variant="outline" className="h-6 w-6 text-xs" onClick={() => handleInsertChar('⁻')}>-</Button>
+                    <div className="space-y-3 rounded-md border p-2">
+                        <p className="text-xs text-muted-foreground">Use these helpers to format your formula (e.g., H₂SO₄²⁻):</p>
+                        <div className="space-y-2">
+                            <label className="text-xs font-medium">Subscript</label>
+                            <div className="flex flex-wrap gap-1">
+                                {'₀₁₂₃₄₅₆₇₈₉'.split('').map(char => (
+                                    <Button key={`sub-${char}`} size="icon" variant="outline" className="h-6 w-6 text-xs" onClick={() => handleInsertChar(char)}>{char}</Button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-medium">Superscript</label>
+                            <div className="flex flex-wrap gap-1">
+                                {'⁰¹²³⁴⁵⁶⁷⁸⁹'.split('').map(char => (
+                                    <Button key={`sup-${char}`} size="icon" variant="outline" className="h-6 w-6 text-xs" onClick={() => handleInsertChar(char)}>{char}</Button>
+                                ))}
+                                <Button size="icon" variant="outline" className="h-6 w-6 text-xs" onClick={() => handleInsertChar('⁺')}>⁺</Button>
+                                <Button size="icon" variant="outline" className="h-6 w-6 text-xs" onClick={() => handleInsertChar('⁻')}>⁻</Button>
+                            </div>
                         </div>
                     </div>
                 </div>
