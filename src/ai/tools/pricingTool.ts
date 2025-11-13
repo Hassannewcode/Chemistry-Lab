@@ -67,7 +67,7 @@ export const getChemicalPrice = ai.defineTool(
     name: 'getChemicalPrice',
     description: 'Retrieves the precise, non-negotiable price for a given chemical and its grade from the simulation\'s official price list.',
     inputSchema: z.object({
-      chemicalIdentifier: z.string().describe('The chemical formula or common name (e.g., "H2O", "Sodium Chloride", "Baking Soda").'),
+      chemical: z.string().describe('The chemical formula or common name (e.g., "H2O", "Sodium Chloride", "Baking Soda").'),
       grade: z.enum(['consumer', 'lab', 'reagent', 'synthetic']).describe('The purity grade of the chemical.'),
     }),
     outputSchema: z.object({
@@ -79,7 +79,7 @@ export const getChemicalPrice = ai.defineTool(
     }),
   },
   async (input) => {
-    const priceData = chemicalPrices[input.chemicalIdentifier] || Object.values(chemicalPrices).find(p => p.name?.toLowerCase() === input.chemicalIdentifier.toLowerCase());
+    const priceData = chemicalPrices[input.chemical] || Object.values(chemicalPrices).find(p => p.name?.toLowerCase() === input.chemical.toLowerCase());
 
     if (priceData) {
       const multiplier = gradeMultipliers[input.grade] || 1.0;

@@ -951,7 +951,7 @@ setIsHistoryOpen(false);
                               <CardTitle className="text-destructive">Dangers & Warnings</CardTitle>
                           </CardHeader>
                           <CardContent>
-                              <p className="text-sm text-destructive-foreground">{reactionResult.dangersAndWarnings}</p>
+                              <p className="text-sm text-foreground">{reactionResult.dangersAndWarnings}</p>
                           </CardContent>
                       </Card>
                       <p className="text-sm text-yellow-800 bg-yellow-100 p-2 rounded-md"><b>Safety:</b> {reactionResult.safetyNotes}</p>
