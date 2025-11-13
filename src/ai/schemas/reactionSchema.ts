@@ -72,6 +72,11 @@ export const ConductReactionOutputSchema = z.object({
     .describe(
       'Important safety warnings or interesting facts about the reaction. Be concise. Mention any spectacular visual results from sprays. MUST include a disclaimer.'
     ),
+  dangersAndWarnings: z
+    .string()
+    .describe(
+      "A clear and direct summary of the potential dangers and hazards associated with this reaction or its products. This should cover toxicity, flammability, corrosiveness, etc."
+    ),
   visualPreview: z
     .string()
     .describe(

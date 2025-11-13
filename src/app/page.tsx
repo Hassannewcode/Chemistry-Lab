@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, DragEvent, useMemo, useEffect, useRef } from 'react';
-import { Sun, ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles, Menu, History, RotateCcw, Beaker, Atom, Wrench, HelpCircle, Trash2, Flame, Snowflake, Sigma, DollarSign, FlaskRound } from 'lucide-react';
+import { Sun, ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles, Menu, History, RotateCcw, Beaker, Atom, Wrench, HelpCircle, Trash2, Flame, Snowflake, Sigma, DollarSign, FlaskRound, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
 import { VerticalSlider } from '@/components/vertical-slider';
@@ -944,6 +944,15 @@ setIsHistoryOpen(false);
                               <ToggleGroupItem value="synthetic" aria-label="Synthetic Grade" className="text-xs sm:text-sm flex-1">Synthetic</ToggleGroupItem>
                           </ToggleGroup>
                         </CardContent>
+                      </Card>
+                      <Card className="border-destructive">
+                          <CardHeader className="flex-row items-center gap-4 space-y-0">
+                              <AlertTriangle className="h-6 w-6 text-destructive" />
+                              <CardTitle className="text-destructive">Dangers & Warnings</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                              <p className="text-sm text-destructive-foreground">{reactionResult.dangersAndWarnings}</p>
+                          </CardContent>
                       </Card>
                       <p className="text-sm text-yellow-800 bg-yellow-100 p-2 rounded-md"><b>Safety:</b> {reactionResult.safetyNotes}</p>
                     </CardContent>
