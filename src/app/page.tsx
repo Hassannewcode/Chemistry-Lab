@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, DragEvent, useMemo, useEffect, useRef } from 'react';
@@ -101,6 +100,7 @@ export default function Home() {
   const [isCreatingCustom, setIsCreatingCustom] = useState(false);
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [customChemicals, setCustomChemicals] = useState<Chemical[]>([]);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -603,6 +603,22 @@ setIsHistoryOpen(false);
     e.preventDefault();
   };
   
+  const handleInsertChar = (char: string) => {
+    if (nameInputRef.current) {
+        const input = nameInputRef.current;
+        const start = input.selectionStart || 0;
+        const end = input.selectionEnd || 0;
+        const value = input.value;
+        const newValue = value.substring(0, start) + char + value.substring(end);
+        setCustomChemicalName(newValue);
+        // Move cursor after the inserted character
+        setTimeout(() => {
+            input.selectionStart = input.selectionEnd = start + char.length;
+            input.focus();
+        }, 0);
+    }
+  };
+
   const renderElementIOTable = (elements: ElementIO[], title: string) => (
     <Card>
       <CardHeader>
@@ -829,16 +845,16 @@ setIsHistoryOpen(false);
                     value={concentration}
                     onValueChange={handleConcentrationChange}
                     unit="M"
-                    icon={<FlaskConical className="h-5 w-5" />}
                     label="Molarity"
+                    icon={<FlaskConical className="h-5 w-5" />}
                   />
                   <BeakerIcon contents={beakerContents} overrideEffects={reactionEffects} className="h-64 w-64 sm:h-72 sm:w-72" />
                   <VerticalSlider
                     value={temperature}
                     onValueChange={handleTemperatureChange}
                     unit="°C"
-                    icon={<Thermometer className="h-5 w-5" />}
                     label="Celsius"
+                    icon={<Thermometer className="h-5 w-5" />}
                   />
                 </div>
               </TooltipProvider>
@@ -1274,19 +1290,32 @@ setIsHistoryOpen(false);
                         <Button variant="link" onClick={() => setCustomCreationCategory(null)}>Change</Button>
                     )}
                 </div>
-                <Input
-                    placeholder={
-                        customCreationCategory === 'compound' ? "e.g., Vinegar, Baking Soda, Lemon" :
-                        customCreationCategory === 'utility' ? "e.g., Copper Wire, Vacuum" :
-                        customCreationCategory === 'modifier' ? "e.g., Solidify, Accelerate" :
-                        customCreationCategory === 'custom' ? "Item Name (e.g., Glowing Shard)" :
-                        "e.g., Baking Soda"
-                    }
-                    value={customChemicalName}
-                    onChange={(e) => setCustomChemicalName(e.target.value)}
-                    disabled={isCreatingCustom || isGeneratingDescription}
-                    aria-label="Custom item name"
-                />
+                <div className="space-y-2">
+                    <Input
+                        ref={nameInputRef}
+                        placeholder={
+                            customCreationCategory === 'compound' ? "e.g., Vinegar, Baking Soda, Lemon" :
+                            customCreationCategory === 'utility' ? "e.g., Copper Wire, Vacuum" :
+                            customCreationCategory === 'modifier' ? "e.g., Solidify, Accelerate" :
+                            customCreationCategory === 'custom' ? "Item Name (e.g., H₂SO₄)" :
+                            "e.g., Baking Soda"
+                        }
+                        value={customChemicalName}
+                        onChange={(e) => setCustomChemicalName(e.target.value)}
+                        disabled={isCreatingCustom || isGeneratingDescription}
+                        aria-label="Custom item name"
+                    />
+                    <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Use these helpers to format your formula:</p>
+                        <div className="flex flex-wrap gap-1">
+                            {'₀₁₂₃₄₅₆₇₈₉'.split('').map(char => (
+                                <Button key={char} size="icon" variant="outline" className="h-6 w-6 text-xs" onClick={() => handleInsertChar(char)}>{char}</Button>
+                            ))}
+                             <Button size="icon" variant="outline" className="h-6 w-6 text-xs" onClick={() => handleInsertChar('⁺')}>+</Button>
+                             <Button size="icon" variant="outline" className="h-6 w-6 text-xs" onClick={() => handleInsertChar('⁻')}>-</Button>
+                        </div>
+                    </div>
+                </div>
                 {(customCreationCategory === 'custom' || editingChemical) && (
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
