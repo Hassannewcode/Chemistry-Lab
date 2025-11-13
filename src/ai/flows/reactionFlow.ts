@@ -47,6 +47,14 @@ const prompt = ai.definePrompt({
   14. **Element I/O**: Analyze the elemental composition of all reactants and products. Provide two arrays for input and output elements and their total relative amounts. This MUST be an accurate accounting of all atoms.
 
   If the combination of chemicals does not react under the given conditions, state that clearly, explaining why (e.g., "At this low temperature, the activation energy is not met."). Still describe the visual mixing and provide analogies for the mixture itself. Do not invent a reaction where none would occur.`,
+  config: {
+    safetySettings: [
+      {
+        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+        threshold: 'BLOCK_NONE',
+      },
+    ],
+  },
 });
 
 const reactionFlow = ai.defineFlow(
@@ -60,5 +68,3 @@ const reactionFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    
