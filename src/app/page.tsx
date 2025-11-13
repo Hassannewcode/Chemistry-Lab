@@ -48,7 +48,7 @@ interface SimulationHistoryEntry {
   state: LabState;
 }
 
-type ChemicalGrade = 'consumer' | 'lab' | 'reagent';
+type ChemicalGrade = 'consumer' | 'lab' | 'reagent' | 'synthetic';
 
 
 const formatFormulaWithSubscripts = (formula: string) => {
@@ -940,7 +940,8 @@ setIsHistoryOpen(false);
                           <ToggleGroup type="single" value={chemicalGrade} onValueChange={(value: ChemicalGrade) => handleGradeChange(value)} aria-label="Chemical Grade" className="w-full justify-around">
                               <ToggleGroupItem value="consumer" aria-label="Consumer/DIY Grade" className="text-xs sm:text-sm flex-1">Consumer/DIY</ToggleGroupItem>
                               <ToggleGroupItem value="lab" aria-label="Standard Lab Grade" className="text-xs sm:text-sm flex-1">Standard Lab</ToggleGroupItem>
-                              <ToggleGroupItem value="reagent" aria-label="Reagent Grade" className="text-xs sm:text-sm flex-1">Reagent Grade</ToggleGroupItem>
+                              <ToggleGroupItem value="reagent" aria-label="Reagent Grade" className="text-xs sm:text-sm flex-1">Reagent</ToggleGroupItem>
+                              <ToggleGroupItem value="synthetic" aria-label="Synthetic Grade" className="text-xs sm:text-sm flex-1">Synthetic</ToggleGroupItem>
                           </ToggleGroup>
                         </CardContent>
                       </Card>

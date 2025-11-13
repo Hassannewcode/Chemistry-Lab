@@ -58,7 +58,8 @@ const chemicalPrices: Record<string, { name?: string; price: number; unit: strin
 const gradeMultipliers: Record<string, number> = {
     'consumer': 0.6, // 60% of lab grade price
     'lab': 1.0,      // Baseline price
-    'reagent': 2.5   // 250% of lab grade price
+    'reagent': 2.5,  // 250% of lab grade price
+    'synthetic': 1.8 // 180% of lab grade price
 };
 
 export const getChemicalPrice = ai.defineTool(
@@ -67,7 +68,7 @@ export const getChemicalPrice = ai.defineTool(
     description: 'Retrieves the precise, non-negotiable price for a given chemical and its grade from the simulation\'s official price list.',
     inputSchema: z.object({
       chemicalIdentifier: z.string().describe('The chemical formula or common name (e.g., "H2O", "Sodium Chloride", "Baking Soda").'),
-      grade: z.enum(['consumer', 'lab', 'reagent']).describe('The purity grade of the chemical.'),
+      grade: z.enum(['consumer', 'lab', 'reagent', 'synthetic']).describe('The purity grade of the chemical.'),
     }),
     outputSchema: z.object({
         found: z.boolean().describe('Whether a price was found for the chemical.'),
