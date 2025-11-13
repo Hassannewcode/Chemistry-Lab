@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, DragEvent, useMemo, useEffect, useRef } from 'react';
@@ -945,49 +946,56 @@ setIsHistoryOpen(false);
                       </div>
                        <Card>
                         <CardHeader>
-                          <CardTitle className="text-sm font-medium flex items-center gap-2">
+                          <CardTitle className="text-base font-medium flex items-center gap-2">
                             <FlaskRound className="h-4 w-4" />
                             Chemical Grade
                           </CardTitle>
+                           <CardDescription>Select the purity and source of your reactants.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                          <ToggleGroup type="single" value={chemicalGrade} onValueChange={(value: ChemicalGrade) => handleGradeChange(value)} aria-label="Chemical Grade" className="w-full flex-col sm:flex-row gap-4">
-                            <div className="flex-1 text-center">
+                          <ToggleGroup 
+                              type="single" 
+                              value={chemicalGrade} 
+                              onValueChange={(value: ChemicalGrade) => handleGradeChange(value)} 
+                              aria-label="Chemical Grade" 
+                              className="grid grid-cols-2 lg:grid-cols-4 gap-2"
+                          >
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <ToggleGroupItem value="consumer" aria-label="Consumer/DIY Grade" className="w-full">Consumer/DIY</ToggleGroupItem>
+                                    <ToggleGroupItem value="consumer" aria-label="Consumer/DIY Grade" className="h-auto flex-col items-start p-3 gap-1">
+                                        <div className="font-bold">Consumer/DIY</div>
+                                        <div className="text-xs text-muted-foreground text-left">Lower-purity, everyday chemicals. Cheaper, but may have impurities or lower yield.</div>
+                                    </ToggleGroupItem>
                                 </TooltipTrigger>
                                 <TooltipContent><p className="max-w-xs">Simulates using lower-purity, everyday chemicals. Cheaper, but may have impurities, lower yield, or fail entirely. Some items cannot be DIY.</p></TooltipContent>
                               </Tooltip>
-                               <CardDescription className="text-xs mt-2 px-2">Lower-purity, everyday chemicals. Cheaper, but may have impurities or lower yield.</CardDescription>
-                            </div>
-                            <div className="flex-1 text-center">
-                              <Tooltip>
+                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <ToggleGroupItem value="lab" aria-label="Standard Lab Grade" className="w-full">Standard Lab</ToggleGroupItem>
+                                    <ToggleGroupItem value="lab" aria-label="Standard Lab Grade" className="h-auto flex-col items-start p-3 gap-1">
+                                        <div className="font-bold">Standard Lab</div>
+                                        <div className="text-xs text-muted-foreground text-left">Standard purity for reliable experiments. The baseline for most reactions.</div>
+                                    </ToggleGroupItem>
                                 </TooltipTrigger>
                                 <TooltipContent><p>Simulates using standard laboratory-grade chemicals. The baseline for reliable, successful experiments.</p></TooltipContent>
                               </Tooltip>
-                              <CardDescription className="text-xs mt-2 px-2">Standard purity for reliable experiments. The baseline for most reactions.</CardDescription>
-                            </div>
-                            <div className="flex-1 text-center">
-                              <Tooltip>
+                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <ToggleGroupItem value="reagent" aria-label="Reagent Grade" className="w-full">Reagent</ToggleGroupItem>
+                                    <ToggleGroupItem value="reagent" aria-label="Reagent Grade" className="h-auto flex-col items-start p-3 gap-1">
+                                        <div className="font-bold">Reagent</div>
+                                        <div className="text-xs text-muted-foreground text-left">Ultra-pure for precision work. Highest purity and yield, but more expensive.</div>
+                                    </ToggleGroupItem>
                                 </TooltipTrigger>
                                 <TooltipContent><p className="max-w-xs">Simulates using ultra-pure chemicals for precision work. Highest purity and yield, but significantly more expensive.</p></TooltipContent>
                               </Tooltip>
-                               <CardDescription className="text-xs mt-2 px-2">Ultra-pure for precision work. Highest purity and yield, but more expensive.</CardDescription>
-                            </div>
-                             <div className="flex-1 text-center">
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <ToggleGroupItem value="synthetic" aria-label="Synthetic Grade" className="w-full">Synthetic</ToggleGroupItem>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p className="max-w-xs">Simulates chemicals created in a lab. High purity but may have different trace impurities than natural sources. Some chemicals can only be synthetic.</p></TooltipContent>
-                                </Tooltip>
-                                <CardDescription className="text-xs mt-2 px-2">Lab-created chemicals. May have unique impurities. Some are only available this way.</CardDescription>
-                            </div>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <ToggleGroupItem value="synthetic" aria-label="Synthetic Grade" className="h-auto flex-col items-start p-3 gap-1">
+                                        <div className="font-bold">Synthetic</div>
+                                        <div className="text-xs text-muted-foreground text-left">Lab-created chemicals. May have unique impurities. Some are only available this way.</div>
+                                    </ToggleGroupItem>
+                                </TooltipTrigger>
+                                <TooltipContent><p className="max-w-xs">Simulates chemicals created in a lab. High purity but may have different trace impurities than natural sources. Some chemicals can only be synthetic.</p></TooltipContent>
+                              </Tooltip>
                           </ToggleGroup>
                         </CardContent>
                       </Card>
@@ -1446,5 +1454,3 @@ setIsHistoryOpen(false);
     </TooltipProvider>
   );
 }
-
-    
