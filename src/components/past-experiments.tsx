@@ -16,11 +16,14 @@ import type { ConductReactionOutput } from '@/ai/schemas/reactionSchema';
 import type { ChatMessage } from './chat-interface';
 import { History, Save, Trash2, Upload, PenSquare } from 'lucide-react';
 
+type ChemicalGrade = 'consumer' | 'lab' | 'reagent';
+
 export interface LabState {
   beakerContents: Chemical[];
   customChemicals: Chemical[];
   temperature: number;
   concentration: number;
+  chemicalGrade: ChemicalGrade;
   reactionResult: ConductReactionOutput | null;
   chatHistory: ChatMessage[];
 }
@@ -180,7 +183,8 @@ export const PastExperiments: React.FC<PastExperimentsProps> = ({
                           </p>
                           <p>
                           <span className="font-semibold">Temp:</span> {lab.temperature}°C,{' '}
-                          <span className="font-semibold">Conc:</span> {lab.concentration}M
+                          <span className="font-semibold">Conc:</span> {lab.concentration}M,{' '}
+                          <span className="font-semibold">Grade:</span> {lab.chemicalGrade || 'lab'}
                           </p>
                       </CardContent>
                       <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

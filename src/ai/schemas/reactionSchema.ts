@@ -16,6 +16,9 @@ export const ConductReactionInputSchema = z.object({
   concentration: z
     .number()
     .describe('The concentration of the reactants in Molarity (M).'),
+  grade: z
+    .enum(['consumer', 'lab', 'reagent'])
+    .describe('The purity grade of the chemicals.'),
   freezeSpeed: z
     .enum(['normal', 'rapid'])
     .optional()

@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, DragEvent, useMemo, useEffect, useRef } from 'react';
-import { Sun, ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles, Menu, History, RotateCcw, Beaker, Atom, Wrench, HelpCircle, Trash2, Flame, Snowflake, Sigma, DollarSign } from 'lucide-react';
+import { Sun, ChevronsRight, FlaskConical, Loader2, X, Info, Grid3x3, BarChart, Thermometer, Search, Lightbulb, PenSquare, Sparkles, Menu, History, RotateCcw, Beaker, Atom, Wrench, HelpCircle, Trash2, Flame, Snowflake, Sigma, DollarSign, FlaskRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BeakerIcon, ChemicalEffect } from '@/components/beaker-icon';
 import { VerticalSlider } from '@/components/vertical-slider';
@@ -48,6 +48,9 @@ interface SimulationHistoryEntry {
   state: LabState;
 }
 
+type ChemicalGrade = 'consumer' | 'lab' | 'reagent';
+
+
 const formatFormulaWithSubscripts = (formula: string) => {
     if (!formula) return formula;
     return formula.split(/(\d+)/).map((part, index) => {
@@ -65,6 +68,7 @@ export default function Home() {
   const [temperature, setTemperature] = useState(25); // in Celsius
   const [concentration, setConcentration] = useState(1); // in Molarity (M)
   const [freezeSpeed, setFreezeSpeed] = useState<'normal' | 'rapid'>('normal');
+  const [chemicalGrade, setChemicalGrade] = useState<ChemicalGrade>('lab');
   
   const [reactionResult, setReactionResult] = useState<ConductReactionOutput | null>(null);
   const [reactionEffects, setReactionEffects] = useState<ChemicalEffect | null>(null);
@@ -124,6 +128,10 @@ export default function Home() {
         
         const savedConcentration = localStorage.getItem('concentration');
         if (savedConcentration) setConcentration(JSON.parse(savedConcentration));
+
+        const savedChemicalGrade = localStorage.getItem('chemicalGrade');
+        if (savedChemicalGrade) setChemicalGrade(JSON.parse(savedChemicalGrade));
+
       } catch (error) {
         console.error("Failed to load state from localStorage", error);
       }
@@ -138,11 +146,12 @@ export default function Home() {
         localStorage.setItem('customChemicals', JSON.stringify(customChemicals));
         localStorage.setItem('temperature', JSON.stringify(temperature));
         localStorage.setItem('concentration', JSON.stringify(concentration));
+        localStorage.setItem('chemicalGrade', JSON.stringify(chemicalGrade));
       } catch (error) {
         console.error("Failed to save state to localStorage", error);
       }
     }
-  }, [beakerContents, customChemicals, temperature, concentration, isMounted]);
+  }, [beakerContents, customChemicals, temperature, concentration, chemicalGrade, isMounted]);
 
   const allChemicalCategories = useMemo(() => {
     const categories: Record<string, Chemical[]> = {...CHEMICAL_CATEGORIES};
@@ -298,6 +307,7 @@ export default function Home() {
     customChemicals,
     temperature,
     concentration,
+    chemicalGrade,
     reactionResult,
     chatHistory,
   });
@@ -307,13 +317,14 @@ export default function Home() {
     setCustomChemicals(state.customChemicals);
     setTemperature(state.temperature);
     setConcentration(state.concentration);
+    setChemicalGrade(state.chemicalGrade || 'lab'); // Default to lab if not present
     setReactionResult(state.reactionResult);
     setReactionEffects(state.reactionResult?.effects || null);
     setChatHistory(state.chatHistory);
     toast({ title: "Lab Loaded", description: "The experiment state has been restored." });
   };
 
-  const handleStartReaction = async (chemicals: string[] = beakerContents.map(c => c.promptName || c.formula), speed: 'normal' | 'rapid' = freezeSpeed) => {
+  const handleStartReaction = async (chemicals: string[] = beakerContents.map(c => c.promptName || c.formula), speed: 'normal' | 'rapid' = freezeSpeed, grade: ChemicalGrade = chemicalGrade) => {
     if (chemicals.length < 2) return;
     setIsLoading(true);
     resetSimulationState();
@@ -322,6 +333,7 @@ export default function Home() {
         chemicals,
         temperature,
         concentration,
+        grade,
         freezeSpeed: speed
       };
       const result = await conductReaction(input);
@@ -353,7 +365,17 @@ export default function Home() {
       setFreezeSpeed(newSpeed);
       if (reactionResult) {
         // Re-run simulation with the new freeze speed
-        handleStartReaction(beakerContents.map(c => c.promptName || c.formula), newSpeed);
+        handleStartReaction(beakerContents.map(c => c.promptName || c.formula), newSpeed, chemicalGrade);
+      }
+    }
+  };
+
+  const handleGradeChange = (newGrade: ChemicalGrade) => {
+    if (newGrade && newGrade !== chemicalGrade) {
+      setChemicalGrade(newGrade);
+      if (reactionResult) {
+        // Re-run simulation with the new grade
+        handleStartReaction(beakerContents.map(c => c.promptName || c.formula), freezeSpeed, newGrade);
       }
     }
   };
@@ -382,6 +404,7 @@ export default function Home() {
                     chemicals: foundChemicals.slice(0, MAX_BEAKER_CONTENTS).map(c => c.promptName || c.formula),
                     temperature,
                     concentration,
+                    grade: chemicalGrade,
                     freezeSpeed
                 };
                 const reactionResult = await conductReaction(input);
@@ -410,7 +433,7 @@ export default function Home() {
     if (isMounted) {
       setWhiteboardCallbacks({ onSimulate: handleSimulateWhiteboard });
     }
-  }, [temperature, concentration, customChemicals, freezeSpeed, isMounted]);
+  }, [temperature, concentration, customChemicals, freezeSpeed, chemicalGrade, isMounted]);
 
 
   const handleSendChatMessage = async (message: string) => {
@@ -548,7 +571,7 @@ const handleDeleteCustomChemical = () => {
 
 const handleRevertHistory = (state: LabState) => {
     loadLabState(state);
-    setIsHistoryOpen(false);
+setIsHistoryOpen(false);
     toast({
       title: "State Reverted",
       description: "The lab has been reverted to the selected point in history.",
@@ -906,6 +929,21 @@ const handleRevertHistory = (state: LabState) => {
                             </ToggleGroup>
                           </div>
                       </div>
+                       <Card>
+                        <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
+                          <CardTitle className="text-sm font-medium flex items-center gap-2">
+                            <FlaskRound className="h-4 w-4" />
+                            Chemical Grade
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <ToggleGroup type="single" value={chemicalGrade} onValueChange={(value: ChemicalGrade) => handleGradeChange(value)} aria-label="Chemical Grade" className="w-full justify-around">
+                              <ToggleGroupItem value="consumer" aria-label="Consumer/DIY Grade" className="text-xs sm:text-sm flex-1">Consumer/DIY</ToggleGroupItem>
+                              <ToggleGroupItem value="lab" aria-label="Standard Lab Grade" className="text-xs sm:text-sm flex-1">Standard Lab</ToggleGroupItem>
+                              <ToggleGroupItem value="reagent" aria-label="Reagent Grade" className="text-xs sm:text-sm flex-1">Reagent Grade</ToggleGroupItem>
+                          </ToggleGroup>
+                        </CardContent>
+                      </Card>
                       <p className="text-sm text-yellow-800 bg-yellow-100 p-2 rounded-md"><b>Safety:</b> {reactionResult.safetyNotes}</p>
                     </CardContent>
                   </Card>
@@ -1339,5 +1377,3 @@ const handleRevertHistory = (state: LabState) => {
     </>
   );
 }
-
-    

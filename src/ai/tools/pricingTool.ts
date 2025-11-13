@@ -9,7 +9,7 @@ import {z} from 'genkit';
 
 // This is our "database" of chemical prices. It provides consistent, accurate data.
 const chemicalPrices: Record<string, { name?: string; price: number; unit: string; currency: string; country: string; }> = {
-    // Elements (per 100g)
+    // Elements (per 100g) - Lab Grade Prices
     'H': { price: 0.5, unit: '100g', currency: 'USD', country: 'USA' },
     'He': { price: 5.0, unit: '100g', currency: 'USD', country: 'USA' },
     'Li': { price: 20.0, unit: '100g', currency: 'USD', country: 'USA' },
@@ -54,12 +54,20 @@ const chemicalPrices: Record<string, { name?: string; price: number; unit: strin
     'Salt': { name: 'NaCl', price: 0.5, unit: 'kg', currency: 'USD', country: 'USA' },
 };
 
+// Define grade multipliers
+const gradeMultipliers: Record<string, number> = {
+    'consumer': 0.6, // 60% of lab grade price
+    'lab': 1.0,      // Baseline price
+    'reagent': 2.5   // 250% of lab grade price
+};
+
 export const getChemicalPrice = ai.defineTool(
   {
     name: 'getChemicalPrice',
-    description: 'Retrieves the precise, non-negotiable price for a given chemical from the simulation\'s official price list.',
+    description: 'Retrieves the precise, non-negotiable price for a given chemical and its grade from the simulation\'s official price list.',
     inputSchema: z.object({
       chemicalIdentifier: z.string().describe('The chemical formula or common name (e.g., "H2O", "Sodium Chloride", "Baking Soda").'),
+      grade: z.enum(['consumer', 'lab', 'reagent']).describe('The purity grade of the chemical.'),
     }),
     outputSchema: z.object({
         found: z.boolean().describe('Whether a price was found for the chemical.'),
@@ -73,18 +81,19 @@ export const getChemicalPrice = ai.defineTool(
     const priceData = chemicalPrices[input.chemicalIdentifier] || Object.values(chemicalPrices).find(p => p.name?.toLowerCase() === input.chemicalIdentifier.toLowerCase());
 
     if (priceData) {
+      const multiplier = gradeMultipliers[input.grade] || 1.0;
+      const finalPrice = priceData.price * multiplier;
+
       return {
         found: true,
-        price: priceData.price,
+        price: finalPrice,
         unit: priceData.unit,
         currency: priceData.currency,
         country: priceData.country,
       };
     }
     
-    // A fallback for estimation if not in the list, but we should prioritize the list.
+    // Francium and other unpriceable items will correctly not be found
     return { found: false };
   }
 );
-
-    
