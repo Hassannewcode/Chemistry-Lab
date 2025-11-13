@@ -651,7 +651,7 @@ setIsHistoryOpen(false);
   }
 
   return (
-    <>
+    <TooltipProvider>
       <SoundManager effects={reactionEffects} />
       <main className="container py-4 md:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -839,25 +839,23 @@ setIsHistoryOpen(false);
                   </div>
               </div>
               
-              <TooltipProvider>
-                <div className="relative w-full flex-1 flex items-center justify-center my-4 min-h-[250px] sm:min-h-[300px]">
-                  <VerticalSlider
-                    value={concentration}
-                    onValueChange={handleConcentrationChange}
-                    unit="M"
-                    label="Molarity"
-                    icon={<FlaskConical className="h-5 w-5" />}
-                  />
-                  <BeakerIcon contents={beakerContents} overrideEffects={reactionEffects} className="h-64 w-64 sm:h-72 sm:w-72" />
-                  <VerticalSlider
-                    value={temperature}
-                    onValueChange={handleTemperatureChange}
-                    unit="°C"
-                    label="Celsius"
-                    icon={<Thermometer className="h-5 w-5" />}
-                  />
-                </div>
-              </TooltipProvider>
+              <div className="relative w-full flex-1 flex items-center justify-center my-4 min-h-[250px] sm:min-h-[300px]">
+                <VerticalSlider
+                  value={concentration}
+                  onValueChange={handleConcentrationChange}
+                  unit="M"
+                  label="Molarity"
+                  icon={<FlaskConical className="h-5 w-5" />}
+                />
+                <BeakerIcon contents={beakerContents} overrideEffects={reactionEffects} className="h-64 w-64 sm:h-72 sm:w-72" />
+                <VerticalSlider
+                  value={temperature}
+                  onValueChange={handleTemperatureChange}
+                  unit="°C"
+                  label="Celsius"
+                  icon={<Thermometer className="h-5 w-5" />}
+                />
+              </div>
             </div>
             
             <div className='w-full mt-4'>
@@ -954,10 +952,30 @@ setIsHistoryOpen(false);
                         </CardHeader>
                         <CardContent>
                           <ToggleGroup type="single" value={chemicalGrade} onValueChange={(value: ChemicalGrade) => handleGradeChange(value)} aria-label="Chemical Grade" className="w-full justify-around">
-                              <ToggleGroupItem value="consumer" aria-label="Consumer/DIY Grade" className="text-xs sm:text-sm flex-1">Consumer/DIY</ToggleGroupItem>
-                              <ToggleGroupItem value="lab" aria-label="Standard Lab Grade" className="text-xs sm:text-sm flex-1">Standard Lab</ToggleGroupItem>
-                              <ToggleGroupItem value="reagent" aria-label="Reagent Grade" className="text-xs sm:text-sm flex-1">Reagent</ToggleGroupItem>
-                              <ToggleGroupItem value="synthetic" aria-label="Synthetic Grade" className="text-xs sm:text-sm flex-1">Synthetic</ToggleGroupItem>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <ToggleGroupItem value="consumer" aria-label="Consumer/DIY Grade" className="text-xs sm:text-sm flex-1">Consumer/DIY</ToggleGroupItem>
+                              </TooltipTrigger>
+                              <TooltipContent><p className="max-w-xs">Simulates using lower-purity, everyday chemicals. Cheaper, but may have impurities, lower yield, or fail entirely. Some items cannot be DIY.</p></TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <ToggleGroupItem value="lab" aria-label="Standard Lab Grade" className="text-xs sm:text-sm flex-1">Standard Lab</ToggleGroupItem>
+                              </TooltipTrigger>
+                              <TooltipContent><p>Simulates using standard laboratory-grade chemicals. The baseline for reliable, successful experiments.</p></TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <ToggleGroupItem value="reagent" aria-label="Reagent Grade" className="text-xs sm:text-sm flex-1">Reagent</ToggleGroupItem>
+                              </TooltipTrigger>
+                              <TooltipContent><p className="max-w-xs">Simulates using ultra-pure chemicals for precision work. Highest purity and yield, but significantly more expensive.</p></TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <ToggleGroupItem value="synthetic" aria-label="Synthetic Grade" className="text-xs sm:text-sm flex-1">Synthetic</ToggleGroupItem>
+                                </TooltipTrigger>
+                                <TooltipContent><p className="max-w-xs">Simulates chemicals created in a lab. High purity but may have different trace impurities than natural sources. Some chemicals can only be synthetic.</p></TooltipContent>
+                            </Tooltip>
                           </ToggleGroup>
                         </CardContent>
                       </Card>
@@ -1413,6 +1431,6 @@ setIsHistoryOpen(false);
           </div>
         </DialogContent>
       </Dialog>
-    </>
+    </TooltipProvider>
   );
 }

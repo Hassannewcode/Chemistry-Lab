@@ -41,7 +41,7 @@ const prompt = ai.definePrompt({
   5.  **Safety Notes**: A brief, important safety note or a fun, factual observation. It MUST end with the disclaimer: "(Disclaimer: This is an AI simulation. Always verify with authoritative sources.)"
   6.  **Visual Effects**: Generate plausible visual effects (color, bubbles, smoke, etc.) that are a direct result of the products and the reaction conditions.
   7.  **Visual Preview**: A short, vivid, and scientifically-grounded text description of the final result.
-  8.  **Real-World Probability**: Estimate the success vs. failure percentage in a real lab, considering the given conditions. 'consumer' grade should have a lower success chance.
+  8.  **Real-World Probability**: Estimate the success vs. failure percentage in a real lab, considering the given conditions. 'consumer' grade should have a lower success chance. This must reflect the limitations of the grade (e.g., a "DIY" attempt to create a complex pharmaceutical should have a 0% success rate).
   9.  **Destruction Scale**: A 0-10 rating of the potential destructive power. 0 is inert, 10 is a catastrophic explosion. This must be based on the reaction's energy release.
   10. **Analogies**: Provide 2-3 simple, real-world analogies for the reaction's effects, grounded in the scale of the reaction.
   11. **Light Test**: Describe what happens if the products are exposed to a strong light source (e.g., UV), noting any fluorescence, degradation, or lack of reaction.
@@ -57,8 +57,20 @@ const prompt = ai.definePrompt({
         category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
         threshold: 'BLOCK_NONE',
       },
-    ],
-  },
+       {
+        category: 'HARM_CATEGORY_HATE_SPEECH',
+        threshold: 'BLOCK_NONE',
+      },
+      {
+        category: 'HARM_CATEGORY_HARASSMENT',
+        threshold: 'BLOCK_NONE',
+      },
+      {
+        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+        threshold: 'BLOCK_NONE',
+      },
+    ]
+  }
 });
 
 const reactionFlow = ai.defineFlow(
